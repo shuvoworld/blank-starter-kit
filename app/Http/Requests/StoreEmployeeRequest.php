@@ -25,6 +25,12 @@ class StoreEmployeeRequest extends FormRequest
             'salary' => ['required', 'numeric', 'min:0'],
             'hire_date' => ['required', 'date'],
             'status' => ['required', 'string', 'in:active,inactive'],
+            'profile_picture' => ['nullable', 'image', 'mimes:jpeg,png,gif,webp', 'max:5120'],
+            'resume' => ['nullable', 'file', 'mimes:pdf', 'max:5120'],
+            'certificates' => ['nullable', 'array', 'max:5'],
+            'certificates.*' => ['nullable', 'file', 'mimes:pdf', 'max:5120'],
+            'documents' => ['nullable', 'array', 'max:10'],
+            'documents.*' => ['nullable', 'file', 'mimes:pdf', 'max:5120'],
         ];
     }
 

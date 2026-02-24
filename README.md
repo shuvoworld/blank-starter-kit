@@ -43,7 +43,7 @@ A robust Laravel 12 starter kit with Role-Based Access Control (RBAC), Activity 
 - **Users** - User management with role assignment
 - **Roles** - Role management with permission assignment
 - **Permissions** - Permission management grouped by module
-- **Employees** - Employee CRUD with filtering
+- **Employees** - Employee CRUD with filtering, profile pictures, documents (resume, certificates)
 - **Products** - Product CRUD functionality
 - **Activity Logs** - Track and view system activities (Spatie Activity Log)
 
@@ -56,6 +56,7 @@ A robust Laravel 12 starter kit with Role-Based Access Control (RBAC), Activity 
 | Laravel Breeze | 2.3.8 | Authentication scaffolding |
 | Spatie Permission | - | Role & Permission management |
 | Spatie Activity Log | - | Activity logging |
+| Spatie Media Library | v11 | File & Media management |
 | Pest | 4.4.1 | Testing framework |
 | Laravel Pint | 1.27.1 | Code style formatter |
 | AdminLTE | v4 | Admin dashboard template |
@@ -238,6 +239,16 @@ This starter kit uses AdminLTE v4 components throughout:
 - Card-based layout with proper validation feedback
 
 ## Development
+
+### Module Development
+For detailed guidelines on creating new modules and file upload functionality, see:
+**[MODULE_DEVELOPMENT_GUIDE.md](MODULE_DEVELOPMENT_GUIDE.md)**
+
+Topics covered:
+- File upload guidelines (images, PDFs)
+- Spatie Media Library integration
+- Creating new modules (models, controllers, views)
+- Best practices for media management
 
 ### Code Formatting
 Run Laravel Pint before committing:

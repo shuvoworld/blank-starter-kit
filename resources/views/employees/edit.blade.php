@@ -20,10 +20,43 @@
                         Edit Employee: {{ $employee->name }}
                     </h3>
                 </div>
-                <form action="{{ route('employees.update', $employee) }}" method="POST">
+                <form action="{{ route('employees.update', $employee) }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
                     <div class="card-body">
+                        {{-- Profile Picture Section --}}
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <label class="form-label">Profile Picture</label>
+                                <div class="d-flex align-items-center gap-3">
+                                    @if($employee->getFirstMediaUrl('profile_picture'))
+                                        <img src="{{ $employee->getFirstMediaUrl('profile_picture', 'thumb') }}"
+                                             alt="{{ $employee->name }}"
+                                             class="rounded-circle"
+                                             width="80"
+                                             height="80"
+                                             style="object-fit: cover;">
+                                    @else
+                                        <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center text-white"
+                                             style="width: 80px; height: 80px; font-size: 2rem;">
+                                            <i class="bi bi-person-fill"></i>
+                                        </div>
+                                    @endif
+                                    <div class="flex-grow-1">
+                                        <input type="file"
+                                               class="form-control @error('profile_picture') is-invalid @enderror"
+                                               id="profile_picture"
+                                               name="profile_picture"
+                                               accept="image/jpeg,image/png,image/gif,image/webp">
+                                        @error('profile_picture')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                        <div class="form-text">Leave empty to keep current image</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="name" class="form-label">Name <span class="text-danger">*</span></label>
@@ -120,6 +153,83 @@
                                 @error('status')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
+                            </div>
+                        </div>
+
+                        {{-- Documents Section --}}
+                        <hr class="my-4">
+                        <h5 class="mb-3"><i class="bi bi-file-earmark-pdf me-2"></i>Documents</h5>
+
+                        {{-- Resume --}}
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <label for="resume" class="form-label">Resume/CV</label>
+                                @if($employee->getFirstMedia('resume'))
+                                    <div class="alert alert-info alert-dismissible fade show" role="alert">
+                                        <i class="bi bi-file-earmark-pdf-fill me-2"></i>
+                                        <strong>Current:</strong> {{ $employee->getFirstMedia('resume')->file_name }}
+                                        <a href="{{ $employee->getFirstMediaUrl('resume') }}" target="_blank" class="btn btn-sm btn-outline-primary ms-2">
+                                            <i class="bi bi-download"></i> Download
+                                        </a>
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                    </div>
+                                @endif
+                                <input type="file" class="form-control @error('resume') is-invalid @enderror"
+                                       id="resume" name="resume" accept=".pdf,application/pdf">
+                                @error('resume')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                                <div class="form-text">Upload employee resume in PDF format (Max: 5MB). New file will replace the existing one.</div>
+                            </div>
+                        </div>
+
+                        {{-- Certificates --}}
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <label for="certificates" class="form-label">Certificates</label>
+                                @if($employee->getMedia('certificates')->count() > 0)
+                                    <div class="mb-2">
+                                        <small class="text-muted">Current certificates:</small>
+                                        @foreach($employee->getMedia('certificates') as $cert)
+                                            <div class="d-inline-block me-2">
+                                                <a href="{{ $cert->getUrl() }}" target="_blank" class="badge bg-info text-decoration-none">
+                                                    <i class="bi bi-file-earmark-pdf-fill me-1"></i>{{ $cert->file_name }}
+                                                </a>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @endif
+                                <input type="file" class="form-control @error('certificates') is-invalid @enderror"
+                                       id="certificates" name="certificates[]" accept=".pdf,application/pdf" multiple>
+                                @error('certificates')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                                <div class="form-text">Upload employee certificates (PDF only, Max: 5 files, 5MB each). New files will be added to existing ones.</div>
+                            </div>
+                        </div>
+
+                        {{-- Other Documents --}}
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <label for="documents" class="form-label">Other Documents</label>
+                                @if($employee->getMedia('documents')->count() > 0)
+                                    <div class="mb-2">
+                                        <small class="text-muted">Current documents:</small>
+                                        @foreach($employee->getMedia('documents') as $doc)
+                                            <div class="d-inline-block me-2">
+                                                <a href="{{ $doc->getUrl() }}" target="_blank" class="badge bg-info text-decoration-none">
+                                                    <i class="bi bi-file-earmark-pdf-fill me-1"></i>{{ $doc->file_name }}
+                                                </a>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @endif
+                                <input type="file" class="form-control @error('documents') is-invalid @enderror"
+                                       id="documents" name="documents[]" accept=".pdf,application/pdf" multiple>
+                                @error('documents')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                                <div class="form-text">Upload other employee documents (PDF only, Max: 10 files, 5MB each). New files will be added to existing ones.</div>
                             </div>
                         </div>
                     </div>

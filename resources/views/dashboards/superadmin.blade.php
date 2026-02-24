@@ -9,58 +9,15 @@
 @endsection
 
 @section('content')
-{{-- Info Boxes Row --}}
-<div class="row">
-    <div class="col-12 col-sm-6 col-md-3">
-        <div class="info-box">
-            <span class="info-box-icon bg-info elevation-1"><i class="bi bi-google"></i></span>
-            <div class="info-box-content">
-                <span class="info-box-text">New Users</span>
-                <span class="info-box-number">{{ $stats['users'] ?? 0 }}</span>
-            </div>
-        </div>
-    </div>
-    <div class="col-12 col-sm-6 col-md-3">
-        <div class="info-box">
-            <span class="info-box-icon bg-success elevation-1"><i class="bi bi-cart-check"></i></span>
-            <div class="info-box-content">
-                <span class="info-box-text">Active Employees</span>
-                <span class="info-box-number">{{ $stats['activeEmployees'] ?? 0 }}</span>
-            </div>
-        </div>
-    </div>
-    <div class="col-12 col-sm-6 col-md-3">
-        <div class="info-box">
-            <span class="info-box-icon bg-warning elevation-1"><i class="bi bi-users"></i></span>
-            <div class="info-box-content">
-                <span class="info-box-text">Products</span>
-                <span class="info-box-number">{{ $stats['products'] ?? 0 }}</span>
-            </div>
-        </div>
-    </div>
-    <div class="col-12 col-sm-6 col-md-3">
-        <div class="info-box">
-            <span class="info-box-icon bg-danger elevation-1"><i class="bi bi-tag"></i></span>
-            <div class="info-box-content">
-                <span class="info-box-text">Roles</span>
-                <span class="info-box-number">{{ $stats['roles'] ?? 0 }}</span>
-            </div>
-        </div>
-    </div>
-</div>
-
 {{-- Small Boxes Row --}}
 <div class="row">
     <div class="col-lg-3 col-6">
         <div class="small-box bg-info">
             <div class="inner">
-                <h3>{{ $stats['users'] ?? 0 }}</h3>
-                <p>Total Users</p>
+                <h3 class="text-white">{{ $stats['users'] ?? 0 }}</h3>
+                <p class="text-white">Total Users</p>
             </div>
-            <div class="icon">
-                <i class="bi bi-people"></i>
-            </div>
-            <a href="{{ route('users.index') }}" class="small-box-footer">
+            <a href="{{ route('users.index') }}" class="small-box-footer text-white">
                 More info <i class="bi bi-arrow-circle-right"></i>
             </a>
         </div>
@@ -69,13 +26,10 @@
     <div class="col-lg-3 col-6">
         <div class="small-box bg-success">
             <div class="inner">
-                <h3>{{ $stats['employees'] ?? 0 }}<sup style="font-size: 20px">%</sup></h3>
-                <p>Employee Rate</p>
+                <h3 class="text-white">{{ $stats['employees'] ?? 0 }}<sup style="font-size: 20px">%</sup></h3>
+                <p class="text-white">Employee Rate</p>
             </div>
-            <div class="icon">
-                <i class="bi bi-person-badge"></i>
-            </div>
-            <a href="{{ route('employees.index') }}" class="small-box-footer">
+            <a href="{{ route('employees.index') }}" class="small-box-footer text-white">
                 More info <i class="bi bi-arrow-circle-right"></i>
             </a>
         </div>
@@ -84,13 +38,10 @@
     <div class="col-lg-3 col-6">
         <div class="small-box bg-warning">
             <div class="inner">
-                <h3>{{ $stats['products'] ?? 0 }}</h3>
-                <p>Products</p>
+                <h3 class="text-white">{{ $stats['products'] ?? 0 }}</h3>
+                <p class="text-white">Products</p>
             </div>
-            <div class="icon">
-                <i class="bi bi-box-seam"></i>
-            </div>
-            <a href="{{ route('products.index') }}" class="small-box-footer">
+            <a href="{{ route('products.index') }}" class="small-box-footer text-white">
                 More info <i class="bi bi-arrow-circle-right"></i>
             </a>
         </div>
@@ -99,13 +50,10 @@
     <div class="col-lg-3 col-6">
         <div class="small-box bg-danger">
             <div class="inner">
-                <h3>{{ $stats['roles'] ?? 0 }}</h3>
-                <p>Roles</p>
+                <h3 class="text-white">{{ $stats['roles'] ?? 0 }}</h3>
+                <p class="text-white">Roles</p>
             </div>
-            <div class="icon">
-                <i class="bi bi-shield-check"></i>
-            </div>
-            <a href="{{ route('roles.index') }}" class="small-box-footer">
+            <a href="{{ route('roles.index') }}" class="small-box-footer text-white">
                 More info <i class="bi bi-arrow-circle-right"></i>
             </a>
         </div>
@@ -162,24 +110,55 @@
 <div class="row">
     {{-- Left Column --}}
     <div class="col-md-8">
-        {{-- Chart Card (Placeholder) --}}
+        {{-- Latest Employees Table --}}
         <div class="card card-success card-outline mb-3">
             <div class="card-header">
                 <h3 class="card-title">
-                    <i class="bi bi-bar-chart me-1"></i> System Activity
+                    <i class="bi bi-person-badge me-1"></i> Latest Employees
                 </h3>
                 <div class="card-tools float-right">
-                    <button type="button" class="btn btn-tool" data-card-widget="collapse">
-                        <i class="bi bi-dash"></i>
-                    </button>
-                    <button type="button" class="btn btn-tool" data-card-widget="remove">
-                        <i class="bi bi-x"></i>
-                    </button>
+                    <a href="{{ route('employees.index') }}" class="btn btn-tool"><i class="bi bi-list-ul"></i></a>
                 </div>
             </div>
-            <div class="card-body">
-                <div class="chart">
-                    <canvas id="activityChart" style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th style="width: 10px">#</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Department</th>
+                                <th>Position</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse(($stats['recentEmployees'] ?? collect()) as $employee)
+                                <tr>
+                                    <td>{{ $loop->iteration }}</td>
+                                    <td>{{ $employee->name }}</td>
+                                    <td>{{ $employee->email }}</td>
+                                    <td>{{ $employee->department }}</td>
+                                    <td>{{ $employee->position }}</td>
+                                    <td>
+                                        @if($employee->status === 'active')
+                                            <span class="badge bg-success">Active</span>
+                                        @else
+                                            <span class="badge bg-danger">{{ ucfirst($employee->status) }}</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted py-4">
+                                        <i class="bi bi-person-x fs-2 d-block mb-2 opacity-25"></i>
+                                        <p class="mb-0">No employees found</p>
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -322,58 +301,3 @@
 </div>
 @endsection
 
-@push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<script>
-  $(function () {
-    'use strict'
-
-    var activityChartCanvas = document.getElementById('activityChart').getContext('2d')
-
-    var activityChartData = {
-      labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
-      datasets: [
-        {
-          label: 'Activity',
-          backgroundColor: 'rgba(60,141,188,0.1)',
-          borderColor: 'rgba(60,141,188,0.8)',
-          pointRadius: false,
-          pointColor: '#3b8bba',
-          pointStrokeColor: 'rgba(60,141,188,1)',
-          pointHighlightFill: '#fff',
-          pointHighlightStroke: 'rgba(60,141,188,1)',
-          data: [28, 48, 40, 19, 86, 27, 90]
-        }
-      ]
-    }
-
-    var activityChartOptions = {
-      maintainAspectRatio: false,
-      responsive: true,
-      plugins: {
-        legend: {
-          display: false
-        }
-      },
-      scales: {
-        xAxes: [{
-          grid: {
-            display: false
-          }
-        }],
-        yAxes: [{
-          grid: {
-            display: false
-          }
-        }]
-      }
-    }
-
-    new Chart(activityChartCanvas, {
-      type: 'line',
-      data: activityChartData,
-      options: activityChartOptions
-    })
-  })
-</script>
-@endpush

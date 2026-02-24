@@ -6,10 +6,13 @@ use App\Traits\HasActivityLog;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
-class Employee extends Model
+class Employee extends Model implements HasMedia
 {
-    use HasActivityLog, HasFactory;
+    use HasActivityLog, HasFactory, InteractsWithMedia;
 
     protected $fillable = [
         'name',
@@ -89,5 +92,52 @@ class Employee extends Model
         }
 
         return $query;
+    }
+
+    /**
+     * Define media collections for profile pictures and documents.
+     */
+    public function registerMediaCollections(): void
+    {
+        // Profile picture - single file
+        $this->addMediaCollection('profile_picture')
+            ->singleFile()
+            ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
+            ->useDisk('public');
+
+        // Resume - single file
+        $this->addMediaCollection('resume')
+            ->singleFile()
+            ->acceptsMimeTypes(['application/pdf'])
+            ->useDisk('public');
+
+        // Certificates - multiple files allowed
+        $this->addMediaCollection('certificates')
+            ->acceptsMimeTypes(['application/pdf'])
+            ->useDisk('public');
+
+        // Documents - multiple files allowed
+        $this->addMediaCollection('documents')
+            ->acceptsMimeTypes(['application/pdf'])
+            ->useDisk('public');
+    }
+
+    /**
+     * Register media conversions.
+     */
+    public function registerMediaConversions(Media $media = null): void
+    {
+        // Profile picture conversions
+        if ($media?->collection_name === 'profile_picture') {
+            $this->addMediaConversion('thumb')
+                ->width(150)
+                ->height(150)
+                ->sharpen(10);
+
+            $this->addMediaConversion('medium')
+                ->width(300)
+                ->height(300)
+                ->sharpen(10);
+        }
     }
 }

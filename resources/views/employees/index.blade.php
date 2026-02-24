@@ -81,6 +81,7 @@
                     <thead>
                         <tr>
                             <th width="50">#</th>
+                            <th width="60">Photo</th>
                             <th>Name</th>
                             <th>Email</th>
                             <th>Department</th>
@@ -143,6 +144,7 @@
                         },
                         columns: [
                             {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false, className: 'text-center'},
+                            {data: 'profile_picture', name: 'profile_picture', orderable: false, searchable: false, className: 'text-center'},
                             {data: 'name', name: 'name'},
                             {data: 'email', name: 'email'},
                             {data: 'department', name: 'department'},

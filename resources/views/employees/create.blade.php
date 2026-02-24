@@ -20,10 +20,21 @@
                         New Employee
                     </h3>
                 </div>
-                <form action="{{ route('employees.store') }}" method="POST">
+                <form action="{{ route('employees.store') }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     <div class="card-body">
                         <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="profile_picture" class="form-label">Profile Picture</label>
+                                <input type="file" class="form-control @error('profile_picture') is-invalid @enderror"
+                                       id="profile_picture" name="profile_picture"
+                                       accept="image/jpeg,image/png,image/gif,image/webp">
+                                @error('profile_picture')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                                <div class="form-text">Allowed: JPG, PNG, GIF, WebP (Max: 5MB)</div>
+                            </div>
+
                             <div class="col-md-6 mb-3">
                                 <label for="name" class="form-label">Name <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control @error('name') is-invalid @enderror"
@@ -118,6 +129,46 @@
                                 @error('status')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
+                            </div>
+                        </div>
+
+                        {{-- Documents Section --}}
+                        <hr class="my-4">
+                        <h5 class="mb-3"><i class="bi bi-file-earmark-pdf me-2"></i>Documents</h5>
+
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label for="resume" class="form-label">Resume/CV</label>
+                                <input type="file" class="form-control @error('resume') is-invalid @enderror"
+                                       id="resume" name="resume" accept=".pdf,application/pdf">
+                                @error('resume')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                                <div class="form-text">Upload employee resume in PDF format (Max: 5MB)</div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label for="certificates" class="form-label">Certificates</label>
+                                <input type="file" class="form-control @error('certificates') is-invalid @enderror"
+                                       id="certificates" name="certificates[]" accept=".pdf,application/pdf" multiple>
+                                @error('certificates')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                                <div class="form-text">Upload employee certificates (PDF only, Max: 5 files, 5MB each)</div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label for="documents" class="form-label">Other Documents</label>
+                                <input type="file" class="form-control @error('documents') is-invalid @enderror"
+                                       id="documents" name="documents[]" accept=".pdf,application/pdf" multiple>
+                                @error('documents')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                                <div class="form-text">Upload other employee documents (PDF only, Max: 10 files, 5MB each)</div>
                             </div>
                         </div>
                     </div>

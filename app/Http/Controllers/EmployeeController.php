@@ -28,6 +28,13 @@ class EmployeeController extends Controller
 
             return DataTables::of($query)
                 ->addIndexColumn()
+                ->addColumn('profile_picture', function (Employee $employee) {
+                    $url = $employee->getFirstMediaUrl('profile_picture', 'thumb');
+                    if ($url) {
+                        return '<img src="'.$url.'" alt="'.e($employee->name).'" class="rounded-circle" width="40" height="40" style="object-fit: cover;">';
+                    }
+                    return '<div class="bg-secondary rounded-circle d-inline-flex align-items-center justify-content-center text-white" style="width: 40px; height: 40px; font-size: 1.2rem;"><i class="bi bi-person-fill"></i></div>';
+                })
                 ->addColumn('status_badge', function (Employee $employee) {
                     $class = $employee->status === 'active' ? 'bg-success' : 'bg-secondary';
 
@@ -54,7 +61,7 @@ class EmployeeController extends Controller
                         </div>
                     ';
                 })
-                ->rawColumns(['status_badge', 'action'])
+                ->rawColumns(['profile_picture', 'status_badge', 'action'])
                 ->make(true);
         }
 
@@ -84,7 +91,35 @@ class EmployeeController extends Controller
 
     public function store(StoreEmployeeRequest $request): RedirectResponse
     {
-        Employee::create($request->validated());
+        $employee = Employee::create($request->validated());
+
+        // Handle profile picture upload
+        if ($request->hasFile('profile_picture')) {
+            $employee->addMediaFromRequest('profile_picture')
+                ->toMediaCollection('profile_picture');
+        }
+
+        // Handle resume upload
+        if ($request->hasFile('resume')) {
+            $employee->addMediaFromRequest('resume')
+                ->toMediaCollection('resume');
+        }
+
+        // Handle certificates upload (multiple files)
+        if ($request->hasFile('certificates')) {
+            foreach ($request->file('certificates') as $certificate) {
+                $employee->addMedia($certificate)
+                    ->toMediaCollection('certificates');
+            }
+        }
+
+        // Handle documents upload (multiple files)
+        if ($request->hasFile('documents')) {
+            foreach ($request->file('documents') as $document) {
+                $employee->addMedia($document)
+                    ->toMediaCollection('documents');
+            }
+        }
 
         return to_route('employees.index')->with('status', 'Employee created successfully.');
     }
@@ -102,6 +137,40 @@ class EmployeeController extends Controller
     public function update(UpdateEmployeeRequest $request, Employee $employee): RedirectResponse
     {
         $employee->update($request->validated());
+
+        // Handle profile picture upload
+        if ($request->hasFile('profile_picture')) {
+            // Clear existing profile picture
+            $employee->clearMediaCollection('profile_picture');
+
+            $employee->addMediaFromRequest('profile_picture')
+                ->toMediaCollection('profile_picture');
+        }
+
+        // Handle resume upload
+        if ($request->hasFile('resume')) {
+            // Clear existing resume
+            $employee->clearMediaCollection('resume');
+
+            $employee->addMediaFromRequest('resume')
+                ->toMediaCollection('resume');
+        }
+
+        // Handle certificates upload (multiple files)
+        if ($request->hasFile('certificates')) {
+            foreach ($request->file('certificates') as $certificate) {
+                $employee->addMedia($certificate)
+                    ->toMediaCollection('certificates');
+            }
+        }
+
+        // Handle documents upload (multiple files)
+        if ($request->hasFile('documents')) {
+            foreach ($request->file('documents') as $document) {
+                $employee->addMedia($document)
+                    ->toMediaCollection('documents');
+            }
+        }
 
         return to_route('employees.index')->with('status', 'Employee updated successfully.');
     }

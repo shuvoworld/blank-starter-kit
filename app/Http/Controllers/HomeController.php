@@ -61,7 +61,7 @@ class HomeController extends Controller
         if ($user->can('view any employees')) {
             $stats['employees'] = \App\Models\Employee::count();
             $stats['activeEmployees'] = \App\Models\Employee::where('status', 'active')->count();
-            $stats['recentEmployees'] = \App\Models\Employee::latest()->limit(5)->get();
+            $stats['recentEmployees'] = \App\Models\Employee::latest()->limit(10)->get();
         }
 
         if ($user->can('view any products')) {
