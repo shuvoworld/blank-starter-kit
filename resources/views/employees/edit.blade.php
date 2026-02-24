@@ -1,0 +1,187 @@
+@extends('layouts.app')
+
+@section('header')
+<h1 class="m-0">Edit Employee</h1>
+@endsection
+
+@section('breadcrumb')
+<li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
+        <li class="breadcrumb-item"><a href="{{ route('employees.index') }}">Employees</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Edit</li>
+@endsection
+
+@section('content')
+<div class="row">
+        <div class="col-lg-8">
+            <div class="card card-primary card-outline">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="bi bi-pencil me-2"></i>
+                        Edit Employee: {{ $employee->name }}
+                    </h3>
+                </div>
+                <form action="{{ route('employees.update', $employee) }}" method="POST">
+                    @csrf
+                    @method('PUT')
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="name" class="form-label">Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control @error('name') is-invalid @enderror"
+                                       id="name" name="name" value="{{ old('name', $employee->name) }}"
+                                       placeholder="Full name" required autofocus>
+                                @error('name')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
+                                <input type="email" class="form-control @error('email') is-invalid @enderror"
+                                       id="email" name="email" value="{{ old('email', $employee->email) }}"
+                                       placeholder="email@example.com" required>
+                                @error('email')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="phone" class="form-label">Phone</label>
+                                <input type="text" class="form-control @error('phone') is-invalid @enderror"
+                                       id="phone" name="phone" value="{{ old('phone', $employee->phone) }}"
+                                       placeholder="+1 (555) 000-0000">
+                                @error('phone')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="hire_date" class="form-label">Hire Date <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control @error('hire_date') is-invalid @enderror"
+                                       id="hire_date" name="hire_date"
+                                       value="{{ old('hire_date', $employee->hire_date->format('Y-m-d')) }}" required>
+                                @error('hire_date')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="department" class="form-label">Department <span class="text-danger">*</span></label>
+                                <select class="form-select @error('department') is-invalid @enderror"
+                                        id="department" name="department" required>
+                                    <option value="">Select department...</option>
+                                    @foreach(['Engineering', 'Marketing', 'Sales', 'HR', 'Finance', 'IT', 'Operations'] as $dept)
+                                        <option value="{{ $dept }}" {{ old('department', $employee->department) === $dept ? 'selected' : '' }}>
+                                            {{ $dept }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('department')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="position" class="form-label">Position <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control @error('position') is-invalid @enderror"
+                                       id="position" name="position" value="{{ old('position', $employee->position) }}"
+                                       placeholder="e.g. Senior Developer" required>
+                                @error('position')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="salary" class="form-label">Salary <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" class="form-control @error('salary') is-invalid @enderror"
+                                           id="salary" name="salary" value="{{ old('salary', $employee->salary) }}"
+                                           placeholder="0.00" min="0" step="0.01" required>
+                                    @error('salary')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="status" class="form-label">Status <span class="text-danger">*</span></label>
+                                <select class="form-select @error('status') is-invalid @enderror"
+                                        id="status" name="status" required>
+                                    <option value="active" {{ old('status', $employee->status) === 'active' ? 'selected' : '' }}>Active</option>
+                                    <option value="inactive" {{ old('status', $employee->status) === 'inactive' ? 'selected' : '' }}>Inactive</option>
+                                </select>
+                                @error('status')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg me-1"></i> Update Employee
+                        </button>
+                        <a href="{{ route('employees.index') }}" class="btn btn-secondary">
+                            <i class="bi bi-x-lg me-1"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card card-info card-outline">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Employee Metadata
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm table-borderless mb-0">
+                        <tr>
+                            <td class="text-muted">ID:</td>
+                            <td>{{ $employee->id }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Created:</td>
+                            <td>{{ $employee->created_at->format('M d, Y H:i') }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Updated:</td>
+                            <td>{{ $employee->updated_at->format('M d, Y H:i') }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            @can('delete employees')
+                <div class="card card-danger card-outline">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            Danger Zone
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted small">Once deleted, this employee record cannot be recovered.</p>
+                        <form action="{{ route('employees.destroy', $employee) }}" method="POST" class="d-inline"
+                              onsubmit="return confirm('Are you sure you want to delete {{ $employee->name }}?')">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-danger btn-sm">
+                                <i class="bi bi-trash me-1"></i> Delete Employee
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            @endcan
+        </div>
+    </div>
+@endsection

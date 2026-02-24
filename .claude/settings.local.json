@@ -1,0 +1,43 @@
+{
+  "env": {
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "GLM-4.7",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "GLM-4.7",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "GLM-4.5-Air",
+    "ANTHROPIC_AUTH_TOKEN": "5fa50164319447edac84c5e5caf2bbc7.wiclzLCmiF6AGz15",
+    "ANTHROPIC_BASE_URL": "https://api.z.ai/api/anthropic",
+    "API_TIMEOUT_MS": "3000000"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(npm uninstall:*)",
+      "Bash(npm run build:*)",
+      "WebFetch(domain:adminlte.io)",
+      "Bash(npm install:*)",
+      "Bash(php artisan view:clear:*)",
+      "Bash(php artisan:*)",
+      "Bash(composer require:*)",
+      "Bash(vendor/bin/pint:*)",
+      "mcp__ide__getDiagnostics",
+      "mcp__laravel-boost__application-info",
+      "mcp__laravel-boost__database-schema",
+      "mcp__laravel-boost__list-available-env-vars",
+      "Bash(cd E:\\\\Xampp\\\\htdocs\\\\blank-starter-kit:*)",
+      "mcp__laravel-boost__browser-logs",
+      "Bash(cd /e/Xampp/htdocs/blank-starter-kit && rm -rf node_modules/.vite public/build && npm run build 2>&1)",
+      "mcp__laravel-boost__list-routes",
+      "mcp__laravel-boost__database-query",
+      "mcp__laravel-boost__tinker",
+      "Bash(head:*)",
+      "mcp__laravel-boost__last-error",
+      "mcp__laravel-boost__get-absolute-url",
+      "mcp__laravel-boost__list-artisan-commands",
+      "mcp__laravel-boost__search-docs",
+      "Bash(ls:*)",
+      "mcp__laravel-boost__get-config"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "laravel-boost"
+  ]
+}

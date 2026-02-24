@@ -1,0 +1,53 @@
+// Custom variables
+// Override Bootstrap/AdminLTE defaults before importing
+// Example: $primary: #007bff;
+
+// Import AdminLTE (includes Bootstrap 5)
+@import "admin-lte/dist/css/adminlte.min.css";
+
+// Import Bootstrap Icons
+@import "bootstrap-icons/font/bootstrap-icons.css";
+
+// Import OverlayScrollbars
+@import "overlayscrollbars/styles/overlayscrollbars.css";
+
+// Import DataTables Bootstrap 5 styling
+@import "datatables.net-bs5/css/dataTables.bootstrap5.min.css";
+@import "datatables.net-responsive-bs5/css/responsive.bootstrap5.min.css";
+
+// Import Select2 styling
+@import "select2/dist/css/select2.min.css";
+@import "select2-bootstrap-5-theme/dist/select2-bootstrap-5-theme.min.css";
+
+// Custom styles below
+// Add your admin panel custom styles here
+
+// DataTables custom styling
+.table.dataTable {
+    thead th {
+        background-color: #f8f9fa;
+    }
+}
+
+.dataTables_wrapper .dataTables_filter input,
+.dataTables_wrapper .dataTables_length select {
+    border-color: #dee2e6;
+}
+
+.dataTables_wrapper .dataTables_paginate .pagination {
+    margin: 0;
+}
+
+.dataTables_wrapper .dataTables_info {
+    padding-top: 0.75rem;
+}
+
+// Select2 custom styling
+.select2-container--bootstrap-5 .select2-selection {
+    border-color: #dee2e6;
+}
+
+.select2-container--bootstrap-5.select2-container--focus .select2-selection {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
