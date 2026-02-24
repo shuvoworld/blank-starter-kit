@@ -1,59 +1,335 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Laravel Starter Kit with AdminLTE v4
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A robust Laravel 12 starter kit with Role-Based Access Control (RBAC), Activity Logging, Role-Based Dashboards, DataTables integration, and dynamic landing page customization. Built with modern PHP 8.4, following Laravel best practices, and styled with AdminLTE v4.
 
-## About Laravel
+![Laravel](https://img.shields.io/badge/Laravel-12.52.0-red.svg)
+![PHP](https://img.shields.io/badge/PHP-8.4.16-purple.svg)
+![License](https://img.shields.io/badge/License-MIT-blue.svg)
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Features
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### 🔐 Authentication & Authorization
+- Complete user authentication system (via Laravel Breeze)
+- **Spatie Permission** - Role-Based Access Control (RBAC)
+- Module-based permission management
+- Role and Permission assignment to users
+- Pre-configured roles: Super Admin, Admin, Manager, Editor, Employee, User
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### 📊 Role-Based Dashboards
+- **Dynamic dashboard routing** via `HomeController` - routes users to role-specific dashboard views
+- **Six role-specific dashboards** tailored to user permissions:
+  - `superadmin.blade.php` - Full system access, all stats, tech stack overview
+  - `admin.blade.php` - Organization management, users, roles, landing page
+  - `manager.blade.php` - Team management, employees, products overview
+  - `editor.blade.php` - Content creation focus, employees, products
+  - `employee.blade.php` - Basic employee access, directory view
+  - `user.blade.php` - Standard user dashboard with profile
+- **AdminLTE v4 components**: small-box, info-box, card-outline, striped tables, charts
 
-## Learning Laravel
+### 🎨 UI/UX
+- **AdminLTE v4** responsive layout for dashboard and authentication
+- Server-side **DataTables** with filtering (department, position, status, hire date)
+- Bootstrap icons integration
+- Toast notifications
+- Modal confirmations for destructive actions
+- Chart.js integration for visual analytics
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+### 📄 Dynamic Landing Page
+- Fully customizable public landing page through admin panel
+- Sections: Hero, Features, How It Works, Stats, Testimonials, Pricing, FAQ, Footer
+- Dynamic content management without code changes
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### 📝 Core Modules
+- **Users** - User management with role assignment
+- **Roles** - Role management with permission assignment
+- **Permissions** - Permission management grouped by module
+- **Employees** - Employee CRUD with filtering
+- **Products** - Product CRUD functionality
+- **Activity Logs** - Track and view system activities (Spatie Activity Log)
 
-## Laravel Sponsors
+## Tech Stack
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+| Package | Version | Description |
+|---------|---------|-------------|
+| PHP | 8.4.16 | Core language |
+| Laravel | 12.52.0 | Web application framework |
+| Laravel Breeze | 2.3.8 | Authentication scaffolding |
+| Spatie Permission | - | Role & Permission management |
+| Spatie Activity Log | - | Activity logging |
+| Pest | 4.4.1 | Testing framework |
+| Laravel Pint | 1.27.1 | Code style formatter |
+| AdminLTE | v4 | Admin dashboard template |
+| Alpine.js | 3.15.8 | Frontend interactivity |
+| Tailwind CSS | 3.4.19 | Utility-first CSS framework |
+| DataTables | - | Server-side table processing |
+| Chart.js | 4.4.1 | Charts and graphs |
 
-### Premium Partners
+## Installation
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+### Prerequisites
+- PHP 8.4+
+- Composer
+- NPM
+- MySQL
+- Laravel Herd (or equivalent local development server)
 
-## Contributing
+### Step 1: Clone and Install
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```bash
+git clone <your-repo-url>
+cd blank-starter-kit
+composer install
+npm install
+```
 
-## Code of Conduct
+### Step 2: Environment Setup
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```bash
+cp .env.example .env
+php artisan key:generate
+```
 
-## Security Vulnerabilities
+Configure your database in `.env`:
+```env
+DB_DATABASE=blank_starter_kit
+DB_USERNAME=root
+DB_PASSWORD=your_password
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Step 3: Run Migrations and Seeders
+
+```bash
+php artisan migrate --seed
+```
+
+The seeder will create:
+- All roles (Super Admin, Admin, Manager, Editor, Employee, User)
+- All permissions grouped by module
+- Role-Permission assignments
+- Default admin user
+- Landing page sections
+
+### Step 4: Build Frontend Assets
+
+```bash
+npm run build
+```
+
+### Step 5: Serve the Application
+
+Via Laravel Herd:
+```
+https://blank-starter-kit.test
+```
+
+Or using artisan:
+```bash
+php artisan serve
+```
+
+## Default Credentials
+
+After running `php artisan migrate --seed`, you can log in with:
+
+| Role | Email | Password | Access Level |
+|------|-------|----------|--------------|
+| Super Admin | `admin@example.com` | `password` | Full system access |
+| Admin | `manager@example.com` | `password` | Organization management |
+| Manager | `editor@example.com` | `password` | Team & content management |
+| Editor | `employee@example.com` | `password` | Content creation |
+| Employee | `user@example.com` | `password` | Basic access |
+
+**⚠️ Important:** Change these passwords in production!
+
+## Project Structure
+
+```
+app/
+├── Http/
+│   ├── Controllers/
+│   │   ├── ActivityLogController.php
+│   │   ├── EmployeeController.php
+│   │   ├── HomeController.php          # Role-based dashboard routing
+│   │   ├── LandingPageSectionController.php
+│   │   ├── PermissionController.php
+│   │   ├── ProductController.php
+│   │   ├── ProfileController.php
+│   │   ├── RoleController.php
+│   │   └── UserController.php
+│   ├── Middleware/
+│   │   ├── HasPermission.php           # Permission authorization
+│   │   └── HasRole.php                 # Role authorization
+│   └── Requests/                       # Form request validation
+├── Models/
+│   ├── Employee.php
+│   ├── LandingPageSection.php          # Dynamic landing page
+│   ├── Permission.php
+│   ├── Product.php
+│   ├── Role.php
+│   └── User.php
+├── Services/
+│   ├── DataTableService.php            # DataTable utilities
+│   ├── PermissionService.php
+│   ├── RbacService.php                 # RBAC functionality
+│   └── RoleService.php
+└── Traits/
+    └── HasActivityLog.php              # Activity logging trait
+
+resources/
+├── views/
+│   ├── layouts/
+│   │   ├── app.blade.php               # Main dashboard layout
+│   │   └── guest.blade.php             # Auth layout (AdminLTE)
+│   ├── auth/                           # Authentication pages
+│   ├── dashboards/                     # Role-based dashboards
+│   │   ├── superadmin.blade.php
+│   │   ├── admin.blade.php
+│   │   ├── manager.blade.php
+│   │   ├── editor.blade.php
+│   │   ├── employee.blade.php
+│   │   └── user.blade.php
+│   ├── landing-page-sections/          # Landing page management
+│   └── welcome.blade.php               # Dynamic public landing page
+```
+
+## Role-Based Dashboard System
+
+The `HomeController` determines which dashboard view to show based on the user's highest priority role:
+
+```php
+// Role priority (highest to lowest)
+$roleDashboardMap = [
+    'Super Admin' => 'superadmin',
+    'Admin'       => 'admin',
+    'Manager'     => 'manager',
+    'Editor'      => 'editor',
+    'Employee'    => 'employee',
+    'User'        => 'user',
+];
+```
+
+### Dashboard Features by Role
+
+| Role | Dashboard | Key Features |
+|------|-----------|--------------|
+| Super Admin | Full system overview | All stats, tech stack, system control |
+| Admin | Organization management | Users, employees, products, landing page |
+| Manager | Team oversight | Employees, products, team stats |
+| Editor | Content creation | Employees, products management |
+| Employee | Basic access | Directory view, products |
+| User | Personal | Profile, basic information |
+
+## AdminLTE v4 Integration
+
+This starter kit uses AdminLTE v4 components throughout:
+
+### Components Used
+- **Info Boxes** - `info-box bg-info/success/warning/danger`
+- **Small Boxes** - `small-box bg-info/success/warning/danger`
+- **Cards** - `card card-primary card-outline`
+- **Profile Widget** - `box-profile` with `profile-username`
+- **Progress Bars** - With percentage indicators
+- **Input Groups** - With Font Awesome icons
+- **Charts** - Chart.js integration
+
+### Authentication Pages
+- Login, Register, Forgot Password, Reset Password pages styled with AdminLTE
+- Input groups with icons
+- Card-based layout with proper validation feedback
+
+## Development
+
+### Code Formatting
+Run Laravel Pint before committing:
+```bash
+vendor/bin/pint --dirty
+```
+
+### Testing
+Run all tests:
+```bash
+php artisan test --compact
+```
+
+Run specific test:
+```bash
+php artisan test --compact --filter=testName
+```
+
+### Clear View Cache
+After updating Blade templates:
+```bash
+php artisan view:clear
+```
+
+## Available Routes
+
+### Authentication
+| Route | Method | Description |
+|-------|--------|-------------|
+| `/login` | GET/POST | User login |
+| `/register` | GET/POST | User registration |
+| `/logout` | POST | User logout |
+| `/password/reset` | GET/POST | Password reset |
+
+### Main Routes
+| Route | Method | Description | Permission |
+|-------|--------|-------------|------------|
+| `/dashboard` | GET | Role-based dashboard | auth |
+| `/users` | GET/POST | User management | view any users |
+| `/users/{user}/roles` | GET/PUT | User role assignment | update users |
+| `/roles` | GET/POST | Role management | view any roles |
+| `/permissions` | GET/POST | Permission management | view any permissions |
+| `/employees` | GET/POST | Employee management | view any employees |
+| `/products` | GET/POST | Product management | view any products |
+| `/activity-log` | GET | Activity log viewer | view any activity log |
+| `/landing-page-sections` | GET/PUT | Landing page customization | manage landing page |
+
+### Public Routes
+| Route | Method | Description |
+|-------|--------|-------------|
+| `/` | GET | Dynamic public landing page |
+
+## Conventions
+
+### PHP Code Style
+- **Type Declarations**: All methods use explicit return type declarations
+- **Constructor Property Promotion**: Use PHP 8 syntax
+- **Casts**: Model casts in `casts()` method
+- **Scopes**: Use query scopes for reusable logic (e.g., `scopeByDepartment()`)
+
+### Naming Conventions
+- **Variables/Methods**: Descriptive names like `isRegisteredForDiscounts`
+- **Filter Parameters**: Use `filter_{field_name}` to avoid DataTables conflicts
+
+### Laravel Best Practices
+- **Form Requests**: Validation in separate Form Request classes
+- **Eloquent**: Use models over raw queries; prefer `Model::query()`
+- **Routes**: Use named routes with `route()` helper
+- **Configuration**: Use `config('key')` not `env()` directly
+- **Eager Loading**: Prevent N+1 queries
+
+## Security
+
+- ✅ CSRF protection enabled
+- ✅ Authorization via Spatie Permission
+- ✅ Input validation via Form Requests
+- ✅ SQL injection prevention via Eloquent ORM
+- ✅ XSS protection via Blade templating
+- ✅ Activity logging for audit trails
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+The MIT License (MIT). Please see [License File](LICENSE) for more information.
+
+## Credits
+
+- [Laravel](https://laravel.com) - The Web Framework
+- [AdminLTE](https://adminlte.io) - Admin Dashboard Template
+- [Spatie](https://spatie.be) - Permission & Activity Log packages
+- [DataTables](https://datatables.net) - Table enhancement plugin
+- [Chart.js](https://www.chartjs.org) - Charting library
+
+---
+
+Made with ❤️ using Laravel 12 & AdminLTE v4
