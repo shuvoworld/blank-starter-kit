@@ -26,7 +26,8 @@
       "mcp__laravel-boost__search-docs",
       "Bash(ls:*)",
       "mcp__laravel-boost__get-config",
-      "Bash(composer show:*)"
+      "Bash(composer show:*)",
+      "Bash(cd:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
