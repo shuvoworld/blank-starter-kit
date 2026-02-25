@@ -19,16 +19,13 @@ class HomeController extends Controller
 
         // Define role-to-dashboard mapping with priority order
         $roleDashboardMap = [
-            'Super Admin' => 'superadmin',
+            'Superuser' => 'superuser',
             'Admin' => 'admin',
-            'Manager' => 'manager',
-            'Editor' => 'editor',
             'Employee' => 'employee',
-            'User' => 'user',
         ];
 
         // Find the first matching role (higher priority roles first)
-        $dashboardView = 'dashboards.user'; // default fallback
+        $dashboardView = 'dashboards.employee'; // default fallback
         foreach ($roleDashboardMap as $role => $view) {
             if (in_array($role, $roles)) {
                 $dashboardView = "dashboards.{$view}";
@@ -64,23 +61,18 @@ class HomeController extends Controller
             $stats['recentEmployees'] = \App\Models\Employee::latest()->limit(10)->get();
         }
 
-        if ($user->can('view any products')) {
-            $stats['products'] = \App\Models\Product::count();
-            $stats['inStockProducts'] = \App\Models\Product::where('stock', '>', 0)->count();
-            $stats['recentProducts'] = \App\Models\Product::latest()->limit(5)->get();
-        }
+        // TODO: Add schedules when Schedule model is created
+        // if ($user->can('view any schedules')) {
+        //     $stats['schedules'] = \App\Models\Schedule::count();
+        // }
+
+        // TODO: Add shifts when Shift model is created
+        // if ($user->can('view any shifts')) {
+        //     $stats['shifts'] = \App\Models\Shift::count();
+        // }
 
         if ($user->can('view any roles')) {
             $stats['roles'] = \App\Models\Role::count();
-        }
-
-        if ($user->can('view any permissions')) {
-            $stats['permissions'] = \App\Models\Permission::count();
-        }
-
-        // Landing page stats for those with permission
-        if ($user->can('manage landing page')) {
-            $stats['landingSections'] = \App\Models\LandingPageSection::count();
         }
 
         return $stats;

@@ -28,7 +28,13 @@
                         </div>
                     @endif
                     <h3 class="card-title">{{ $employee->name }}</h3>
-                    <p class="text-muted">{{ $employee->position }}</p>
+                    <p class="text-muted">
+                        @if($employee->designation)
+                            {{ $employee->designation->name }}
+                        @else
+                            {{ $employee->position ?? '—' }}
+                        @endif
+                    </p>
                     @if($employee->status === 'active')
                         <span class="badge bg-success">Active</span>
                     @else
@@ -78,11 +84,23 @@
                             <table class="table table-bordered">
                                 <tr>
                                     <th width="140">Department</th>
-                                    <td>{{ $employee->department }}</td>
+                                    <td>
+                                        @if($employee->departmentRelation)
+                                            {{ $employee->departmentRelation->name }}
+                                        @else
+                                            {{ $employee->department ?? '—' }}
+                                        @endif
+                                    </td>
                                 </tr>
                                 <tr>
-                                    <th>Position</th>
-                                    <td>{{ $employee->position }}</td>
+                                    <th>Designation</th>
+                                    <td>
+                                        @if($employee->designation)
+                                            {{ $employee->designation->name }}
+                                        @else
+                                            {{ $employee->position ?? '—' }}
+                                        @endif
+                                    </td>
                                 </tr>
                                 <tr>
                                     <th>Salary</th>

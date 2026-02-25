@@ -1,92 +1,39 @@
 @extends('layouts.app')
 
 @section('header')
-<h1 class="m-0">Employees</h1>
+<h1 class="m-0">Departments</h1>
 @endsection
 
 @section('breadcrumb')
 <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
-        <li class="breadcrumb-item active" aria-current="page">Employees</li>
+        <li class="breadcrumb-item active" aria-current="page">Departments</li>
 @endsection
 
 @section('content')
-<!-- Filters -->
-<div class="row mb-3">
-    <div class="col-md-12">
-        <div class="card">
-            <div class="card-body py-2">
-                <form id="filterForm" class="row g-2 align-items-end">
-                    <div class="col-md-3">
-                        <label class="form-label small mb-1">Department</label>
-                        <select name="filter_department_id" class="form-select form-select-sm">
-                            <option value="">All Departments</option>
-                            @foreach($departments as $department)
-                                <option value="{{ $department->id }}">{{ $department->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label small mb-1">Designation</label>
-                        <select name="filter_designation_id" class="form-select form-select-sm">
-                            <option value="">All Designations</option>
-                            @foreach($designations as $designation)
-                                <option value="{{ $designation->id }}">{{ $designation->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label small mb-1">Status</label>
-                        <select name="filter_status" class="form-select form-select-sm">
-                            <option value="">All Status</option>
-                            <option value="active">Active</option>
-                            <option value="inactive">Inactive</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label small mb-1">Hire Date From</label>
-                        <input type="date" name="filter_hire_date_from" class="form-control form-control-sm">
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label small mb-1">Hire Date To</label>
-                        <input type="date" name="filter_hire_date_to" class="form-control form-control-sm">
-                    </div>
-                    <div class="col-md-12 text-end">
-                        <button type="button" id="clearFilters" class="btn btn-sm btn-outline-secondary">
-                            <i class="bi bi-x-lg me-1"></i> Clear Filters
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
 <div class="card">
         <div class="card-header">
             <div class="d-flex justify-content-between align-items-center">
                 <h3 class="card-title">
-                    <i class="bi bi-person-badge me-2"></i>
-                    All Employees
+                    <i class="bi bi-building me-2"></i>
+                    All Departments
                 </h3>
-                @can('create employees')
-                    <a href="{{ route('employees.create') }}" class="btn btn-primary">
-                        <i class="bi bi-plus-lg me-1"></i> Add Employee
+                @can('create departments')
+                    <a href="{{ route('departments.create') }}" class="btn btn-primary">
+                        <i class="bi bi-plus-lg me-1"></i> Add Department
                     </a>
                 @endcan
             </div>
         </div>
         <div class="card-body">
             <div class="table-responsive">
-                <table id="employees-table" class="table table-bordered table-hover table-striped w-100">
+                <table id="departments-table" class="table table-bordered table-hover table-striped w-100">
                     <thead>
                         <tr>
                             <th width="50">#</th>
-                            <th width="60">Photo</th>
                             <th>Name</th>
-                            <th>Email</th>
-                            <th>Department</th>
-                            <th>Designation</th>
+                            <th>Description</th>
                             <th>Status</th>
+                            <th width="120">Sort Order</th>
                             <th width="180">Actions</th>
                         </tr>
                     </thead>
@@ -124,44 +71,35 @@
 
     @push('scripts')
     <script>
-        function initEmployeesDataTable() {
+        function initDepartmentsDataTable() {
             if (typeof $ !== 'undefined' && typeof bootstrap !== 'undefined') {
                 $(document).ready(function() {
-                    var table = $('#employees-table').DataTable({
+                    var table = $('#departments-table').DataTable({
                         processing: true,
                         serverSide: true,
                         responsive: true,
                         ajax: {
-                            url: '{{ route('employees.index') }}',
-                            type: 'GET',
-                            data: function(d) {
-                                d.filter_department_id = $('select[name="filter_department_id"]').val();
-                                d.filter_designation_id = $('select[name="filter_designation_id"]').val();
-                                d.filter_status = $('select[name="filter_status"]').val();
-                                d.filter_hire_date_from = $('input[name="filter_hire_date_from"]').val();
-                                d.filter_hire_date_to = $('input[name="filter_hire_date_to"]').val();
-                            }
+                            url: '{{ route('departments.index') }}',
+                            type: 'GET'
                         },
                         columns: [
                             {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false, className: 'text-center'},
-                            {data: 'profile_picture', name: 'profile_picture', orderable: false, searchable: false, className: 'text-center'},
                             {data: 'name', name: 'name'},
-                            {data: 'email', name: 'email'},
-                            {data: 'department_name', name: 'department_name'},
-                            {data: 'designation_name', name: 'designation_name'},
-                            {data: 'status_badge', name: 'status', orderable: false, searchable: false, className: 'text-center'},
+                            {data: 'description', name: 'description'},
+                            {data: 'status_badge', name: 'is_active', orderable: false, searchable: false, className: 'text-center'},
+                            {data: 'sort_order', name: 'sort_order', className: 'text-center'},
                             {data: 'action', name: 'action', orderable: false, searchable: false, className: 'text-center'}
                         ],
-                        order: [[1, 'asc']],
+                        order: [[4, 'asc']],
                         pageLength: 10,
                         lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
                         language: {
                             processing: '<div class="d-flex justify-content-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>',
                             search: '_INPUT_',
-                            searchPlaceholder: 'Search employees...',
+                            searchPlaceholder: 'Search departments...',
                             lengthMenu: 'Show _MENU_',
-                            info: 'Showing _START_ to _END_ of _TOTAL_ employees',
-                            infoEmpty: 'No employees found',
+                            info: 'Showing _START_ to _END_ of _TOTAL_ departments',
+                            infoEmpty: 'No departments found',
                             infoFiltered: '(filtered from _MAX_ total)',
                             paginate: {
                                 first: '<i class="bi bi-chevron-double-left"></i>',
@@ -169,20 +107,9 @@
                                 next: '<i class="bi bi-chevron-right"></i>',
                                 last: '<i class="bi bi-chevron-double-right"></i>'
                             },
-                            emptyTable: '<div class="text-center py-4"><i class="bi bi-person-badge fs-1 text-muted"></i><p class="text-muted mt-2">No employees found</p></div>'
+                            emptyTable: '<div class="text-center py-4"><i class="bi bi-building fs-1 text-muted"></i><p class="text-muted mt-2">No departments found</p></div>'
                         },
                         dom: "<'pk-dt-top'lf><'pk-dt-table'rt><'pk-dt-foot'ip>",
-                    });
-
-                    // Reload table on filter change
-                    $('#filterForm select, #filterForm input').on('change', function() {
-                        table.ajax.reload();
-                    });
-
-                    // Clear filters
-                    $('#clearFilters').on('click', function() {
-                        $('#filterForm')[0].reset();
-                        table.ajax.reload();
                     });
 
                     var deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
@@ -207,7 +134,7 @@
                             success: function() {
                                 deleteModal.hide();
                                 table.ajax.reload(null, false);
-                                showToast('success', 'Employee deleted successfully.');
+                                showToast('success', 'Department deleted successfully.');
                             },
                             error: function(xhr) {
                                 deleteModal.hide();
@@ -242,11 +169,11 @@
                     }
                 });
             } else {
-                setTimeout(initEmployeesDataTable, 100);
+                setTimeout(initDepartmentsDataTable, 100);
             }
         }
 
-        initEmployeesDataTable();
+        initDepartmentsDataTable();
     </script>
     @endpush
 @endsection

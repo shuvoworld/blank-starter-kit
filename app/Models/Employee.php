@@ -6,6 +6,7 @@ use App\Traits\HasActivityLog;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
@@ -19,7 +20,9 @@ class Employee extends Model implements HasMedia
         'email',
         'phone',
         'department',
+        'department_id',
         'position',
+        'designation_id',
         'salary',
         'hire_date',
         'status',
@@ -31,6 +34,22 @@ class Employee extends Model implements HasMedia
             'hire_date' => 'date',
             'salary' => 'decimal:2',
         ];
+    }
+
+    /**
+     * Get the department that owns the employee.
+     */
+    public function departmentRelation(): BelongsTo
+    {
+        return $this->belongsTo(Department::class, 'department_id');
+    }
+
+    /**
+     * Get the designation that owns the employee.
+     */
+    public function designation(): BelongsTo
+    {
+        return $this->belongsTo(Designation::class, 'designation_id');
     }
 
     public function scopeActive(Builder $query): Builder
@@ -51,6 +70,18 @@ class Employee extends Model implements HasMedia
     }
 
     /**
+     * Scope a query to filter by department ID.
+     */
+    public function scopeByDepartmentId(Builder $query, ?int $departmentId): Builder
+    {
+        if (empty($departmentId)) {
+            return $query;
+        }
+
+        return $query->where('department_id', $departmentId);
+    }
+
+    /**
      * Scope a query to filter by position.
      */
     public function scopeByPosition(Builder $query, ?string $position): Builder
@@ -60,6 +91,18 @@ class Employee extends Model implements HasMedia
         }
 
         return $query->where('position', $position);
+    }
+
+    /**
+     * Scope a query to filter by designation ID.
+     */
+    public function scopeByDesignationId(Builder $query, ?int $designationId): Builder
+    {
+        if (empty($designationId)) {
+            return $query;
+        }
+
+        return $query->where('designation_id', $designationId);
     }
 
     /**

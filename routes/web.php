@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\ActivityLogController;
+use App\Http\Controllers\DepartmentController;
+use App\Http\Controllers\DesignationController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LandingPageSectionController;
@@ -69,6 +71,28 @@ Route::middleware('auth')->group(function () {
         Route::get('/{employee}/edit', [EmployeeController::class, 'edit'])->name('edit')->middleware('permission:update employees');
         Route::put('/{employee}', [EmployeeController::class, 'update'])->name('update')->middleware('permission:update employees');
         Route::delete('/{employee}', [EmployeeController::class, 'destroy'])->name('destroy')->middleware('permission:delete employees');
+    });
+
+    // Department Routes
+    Route::prefix('departments')->name('departments.')->middleware('permission:view any departments')->group(function () {
+        Route::get('/', [DepartmentController::class, 'index'])->name('index');
+        Route::get('/create', [DepartmentController::class, 'create'])->name('create')->middleware('permission:create departments');
+        Route::post('/', [DepartmentController::class, 'store'])->name('store')->middleware('permission:create departments');
+        Route::get('/{department}', [DepartmentController::class, 'show'])->name('show');
+        Route::get('/{department}/edit', [DepartmentController::class, 'edit'])->name('edit')->middleware('permission:update departments');
+        Route::put('/{department}', [DepartmentController::class, 'update'])->name('update')->middleware('permission:update departments');
+        Route::delete('/{department}', [DepartmentController::class, 'destroy'])->name('destroy')->middleware('permission:delete departments');
+    });
+
+    // Designation Routes
+    Route::prefix('designations')->name('designations.')->middleware('permission:view any designations')->group(function () {
+        Route::get('/', [DesignationController::class, 'index'])->name('index');
+        Route::get('/create', [DesignationController::class, 'create'])->name('create')->middleware('permission:create designations');
+        Route::post('/', [DesignationController::class, 'store'])->name('store')->middleware('permission:create designations');
+        Route::get('/{designation}', [DesignationController::class, 'show'])->name('show');
+        Route::get('/{designation}/edit', [DesignationController::class, 'edit'])->name('edit')->middleware('permission:update designations');
+        Route::put('/{designation}', [DesignationController::class, 'update'])->name('update')->middleware('permission:update designations');
+        Route::delete('/{designation}', [DesignationController::class, 'destroy'])->name('destroy')->middleware('permission:delete designations');
     });
 
     // Activity Log Routes

@@ -22,8 +22,8 @@ class UpdateEmployeeRequest extends FormRequest
             'name' => ['sometimes', 'required', 'string', 'max:255'],
             'email' => ['sometimes', 'required', 'string', 'email', 'max:255', "unique:employees,email,{$employeeId}"],
             'phone' => ['sometimes', 'nullable', 'string', 'max:50'],
-            'department' => ['sometimes', 'required', 'string', 'max:255'],
-            'position' => ['sometimes', 'required', 'string', 'max:255'],
+            'department_id' => ['nullable', 'exists:departments,id'],
+            'designation_id' => ['nullable', 'exists:designations,id'],
             'salary' => ['sometimes', 'required', 'numeric', 'min:0'],
             'hire_date' => ['sometimes', 'required', 'date'],
             'status' => ['sometimes', 'required', 'string', 'in:active,inactive'],
@@ -43,6 +43,8 @@ class UpdateEmployeeRequest extends FormRequest
     {
         return [
             'email.unique' => 'This email address is already in use by another employee.',
+            'department_id.exists' => 'The selected department is invalid.',
+            'designation_id.exists' => 'The selected designation is invalid.',
             'status.in' => 'Status must be active or inactive.',
         ];
     }

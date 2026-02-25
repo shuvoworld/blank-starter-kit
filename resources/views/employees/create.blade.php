@@ -79,29 +79,45 @@
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="department" class="form-label">Department <span class="text-danger">*</span></label>
-                                <select class="form-select @error('department') is-invalid @enderror"
-                                        id="department" name="department" required>
+                                <label for="department_id" class="form-label">Department</label>
+                                <select class="form-select @error('department_id') is-invalid @enderror"
+                                        id="department_id" name="department_id">
                                     <option value="">Select department...</option>
-                                    @foreach(['Engineering', 'Marketing', 'Sales', 'HR', 'Finance', 'IT', 'Operations'] as $dept)
-                                        <option value="{{ $dept }}" {{ old('department') === $dept ? 'selected' : '' }}>
-                                            {{ $dept }}
+                                    @foreach($departments as $dept)
+                                        <option value="{{ $dept->id }}" {{ old('department_id') == $dept->id ? 'selected' : '' }}>
+                                            {{ $dept->name }}
                                         </option>
                                     @endforeach
                                 </select>
-                                @error('department')
+                                @error('department_id')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
+                                <div class="form-text">
+                                    <a href="{{ route('departments.index') }}" target="_blank" class="text-info">
+                                        <i class="bi bi-plus-circle"></i> Add New Department
+                                    </a>
+                                </div>
                             </div>
 
                             <div class="col-md-6 mb-3">
-                                <label for="position" class="form-label">Position <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control @error('position') is-invalid @enderror"
-                                       id="position" name="position" value="{{ old('position') }}"
-                                       placeholder="e.g. Senior Developer" required>
-                                @error('position')
+                                <label for="designation_id" class="form-label">Designation</label>
+                                <select class="form-select @error('designation_id') is-invalid @enderror"
+                                        id="designation_id" name="designation_id">
+                                    <option value="">Select designation...</option>
+                                    @foreach($designations as $designation)
+                                        <option value="{{ $designation->id }}" {{ old('designation_id') == $designation->id ? 'selected' : '' }}>
+                                            {{ $designation->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('designation_id')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
+                                <div class="form-text">
+                                    <a href="{{ route('designations.index') }}" target="_blank" class="text-info">
+                                        <i class="bi bi-plus-circle"></i> Add New Designation
+                                    </a>
+                                </div>
                             </div>
                         </div>
 

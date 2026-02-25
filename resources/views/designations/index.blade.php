@@ -1,12 +1,12 @@
 @extends('layouts.app')
 
 @section('header')
-<h1 class="m-0">Employees</h1>
+<h1 class="m-0">Designations</h1>
 @endsection
 
 @section('breadcrumb')
 <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
-        <li class="breadcrumb-item active" aria-current="page">Employees</li>
+        <li class="breadcrumb-item active" aria-current="page">Designations</li>
 @endsection
 
 @section('content')
@@ -17,24 +17,6 @@
             <div class="card-body py-2">
                 <form id="filterForm" class="row g-2 align-items-end">
                     <div class="col-md-3">
-                        <label class="form-label small mb-1">Department</label>
-                        <select name="filter_department_id" class="form-select form-select-sm">
-                            <option value="">All Departments</option>
-                            @foreach($departments as $department)
-                                <option value="{{ $department->id }}">{{ $department->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label small mb-1">Designation</label>
-                        <select name="filter_designation_id" class="form-select form-select-sm">
-                            <option value="">All Designations</option>
-                            @foreach($designations as $designation)
-                                <option value="{{ $designation->id }}">{{ $designation->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-2">
                         <label class="form-label small mb-1">Status</label>
                         <select name="filter_status" class="form-select form-select-sm">
                             <option value="">All Status</option>
@@ -42,15 +24,7 @@
                             <option value="inactive">Inactive</option>
                         </select>
                     </div>
-                    <div class="col-md-2">
-                        <label class="form-label small mb-1">Hire Date From</label>
-                        <input type="date" name="filter_hire_date_from" class="form-control form-control-sm">
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label small mb-1">Hire Date To</label>
-                        <input type="date" name="filter_hire_date_to" class="form-control form-control-sm">
-                    </div>
-                    <div class="col-md-12 text-end">
+                    <div class="col-md-9 text-end">
                         <button type="button" id="clearFilters" class="btn btn-sm btn-outline-secondary">
                             <i class="bi bi-x-lg me-1"></i> Clear Filters
                         </button>
@@ -66,27 +40,25 @@
             <div class="d-flex justify-content-between align-items-center">
                 <h3 class="card-title">
                     <i class="bi bi-person-badge me-2"></i>
-                    All Employees
+                    All Designations
                 </h3>
-                @can('create employees')
-                    <a href="{{ route('employees.create') }}" class="btn btn-primary">
-                        <i class="bi bi-plus-lg me-1"></i> Add Employee
+                @can('create designations')
+                    <a href="{{ route('designations.create') }}" class="btn btn-primary">
+                        <i class="bi bi-plus-lg me-1"></i> Add Designation
                     </a>
                 @endcan
             </div>
         </div>
         <div class="card-body">
             <div class="table-responsive">
-                <table id="employees-table" class="table table-bordered table-hover table-striped w-100">
+                <table id="designations-table" class="table table-bordered table-hover table-striped w-100">
                     <thead>
                         <tr>
                             <th width="50">#</th>
-                            <th width="60">Photo</th>
                             <th>Name</th>
-                            <th>Email</th>
-                            <th>Department</th>
-                            <th>Designation</th>
+                            <th>Description</th>
                             <th>Status</th>
+                            <th width="100">Sort Order</th>
                             <th width="180">Actions</th>
                         </tr>
                     </thead>
@@ -124,32 +96,26 @@
 
     @push('scripts')
     <script>
-        function initEmployeesDataTable() {
+        function initDesignationsDataTable() {
             if (typeof $ !== 'undefined' && typeof bootstrap !== 'undefined') {
                 $(document).ready(function() {
-                    var table = $('#employees-table').DataTable({
+                    var table = $('#designations-table').DataTable({
                         processing: true,
                         serverSide: true,
                         responsive: true,
                         ajax: {
-                            url: '{{ route('employees.index') }}',
+                            url: '{{ route('designations.index') }}',
                             type: 'GET',
                             data: function(d) {
-                                d.filter_department_id = $('select[name="filter_department_id"]').val();
-                                d.filter_designation_id = $('select[name="filter_designation_id"]').val();
                                 d.filter_status = $('select[name="filter_status"]').val();
-                                d.filter_hire_date_from = $('input[name="filter_hire_date_from"]').val();
-                                d.filter_hire_date_to = $('input[name="filter_hire_date_to"]').val();
                             }
                         },
                         columns: [
                             {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false, className: 'text-center'},
-                            {data: 'profile_picture', name: 'profile_picture', orderable: false, searchable: false, className: 'text-center'},
                             {data: 'name', name: 'name'},
-                            {data: 'email', name: 'email'},
-                            {data: 'department_name', name: 'department_name'},
-                            {data: 'designation_name', name: 'designation_name'},
-                            {data: 'status_badge', name: 'status', orderable: false, searchable: false, className: 'text-center'},
+                            {data: 'description', name: 'description'},
+                            {data: 'status_badge', name: 'is_active', orderable: false, searchable: false, className: 'text-center'},
+                            {data: 'sort_order', name: 'sort_order', className: 'text-center'},
                             {data: 'action', name: 'action', orderable: false, searchable: false, className: 'text-center'}
                         ],
                         order: [[1, 'asc']],
@@ -158,10 +124,10 @@
                         language: {
                             processing: '<div class="d-flex justify-content-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>',
                             search: '_INPUT_',
-                            searchPlaceholder: 'Search employees...',
+                            searchPlaceholder: 'Search designations...',
                             lengthMenu: 'Show _MENU_',
-                            info: 'Showing _START_ to _END_ of _TOTAL_ employees',
-                            infoEmpty: 'No employees found',
+                            info: 'Showing _START_ to _END_ of _TOTAL_ designations',
+                            infoEmpty: 'No designations found',
                             infoFiltered: '(filtered from _MAX_ total)',
                             paginate: {
                                 first: '<i class="bi bi-chevron-double-left"></i>',
@@ -169,7 +135,7 @@
                                 next: '<i class="bi bi-chevron-right"></i>',
                                 last: '<i class="bi bi-chevron-double-right"></i>'
                             },
-                            emptyTable: '<div class="text-center py-4"><i class="bi bi-person-badge fs-1 text-muted"></i><p class="text-muted mt-2">No employees found</p></div>'
+                            emptyTable: '<div class="text-center py-4"><i class="bi bi-person-badge fs-1 text-muted"></i><p class="text-muted mt-2">No designations found</p></div>'
                         },
                         dom: "<'pk-dt-top'lf><'pk-dt-table'rt><'pk-dt-foot'ip>",
                     });
@@ -207,7 +173,7 @@
                             success: function() {
                                 deleteModal.hide();
                                 table.ajax.reload(null, false);
-                                showToast('success', 'Employee deleted successfully.');
+                                showToast('success', 'Designation deleted successfully.');
                             },
                             error: function(xhr) {
                                 deleteModal.hide();
@@ -242,11 +208,11 @@
                     }
                 });
             } else {
-                setTimeout(initEmployeesDataTable, 100);
+                setTimeout(initDesignationsDataTable, 100);
             }
         }
 
-        initEmployeesDataTable();
+        initDesignationsDataTable();
     </script>
     @endpush
 @endsection

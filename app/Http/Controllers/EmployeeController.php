@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreEmployeeRequest;
 use App\Http\Requests\UpdateEmployeeRequest;
+use App\Models\Department;
+use App\Models\Designation;
 use App\Models\Employee;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -16,10 +18,10 @@ class EmployeeController extends Controller
     public function index(Request $request): View|JsonResponse
     {
         if ($request->ajax()) {
-            $query = Employee::query();
+            $query = Employee::query()->with('departmentRelation', 'designation');
 
-            $query->byDepartment($request->input('filter_department'));
-            $query->byPosition($request->input('filter_position'));
+            $query->byDepartmentId($request->input('filter_department_id'));
+            $query->byDesignationId($request->input('filter_designation_id'));
             $query->byStatus($request->input('filter_status'));
             $query->byHireDateRange(
                 $request->input('filter_hire_date_from'),
@@ -34,6 +36,12 @@ class EmployeeController extends Controller
                         return '<img src="'.$url.'" alt="'.e($employee->name).'" class="rounded-circle" width="40" height="40" style="object-fit: cover;">';
                     }
                     return '<div class="bg-secondary rounded-circle d-inline-flex align-items-center justify-content-center text-white" style="width: 40px; height: 40px; font-size: 1.2rem;"><i class="bi bi-person-fill"></i></div>';
+                })
+                ->addColumn('department_name', function (Employee $employee) {
+                    return $employee->departmentRelation?->name ?? $employee->department ?? '—';
+                })
+                ->addColumn('designation_name', function (Employee $employee) {
+                    return $employee->designation?->name ?? $employee->position ?? '—';
                 })
                 ->addColumn('status_badge', function (Employee $employee) {
                     $class = $employee->status === 'active' ? 'bg-success' : 'bg-secondary';
@@ -65,28 +73,32 @@ class EmployeeController extends Controller
                 ->make(true);
         }
 
-        $departments = Employee::query()
-            ->select('department')
-            ->distinct()
-            ->whereNotNull('department')
-            ->pluck('department')
-            ->sort()
-            ->values();
+        $departments = Department::active()
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get(['id', 'name']);
 
-        $positions = Employee::query()
-            ->select('position')
-            ->distinct()
-            ->whereNotNull('position')
-            ->pluck('position')
-            ->sort()
-            ->values();
+        $designations = Designation::active()
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get(['id', 'name']);
 
-        return view('employees.index', compact('departments', 'positions'));
+        return view('employees.index', compact('departments', 'designations'));
     }
 
     public function create(): View
     {
-        return view('employees.create');
+        $departments = Department::active()
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        $designations = Designation::active()
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        return view('employees.create', compact('departments', 'designations'));
     }
 
     public function store(StoreEmployeeRequest $request): RedirectResponse
@@ -131,7 +143,17 @@ class EmployeeController extends Controller
 
     public function edit(Employee $employee): View
     {
-        return view('employees.edit', compact('employee'));
+        $departments = Department::active()
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        $designations = Designation::active()
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        return view('employees.edit', compact('employee', 'departments', 'designations'));
     }
 
     public function update(UpdateEmployeeRequest $request, Employee $employee): RedirectResponse

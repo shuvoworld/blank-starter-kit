@@ -28,84 +28,135 @@
                     </a>
                 </li>
 
-                <!-- Users Management -->
-                @can('view any users')
+                @php
+                    $userRole = auth()->user()->roles->pluck('name')->first();
+                    $rolePriority = ['Superuser' => 3, 'Admin' => 2, 'Employee' => 1];
+                    $priority = $rolePriority[$userRole] ?? 0;
+                @endphp
+
+                @if($priority >= 3) {{-- Superuser Menu --}}
+                    <li class="nav-header">MANAGEMENT</li>
+
                     <li class="nav-item">
                         <a href="{{ route('users.index') }}" class="nav-link {{ request()->routeIs('users.*') ? 'active' : '' }}">
                             <i class="nav-icon bi bi-people"></i>
                             <p>Users</p>
                         </a>
                     </li>
-                @endcan
 
-                <!-- RBAC Management -->
-                @can('view any roles')
-                    <li class="nav-header">RBAC</li>
-                @endcan
+                    <li class="nav-header">ORGANIZATION</li>
 
-                @can('view any roles')
+                    <li class="nav-item">
+                        <a href="{{ route('departments.index') }}" class="nav-link {{ request()->routeIs('departments.*') ? 'active' : '' }}">
+                            <i class="nav-icon bi bi-building"></i>
+                            <p>Departments</p>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="{{ route('designations.index') }}" class="nav-link {{ request()->routeIs('designations.*') ? 'active' : '' }}">
+                            <i class="nav-icon bi bi-person-badge"></i>
+                            <p>Designations</p>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="{{ route('employees.index') }}" class="nav-link {{ request()->routeIs('employees.*') ? 'active' : '' }}">
+                            <i class="nav-icon bi bi-person-work"></i>
+                            <p>Employees</p>
+                        </a>
+                    </li>
+
+                    <li class="nav-header">SYSTEM</li>
+
                     <li class="nav-item">
                         <a href="{{ route('roles.index') }}" class="nav-link {{ request()->routeIs('roles.*') ? 'active' : '' }}">
                             <i class="nav-icon bi bi-shield"></i>
                             <p>Roles</p>
                         </a>
                     </li>
-                @endcan
 
-                @can('view any permissions')
                     <li class="nav-item">
                         <a href="{{ route('permissions.index') }}" class="nav-link {{ request()->routeIs('permissions.*') ? 'active' : '' }}">
                             <i class="nav-icon bi bi-key"></i>
                             <p>Permissions</p>
                         </a>
                     </li>
-                @endcan
 
-                <!-- Activity Log -->
-                @can('view any activity log')
-                    <li class="nav-header">SYSTEM</li>
-                @endcan
-
-                @can('view any activity log')
                     <li class="nav-item">
                         <a href="{{ route('activity-log.index') }}" class="nav-link {{ request()->routeIs('activity-log.*') ? 'active' : '' }}">
                             <i class="nav-icon bi bi-activity"></i>
                             <p>Activity Log</p>
                         </a>
                     </li>
-                @endcan
 
-                @can('manage landing page')
+                @elseif($priority >= 2) {{-- Admin Menu --}}
+                    <li class="nav-header">ORGANIZATION</li>
+
                     <li class="nav-item">
-                        <a href="{{ route('landing-page-sections.index') }}" class="nav-link {{ request()->routeIs('landing-page-sections.*') ? 'active' : '' }}">
-                            <i class="nav-icon bi bi-palette"></i>
-                            <p>Landing Page</p>
+                        <a href="{{ route('departments.index') }}" class="nav-link {{ request()->routeIs('departments.*') ? 'active' : '' }}">
+                            <i class="nav-icon bi bi-building"></i>
+                            <p>Departments</p>
                         </a>
                     </li>
-                @endcan
 
-                <!-- Modules -->
-                @canany(['view any employees', 'view any products'])
-                    <li class="nav-header">MODULES</li>
-                @endcanany
+                    <li class="nav-item">
+                        <a href="{{ route('designations.index') }}" class="nav-link {{ request()->routeIs('designations.*') ? 'active' : '' }}">
+                            <i class="nav-icon bi bi-person-badge"></i>
+                            <p>Designations</p>
+                        </a>
+                    </li>
 
-                @can('view any employees')
                     <li class="nav-item">
                         <a href="{{ route('employees.index') }}" class="nav-link {{ request()->routeIs('employees.*') ? 'active' : '' }}">
-                            <i class="nav-icon bi bi-person-badge"></i>
+                            <i class="nav-icon bi bi-person-work"></i>
                             <p>Employees</p>
                         </a>
                     </li>
-                @endcan
 
-                @can('view any products')
+                    <li class="nav-header">SYSTEM</li>
+
                     <li class="nav-item">
-                        <a href="{{ route('products.index') }}" class="nav-link {{ request()->routeIs('products.*') ? 'active' : '' }}">
-                            <i class="nav-icon bi bi-box-seam"></i>
-                            <p>Products</p>
+                        <a href="{{ route('activity-log.index') }}" class="nav-link {{ request()->routeIs('activity-log.*') ? 'active' : '' }}">
+                            <i class="nav-icon bi bi-activity"></i>
+                            <p>Activity Log</p>
                         </a>
                     </li>
-                @endcan
+
+                @else {{-- Employee Menu --}}
+                    <li class="nav-header">MY ACCOUNT</li>
+
+                    <li class="nav-item">
+                        <a href="{{ route('profile.edit') }}" class="nav-link {{ request()->routeIs('profile.edit') ? 'active' : '' }}">
+                            <i class="nav-icon bi bi-person"></i>
+                            <p>My Profile</p>
+                        </a>
+                    </li>
+
+                    <li class="nav-header">TEAM</li>
+
+                    <li class="nav-item">
+                        <a href="{{ route('departments.index') }}" class="nav-link {{ request()->routeIs('departments.*') ? 'active' : '' }}">
+                            <i class="nav-icon bi bi-building"></i>
+                            <p>Departments</p>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="{{ route('designations.index') }}" class="nav-link {{ request()->routeIs('designations.*') ? 'active' : '' }}">
+                            <i class="nav-icon bi bi-person-badge"></i>
+                            <p>Designations</p>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="{{ route('employees.index') }}" class="nav-link {{ request()->routeIs('employees.*') ? 'active' : '' }}">
+                            <i class="nav-icon bi bi-people"></i>
+                            <p>Team Directory</p>
+                        </a>
+                    </li>
+
+                @endif
             </ul>
         </nav>
     </div>
