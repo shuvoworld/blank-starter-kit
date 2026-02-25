@@ -1,17 +1,17 @@
 @extends('layouts.app')
 
 @section('header')
-<h1 class="m-0">Add Employee</h1>
+    <h1 class="m-0">Add Employee</h1>
 @endsection
 
 @section('breadcrumb')
-<li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
-        <li class="breadcrumb-item"><a href="{{ route('employees.index') }}">Employees</a></li>
-        <li class="breadcrumb-item active" aria-current="page">Create</li>
+    <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
+    <li class="breadcrumb-item"><a href="{{ route('employees.index') }}">Employees</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Create</li>
 @endsection
 
 @section('content')
-<div class="row">
+    <div class="row">
         <div class="col-lg-8">
             <div class="card card-primary card-outline">
                 <div class="card-header">
@@ -24,13 +24,14 @@
                     @csrf
                     <div class="card-body">
                         <div class="row">
+                            @include('form.text', ['var' => ['name'=> 'name','label'=> 'Name','placeholder' => 'Enter Name','div'=> 'col-md-6 col-sm-6']])
                             <div class="col-md-6 mb-3">
                                 <label for="name" class="form-label">Name <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control @error('name') is-invalid @enderror"
                                        id="name" name="name" value="{{ old('name') }}"
                                        placeholder="Full name" required autofocus>
                                 @error('name')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                                <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
 
@@ -40,7 +41,7 @@
                                        id="email" name="email" value="{{ old('email') }}"
                                        placeholder="email@example.com" required>
                                 @error('email')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                                <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
                         </div>
@@ -52,7 +53,7 @@
                                        id="phone" name="phone" value="{{ old('phone') }}"
                                        placeholder="+1 (555) 000-0000">
                                 @error('phone')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                                <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
 
@@ -61,7 +62,7 @@
                                 <input type="date" class="form-control @error('hire_date') is-invalid @enderror"
                                        id="hire_date" name="hire_date" value="{{ old('hire_date') }}" required>
                                 @error('hire_date')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                                <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
                         </div>
@@ -79,7 +80,7 @@
                                     @endforeach
                                 </select>
                                 @error('department')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                                <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
 
@@ -89,7 +90,7 @@
                                        id="position" name="position" value="{{ old('position') }}"
                                        placeholder="e.g. Senior Developer" required>
                                 @error('position')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                                <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
                         </div>
@@ -103,7 +104,7 @@
                                            id="salary" name="salary" value="{{ old('salary') }}"
                                            placeholder="0.00" min="0" step="0.01" required>
                                     @error('salary')
-                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
                             </div>
@@ -116,7 +117,7 @@
                                     <option value="inactive" {{ old('status') === 'inactive' ? 'selected' : '' }}>Inactive</option>
                                 </select>
                                 @error('status')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                                <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
                         </div>
