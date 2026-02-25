@@ -58,4 +58,29 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    public function leaveRequests()
+    {
+        return $this->hasMany(LeaveRequest::class);
+    }
+
+    public function leaveBalances()
+    {
+        return $this->hasMany(LeaveBalance::class);
+    }
+
+    public function approvedLeaveRequests()
+    {
+        return $this->leaveRequests()->approved();
+    }
+
+    public function pendingLeaveRequests()
+    {
+        return $this->leaveRequests()->pending();
+    }
+
+    public function employee()
+    {
+        return $this->hasOne(\App\Models\Employee::class);
+    }
 }

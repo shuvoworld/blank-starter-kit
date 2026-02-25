@@ -54,6 +54,29 @@
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="user_id" class="form-label">Associate User</label>
+                                @if(Auth::user()->hasRole(['Superuser', 'Admin']))
+                                    <select class="form-select @error('user_id') is-invalid @enderror"
+                                            id="user_id" name="user_id">
+                                        <option value="">Select user...</option>
+                                        @foreach($users as $user)
+                                            <option value="{{ $user->id }}" {{ old('user_id') == $user->id ? 'selected' : '' }}>
+                                                {{ $user->name }} ({{ $user->email }})
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('user_id')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                    <div class="form-text">Link this employee to a system user account</div>
+                                @else
+                                    <input type="text" class="form-control"
+                                           id="user_id" value="Not available" readonly>
+                                    <div class="form-text">Only administrators can associate users</div>
+                                @endif
+                            </div>
                         </div>
 
                         <div class="row">

@@ -19,6 +19,7 @@ class UpdateEmployeeRequest extends FormRequest
         $employeeId = $this->route('employee')?->id;
 
         return [
+            'user_id' => ['nullable', 'exists:users,id'],
             'name' => ['sometimes', 'required', 'string', 'max:255'],
             'email' => ['sometimes', 'required', 'string', 'email', 'max:255', "unique:employees,email,{$employeeId}"],
             'phone' => ['sometimes', 'nullable', 'string', 'max:50'],

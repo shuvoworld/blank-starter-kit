@@ -7,6 +7,7 @@ use App\Http\Requests\UpdateEmployeeRequest;
 use App\Models\Department;
 use App\Models\Designation;
 use App\Models\Employee;
+use App\Services\LeaveBalanceService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -18,10 +19,14 @@ use Yajra\DataTables\Facades\DataTables;
 
 class EmployeeController extends Controller
 {
+    public function __construct(
+        private LeaveBalanceService $balanceService
+    ) {}
+
     public function index(Request $request): View|JsonResponse
     {
         if ($request->ajax()) {
-            $query = Employee::query()->with('departmentRelation', 'designation', 'country', 'city', 'area');
+            $query = Employee::query()->with('user', 'departmentRelation', 'designation', 'country', 'city', 'area');
 
             $query->byDepartmentId($request->input('filter_department_id'));
             $query->byDesignationId($request->input('filter_designation_id'));
@@ -43,6 +48,13 @@ class EmployeeController extends Controller
                     }
 
                     return '<div class="bg-secondary rounded-circle d-inline-flex align-items-center justify-content-center text-white" style="width: 40px; height: 40px; font-size: 1.2rem;"><i class="bi bi-person-fill"></i></div>';
+                })
+                ->addColumn('user_badge', function (Employee $employee) {
+                    if ($employee->user) {
+                        return '<span class="badge bg-primary"><i class="bi bi-person-check me-1"></i>'.e($employee->user->name).'</span>';
+                    }
+
+                    return '<span class="text-muted">—</span>';
                 })
                 ->addColumn('department_name', function (Employee $employee) {
                     return $employee->departmentRelation?->name ?? $employee->department ?? '—';
@@ -85,7 +97,7 @@ class EmployeeController extends Controller
                         </div>
                     ';
                 })
-                ->rawColumns(['profile_picture', 'status_badge', 'action'])
+                ->rawColumns(['profile_picture', 'user_badge', 'status_badge', 'action'])
                 ->make(true);
         }
 
@@ -122,7 +134,9 @@ class EmployeeController extends Controller
             ->orderBy('name')
             ->get(['id', 'name']);
 
-        return view('employees.create', compact('departments', 'designations', 'countries'));
+        $users = \App\Models\User::orderBy('name')->get(['id', 'name', 'email']);
+
+        return view('employees.create', compact('departments', 'designations', 'countries', 'users'));
     }
 
     public function store(StoreEmployeeRequest $request): RedirectResponse
@@ -162,14 +176,21 @@ class EmployeeController extends Controller
 
     public function show(Employee $employee): View
     {
-        $employee->load('country', 'city', 'area');
+        $employee->load('user', 'country', 'city', 'area');
 
-        return view('employees.show', compact('employee'));
+        // Get leave summary if employee has a user
+        $leaveSummary = null;
+        $currentYear = now()->year;
+        if ($employee->user) {
+            $leaveSummary = $this->balanceService->getLeaveSummary($employee->user->id, $currentYear);
+        }
+
+        return view('employees.show', compact('employee', 'leaveSummary', 'currentYear'));
     }
 
     public function edit(Employee $employee): View
     {
-        $employee->load('country', 'city', 'area');
+        $employee->load('user', 'country', 'city', 'area');
 
         $departments = Department::active()
             ->orderBy('sort_order')
@@ -193,7 +214,9 @@ class EmployeeController extends Controller
             ? Area::activated()->where('city_id', $employee->city_id)->get(['id', 'name'])
             : collect();
 
-        return view('employees.edit', compact('employee', 'departments', 'designations', 'countries', 'cities', 'areas'));
+        $users = \App\Models\User::orderBy('name')->get(['id', 'name', 'email']);
+
+        return view('employees.edit', compact('employee', 'departments', 'designations', 'countries', 'cities', 'areas', 'users'));
     }
 
     public function update(UpdateEmployeeRequest $request, Employee $employee): RedirectResponse

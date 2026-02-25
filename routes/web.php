@@ -4,8 +4,12 @@ use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\DesignationController;
 use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\HolidayController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LandingPageSectionController;
+use App\Http\Controllers\LeaveBalanceController;
+use App\Http\Controllers\LeaveRequestController;
+use App\Http\Controllers\LeaveTypeController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
@@ -96,6 +100,59 @@ Route::middleware('auth')->group(function () {
         Route::put('/{designation}', [DesignationController::class, 'update'])->name('update')->middleware('permission:update designations');
         Route::delete('/{designation}', [DesignationController::class, 'destroy'])->name('destroy')->middleware('permission:delete designations');
     });
+
+    // Leave Type Routes
+    Route::prefix('leave-types')->name('leave-types.')->middleware('permission:view any leave types')->group(function () {
+        Route::get('/', [LeaveTypeController::class, 'index'])->name('index');
+        Route::get('/create', [LeaveTypeController::class, 'create'])->name('create')->middleware('permission:create leave types');
+        Route::post('/', [LeaveTypeController::class, 'store'])->name('store')->middleware('permission:create leave types');
+        Route::get('/{leaveType}', [LeaveTypeController::class, 'show'])->name('show');
+        Route::get('/{leaveType}/edit', [LeaveTypeController::class, 'edit'])->name('edit')->middleware('permission:update leave types');
+        Route::put('/{leaveType}', [LeaveTypeController::class, 'update'])->name('update')->middleware('permission:update leave types');
+        Route::delete('/{leaveType}', [LeaveTypeController::class, 'destroy'])->name('destroy')->middleware('permission:delete leave types');
+    });
+
+    // Holiday Routes
+    Route::prefix('holidays')->name('holidays.')->middleware('permission:view any holidays')->group(function () {
+        Route::get('/', [HolidayController::class, 'index'])->name('index');
+        Route::get('/create', [HolidayController::class, 'create'])->name('create')->middleware('permission:create holidays');
+        Route::post('/', [HolidayController::class, 'store'])->name('store')->middleware('permission:create holidays');
+        Route::get('/{holiday}', [HolidayController::class, 'show'])->name('show');
+        Route::get('/{holiday}/edit', [HolidayController::class, 'edit'])->name('edit')->middleware('permission:update holidays');
+        Route::put('/{holiday}', [HolidayController::class, 'update'])->name('update')->middleware('permission:update holidays');
+        Route::delete('/{holiday}', [HolidayController::class, 'destroy'])->name('destroy')->middleware('permission:delete holidays');
+        Route::get('/api/dates', [HolidayController::class, 'getHolidaysForDateRange'])->name('api.dates');
+    });
+
+    // Leave Request Routes - Admin view all requests
+    Route::prefix('leave-requests')->name('leave-requests.')->middleware('permission:view any leave requests')->group(function () {
+        Route::get('/', [LeaveRequestController::class, 'index'])->name('index');
+        Route::get('/{leaveRequest}', [LeaveRequestController::class, 'show'])->name('show');
+        Route::post('/{leaveRequest}/approve', [LeaveRequestController::class, 'approve'])->name('approve')->middleware('permission:approve leave requests');
+        Route::post('/{leaveRequest}/reject', [LeaveRequestController::class, 'reject'])->name('reject')->middleware('permission:reject leave requests');
+        Route::post('/{leaveRequest}/cancel', [LeaveRequestController::class, 'cancel'])->name('cancel')->middleware('permission:cancel leave requests');
+    });
+
+    // My Leave Requests - Employee view own requests
+    Route::prefix('my-leave-requests')->name('my-leave-requests.')->group(function () {
+        Route::get('/', [LeaveRequestController::class, 'myRequests'])->name('index');
+        Route::get('/create', [LeaveRequestController::class, 'create'])->name('create');
+        Route::post('/', [LeaveRequestController::class, 'store'])->name('store');
+        Route::get('/{leaveRequest}', [LeaveRequestController::class, 'showMy'])->name('show');
+        Route::post('/{leaveRequest}/cancel', [LeaveRequestController::class, 'cancel'])->name('cancel');
+    });
+
+    // Leave Balances Routes - Admin view all balances
+    Route::prefix('leave-balances')->name('leave-balances.')->middleware('permission:view any leave balances')->group(function () {
+        Route::get('/', [LeaveBalanceController::class, 'index'])->name('index');
+        Route::get('/summary', [LeaveBalanceController::class, 'userSummary'])->name('summary');
+    });
+
+    // Get balance API - accessible to authenticated users for their own balance
+    Route::post('/leave-balances/get-balance', [LeaveBalanceController::class, 'getBalance'])->name('leave-balances.get-balance');
+
+    // My Leave Summary - Employee view own balance
+    Route::get('/my-leave-summary', [LeaveBalanceController::class, 'mySummary'])->name('my-leave-summary');
 
     // Activity Log Routes
     Route::prefix('activity-log')->name('activity-log.')->middleware('permission:view any activity log')->group(function () {

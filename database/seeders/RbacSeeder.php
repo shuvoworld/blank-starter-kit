@@ -26,6 +26,10 @@ class RbacSeeder extends Seeder
             'shifts' => ['view any', 'view', 'create', 'update', 'delete'],
             'departments' => ['view any', 'view', 'create', 'update', 'delete'],
             'designations' => ['view any', 'view', 'create', 'update', 'delete'],
+            'leave types' => ['view any', 'view', 'create', 'update', 'delete'],
+            'holidays' => ['view any', 'view', 'create', 'update', 'delete'],
+            'leave requests' => ['view any', 'view', 'create', 'approve', 'reject', 'cancel'],
+            'leave balances' => ['view any', 'view'],
             'dashboard' => ['view'],
         ];
 
@@ -68,18 +72,21 @@ class RbacSeeder extends Seeder
             ['description' => 'Employee with view-only access to own schedule']
         );
         $employee->syncPermissions(
-            Permission::whereIn('module', ['dashboard', 'employees', 'departments', 'designations'])
+            Permission::whereIn('module', ['dashboard', 'employees', 'departments', 'designations', 'holidays', 'leave requests', 'leave balances'])
                 ->where(function ($query) {
                     $query->where('name', 'view dashboard')
-                          ->orWhere('name', 'view any employees')
-                          ->orWhere('name', 'view any departments')
-                          ->orWhere('name', 'view any designations');
+                        ->orWhere('name', 'view any employees')
+                        ->orWhere('name', 'view any departments')
+                        ->orWhere('name', 'view any designations')
+                        ->orWhere('name', 'view any holidays')
+                        ->orWhere('name', 'create leave requests')
+                        ->orWhere('name', 'view leave balances');
                 })
                 ->get()
         );
 
         $this->command->info('RBAC seeded successfully.');
         $this->command->info('Roles created: Superuser, Admin, Employee');
-        $this->command->info('Permissions created for modules: users, roles, permissions, employees, schedules, shifts, departments, designations, dashboard');
+        $this->command->info('Permissions created for modules: users, roles, permissions, employees, schedules, shifts, departments, designations, leave types, holidays, leave requests, leave balances, dashboard');
     }
 }

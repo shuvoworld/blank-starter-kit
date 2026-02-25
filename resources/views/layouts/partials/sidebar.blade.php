@@ -67,6 +67,36 @@
                         </a>
                     </li>
 
+                    <li class="nav-header">LEAVE MANAGEMENT</li>
+
+                    <li class="nav-item">
+                        <a href="{{ route('leave-types.index') }}" class="nav-link {{ request()->routeIs('leave-types.*') ? 'active' : '' }}">
+                            <i class="nav-icon bi bi-calendar-check"></i>
+                            <p>Leave Types</p>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="{{ route('holidays.index') }}" class="nav-link {{ request()->routeIs('holidays.*') ? 'active' : '' }}">
+                            <i class="nav-icon bi bi-calendar-event"></i>
+                            <p>Holidays</p>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="{{ route('leave-requests.index') }}" class="nav-link {{ request()->routeIs('leave-requests.*') ? 'active' : '' }}">
+                            <i class="nav-icon bi bi-calendar2-check"></i>
+                            <p>Leave Requests</p>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="{{ route('leave-balances.index') }}" class="nav-link {{ request()->routeIs('leave-balances.*') ? 'active' : '' }}">
+                            <i class="nav-icon bi bi-pie-chart"></i>
+                            <p>Leave Balances</p>
+                        </a>
+                    </li>
+
                     <li class="nav-header">SYSTEM</li>
 
                     <li class="nav-item">
@@ -114,6 +144,36 @@
                         </a>
                     </li>
 
+                    <li class="nav-header">LEAVE MANAGEMENT</li>
+
+                    <li class="nav-item">
+                        <a href="{{ route('leave-types.index') }}" class="nav-link {{ request()->routeIs('leave-types.*') ? 'active' : '' }}">
+                            <i class="nav-icon bi bi-calendar-check"></i>
+                            <p>Leave Types</p>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="{{ route('holidays.index') }}" class="nav-link {{ request()->routeIs('holidays.*') ? 'active' : '' }}">
+                            <i class="nav-icon bi bi-calendar-event"></i>
+                            <p>Holidays</p>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="{{ route('leave-requests.index') }}" class="nav-link {{ request()->routeIs('leave-requests.*') ? 'active' : '' }}">
+                            <i class="nav-icon bi bi-calendar2-check"></i>
+                            <p>Leave Requests</p>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="{{ route('leave-balances.index') }}" class="nav-link {{ request()->routeIs('leave-balances.*') ? 'active' : '' }}">
+                            <i class="nav-icon bi bi-pie-chart"></i>
+                            <p>Leave Balances</p>
+                        </a>
+                    </li>
+
                     <li class="nav-header">SYSTEM</li>
 
                     <li class="nav-item">
@@ -130,6 +190,29 @@
                         <a href="{{ route('profile.edit') }}" class="nav-link {{ request()->routeIs('profile.edit') ? 'active' : '' }}">
                             <i class="nav-icon bi bi-person"></i>
                             <p>My Profile</p>
+                        </a>
+                    </li>
+
+                    <li class="nav-header">LEAVE MANAGEMENT</li>
+
+                    <li class="nav-item">
+                        <a href="{{ route('my-leave-requests.index') }}" class="nav-link {{ request()->routeIs('my-leave-requests.*') ? 'active' : '' }}">
+                            <i class="nav-icon bi bi-calendar2-check"></i>
+                            <p>My Requests</p>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="{{ route('my-leave-summary') }}" class="nav-link {{ request()->routeIs('my-leave-summary') ? 'active' : '' }}">
+                            <i class="nav-icon bi bi-pie-chart"></i>
+                            <p>My Leave Summary</p>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="{{ route('holidays.index') }}" class="nav-link {{ request()->routeIs('holidays.*') ? 'active' : '' }}">
+                            <i class="nav-icon bi bi-calendar-event"></i>
+                            <p>Holidays</p>
                         </a>
                     </li>
 

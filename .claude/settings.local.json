@@ -33,7 +33,8 @@
       "mcp__laravel-boost__list-artisan-commands",
       "mcp__laravel-boost__search-docs",
       "Bash(ls:*)",
-      "mcp__laravel-boost__get-config"
+      "mcp__laravel-boost__get-config",
+      "Bash(composer show:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

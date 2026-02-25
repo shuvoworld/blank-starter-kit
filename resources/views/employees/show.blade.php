@@ -65,6 +65,18 @@
                                     <td><a href="mailto:{{ $employee->email }}">{{ $employee->email }}</a></td>
                                 </tr>
                                 <tr>
+                                    <th>System User</th>
+                                    <td>
+                                        @if($employee->user)
+                                            <span class="badge bg-primary">
+                                                <i class="bi bi-person-check me-1"></i>{{ $employee->user->name }}
+                                            </span>
+                                        @else
+                                            <span class="text-muted">—</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                                <tr>
                                     <th>Phone</th>
                                     <td>{{ $employee->phone ?? '—' }}</td>
                                 </tr>
@@ -126,6 +138,71 @@
                 </div>
             </div>
         </div>
+
+        {{-- Leave Balance Summary --}}
+        @if(isset($leaveSummary) && $leaveSummary && auth()->user()->can('view any leave balances'))
+        <div class="card card-primary card-outline mt-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h3 class="card-title">
+                    <i class="bi bi-pie-chart me-2"></i> Leave Balance Summary ({{ $currentYear }})
+                </h3>
+                <a href="{{ route('leave-balances.summary', ['user_id' => $employee->user->id, 'year' => $currentYear]) }}" class="btn btn-sm btn-outline-light">
+                    <i class="bi bi-fullscreen me-1"></i> View Full Summary
+                </a>
+            </div>
+            <div class="card-body">
+                @if(!empty($leaveSummary['by_type']))
+                    <div class="row">
+                        @foreach($leaveSummary['by_type'] as $balance)
+                            <div class="col-md-6 mb-3">
+                                <div class="card card-outline">
+                                    <div class="card-header py-2">
+                                        <h6 class="card-title mb-0">
+                                            <span class="badge bg-info me-2">{{ $balance['code'] }}</span>
+                                            {{ $balance['leave_type'] }}
+                                        </h6>
+                                    </div>
+                                    <div class="card-body py-2">
+                                        <div class="d-flex justify-content-between mb-1">
+                                            <small>Entitlement:</small>
+                                            <strong>{{ $balance['entitlement'] }}d</strong>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-1">
+                                            <small>Taken:</small>
+                                            <strong class="text-danger">{{ $balance['taken'] }}d</strong>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-1">
+                                            <small>Remaining:</small>
+                                            <strong class="text-success">{{ $balance['remaining'] }}d</strong>
+                                        </div>
+                                        @if($balance['pending'] > 0)
+                                            <div class="d-flex justify-content-between">
+                                                <small>Pending:</small>
+                                                <strong class="text-warning">{{ $balance['pending'] }}d</strong>
+                                            </div>
+                                        @endif
+                                        @if($balance['usage_percentage'] > 0)
+                                            <div class="progress mt-2" style="height: 6px;">
+                                                <div class="progress-bar {{ $balance['usage_percentage'] >= 80 ? 'bg-danger' : ($balance['usage_percentage'] >= 50 ? 'bg-warning' : 'bg-success') }}"
+                                                     style="width: {{ $balance['usage_percentage'] }}%"
+                                                     role="progressbar"></div>
+                                            </div>
+                                            <small class="text-muted">{{ $balance['usage_percentage'] }}% used</small>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @else
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        No leave balances found for {{ $currentYear }}.
+                    </div>
+                @endif
+            </div>
+        </div>
+        @endif
 
         <div class="col-md-4">
             <div class="card">

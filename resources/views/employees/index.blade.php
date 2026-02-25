@@ -84,6 +84,7 @@
                             <th width="60">Photo</th>
                             <th>Name</th>
                             <th>Email</th>
+                            <th>System User</th>
                             <th>Department</th>
                             <th>Designation</th>
                             <th>Status</th>
@@ -147,6 +148,7 @@
                             {data: 'profile_picture', name: 'profile_picture', orderable: false, searchable: false, className: 'text-center'},
                             {data: 'name', name: 'name'},
                             {data: 'email', name: 'email'},
+                            {data: 'user_badge', name: 'user_badge', orderable: false, searchable: false},
                             {data: 'department_name', name: 'department_name'},
                             {data: 'designation_name', name: 'designation_name'},
                             {data: 'status_badge', name: 'status', orderable: false, searchable: false, className: 'text-center'},

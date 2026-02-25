@@ -19,6 +19,7 @@ class Employee extends Model implements HasMedia
     use HasActivityLog, HasFactory, InteractsWithMedia;
 
     protected $fillable = [
+        'user_id',
         'name',
         'email',
         'phone',
@@ -80,6 +81,14 @@ class Employee extends Model implements HasMedia
     public function area(): BelongsTo
     {
         return $this->belongsTo(Area::class, 'area_id');
+    }
+
+    /**
+     * Get the user associated with the employee.
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\User::class);
     }
 
     public function scopeActive(Builder $query): Builder
