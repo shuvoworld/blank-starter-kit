@@ -7,6 +7,9 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Milenmk\LaravelLocations\Models\Area;
+use Milenmk\LaravelLocations\Models\City;
+use Milenmk\LaravelLocations\Models\Country;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
@@ -26,6 +29,9 @@ class Employee extends Model implements HasMedia
         'salary',
         'hire_date',
         'status',
+        'country_id',
+        'city_id',
+        'area_id',
     ];
 
     public function casts(): array
@@ -50,6 +56,30 @@ class Employee extends Model implements HasMedia
     public function designation(): BelongsTo
     {
         return $this->belongsTo(Designation::class, 'designation_id');
+    }
+
+    /**
+     * Get the country that owns the employee.
+     */
+    public function country(): BelongsTo
+    {
+        return $this->belongsTo(Country::class, 'country_id');
+    }
+
+    /**
+     * Get the city (state) that owns the employee.
+     */
+    public function city(): BelongsTo
+    {
+        return $this->belongsTo(City::class, 'city_id');
+    }
+
+    /**
+     * Get the area that owns the employee.
+     */
+    public function area(): BelongsTo
+    {
+        return $this->belongsTo(Area::class, 'area_id');
     }
 
     public function scopeActive(Builder $query): Builder
@@ -126,15 +156,51 @@ class Employee extends Model implements HasMedia
             return $query;
         }
 
-        if (!empty($from)) {
+        if (! empty($from)) {
             $query->where('hire_date', '>=', $from);
         }
 
-        if (!empty($to)) {
+        if (! empty($to)) {
             $query->where('hire_date', '<=', $to);
         }
 
         return $query;
+    }
+
+    /**
+     * Scope a query to filter by country.
+     */
+    public function scopeByCountry(Builder $query, ?int $countryId): Builder
+    {
+        if (empty($countryId)) {
+            return $query;
+        }
+
+        return $query->where('country_id', $countryId);
+    }
+
+    /**
+     * Scope a query to filter by city (state).
+     */
+    public function scopeByCity(Builder $query, ?int $cityId): Builder
+    {
+        if (empty($cityId)) {
+            return $query;
+        }
+
+        return $query->where('city_id', $cityId);
+    }
+
+    /**
+     * Scope a query to filter by area.
+     */
+    public function scopeByArea(Builder $query, ?int $areaId): Builder
+    {
+        if (empty($areaId)) {
+            return $query;
+        }
+
+        return $query->where('area_id', $areaId);
     }
 
     /**
@@ -168,7 +234,7 @@ class Employee extends Model implements HasMedia
     /**
      * Register media conversions.
      */
-    public function registerMediaConversions(Media $media = null): void
+    public function registerMediaConversions(?Media $media = null): void
     {
         // Profile picture conversions
         if ($media?->collection_name === 'profile_picture') {

@@ -71,6 +71,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/{employee}/edit', [EmployeeController::class, 'edit'])->name('edit')->middleware('permission:update employees');
         Route::put('/{employee}', [EmployeeController::class, 'update'])->name('update')->middleware('permission:update employees');
         Route::delete('/{employee}', [EmployeeController::class, 'destroy'])->name('destroy')->middleware('permission:delete employees');
+        Route::get('/cities/by-country', [EmployeeController::class, 'citiesByCountry'])->name('cities.by-country');
+        Route::get('/areas/by-city', [EmployeeController::class, 'areasByCity'])->name('areas.by-city');
     });
 
     // Department Routes

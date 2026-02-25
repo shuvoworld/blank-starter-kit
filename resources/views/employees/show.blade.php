@@ -110,6 +110,16 @@
                                     <th>Hire Date</th>
                                     <td>{{ $employee->hire_date->format('M d, Y') }}</td>
                                 </tr>
+                                <tr>
+                                    <th>Location</th>
+                                    <td>
+                                        @if($employee->country || $employee->city || $employee->area)
+                                            {{ collect([$employee->area?->name, $employee->city?->name, $employee->country?->name])->filter()->join(', ') }}
+                                        @else
+                                            —
+                                        @endif
+                                    </td>
+                                </tr>
                             </table>
                         </div>
                     </div>

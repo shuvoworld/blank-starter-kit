@@ -3207,6 +3207,64 @@
             "install-path": "../maennchen/zipstream-php"
         },
         {
+            "name": "milenmk/laravel-locations",
+            "version": "1.4.0",
+            "version_normalized": "1.4.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/milenmk/laravel-locations.git",
+                "reference": "61da77216ac4d33ae591d43f88025f57b55d63cd"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/milenmk/laravel-locations/zipball/61da77216ac4d33ae591d43f88025f57b55d63cd",
+                "reference": "61da77216ac4d33ae591d43f88025f57b55d63cd",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^8.2"
+            },
+            "conflict": {
+                "laravel/framework": "<9.0"
+            },
+            "require-dev": {
+                "laravel/pint": "^1.20",
+                "orchestra/testbench": "^8.21",
+                "tightenco/duster": "^2.7"
+            },
+            "time": "2025-12-24T08:47:39+00:00",
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Milenmk\\LaravelLocations\\MilenmkLocationsServiceProvider"
+                    ]
+                }
+            },
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "Milenmk\\LaravelLocations\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Milen Karaganski",
+                    "email": "milenmk@gmail.com"
+                }
+            ],
+            "description": "Add Countries, Cities, Areas, Languages and Currencies models to your Laravel application",
+            "support": {
+                "issues": "https://github.com/milenmk/laravel-locations/issues",
+                "source": "https://github.com/milenmk/laravel-locations/tree/1.4.0"
+            },
+            "install-path": "../milenmk/laravel-locations"
+        },
+        {
             "name": "mockery/mockery",
             "version": "1.6.12",
             "version_normalized": "1.6.12.0",

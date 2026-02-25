@@ -27,6 +27,9 @@ class UpdateEmployeeRequest extends FormRequest
             'salary' => ['sometimes', 'required', 'numeric', 'min:0'],
             'hire_date' => ['sometimes', 'required', 'date'],
             'status' => ['sometimes', 'required', 'string', 'in:active,inactive'],
+            'country_id' => ['nullable', 'exists:countries,id'],
+            'city_id' => ['nullable', 'exists:cities,id'],
+            'area_id' => ['nullable', 'exists:areas,id'],
             'profile_picture' => ['nullable', 'image', 'mimes:jpeg,png,gif,webp', 'max:5120'],
             'resume' => ['nullable', 'file', 'mimes:pdf', 'max:5120'],
             'certificates' => ['nullable', 'array', 'max:5'],
@@ -45,6 +48,9 @@ class UpdateEmployeeRequest extends FormRequest
             'email.unique' => 'This email address is already in use by another employee.',
             'department_id.exists' => 'The selected department is invalid.',
             'designation_id.exists' => 'The selected designation is invalid.',
+            'country_id.exists' => 'The selected country is invalid.',
+            'city_id.exists' => 'The selected state/city is invalid.',
+            'area_id.exists' => 'The selected area is invalid.',
             'status.in' => 'Status must be active or inactive.',
         ];
     }

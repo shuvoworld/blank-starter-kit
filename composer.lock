@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "5c7ffd714093a6554f621688081d0dd5",
+    "content-hash": "030b0914c4f4a3fa02a456295bdb6885",
     "packages": [
         {
             "name": "brick/math",
@@ -2173,6 +2173,61 @@
                 }
             ],
             "time": "2025-12-10T09:58:31+00:00"
+        },
+        {
+            "name": "milenmk/laravel-locations",
+            "version": "1.4.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/milenmk/laravel-locations.git",
+                "reference": "61da77216ac4d33ae591d43f88025f57b55d63cd"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/milenmk/laravel-locations/zipball/61da77216ac4d33ae591d43f88025f57b55d63cd",
+                "reference": "61da77216ac4d33ae591d43f88025f57b55d63cd",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^8.2"
+            },
+            "conflict": {
+                "laravel/framework": "<9.0"
+            },
+            "require-dev": {
+                "laravel/pint": "^1.20",
+                "orchestra/testbench": "^8.21",
+                "tightenco/duster": "^2.7"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Milenmk\\LaravelLocations\\MilenmkLocationsServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Milenmk\\LaravelLocations\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Milen Karaganski",
+                    "email": "milenmk@gmail.com"
+                }
+            ],
+            "description": "Add Countries, Cities, Areas, Languages and Currencies models to your Laravel application",
+            "support": {
+                "issues": "https://github.com/milenmk/laravel-locations/issues",
+                "source": "https://github.com/milenmk/laravel-locations/tree/1.4.0"
+            },
+            "time": "2025-12-24T08:47:39+00:00"
         },
         {
             "name": "monolog/monolog",

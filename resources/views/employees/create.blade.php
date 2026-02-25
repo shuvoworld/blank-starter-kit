@@ -123,6 +123,46 @@
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
+                                <label for="country_id" class="form-label">Country</label>
+                                <select class="form-select @error('country_id') is-invalid @enderror"
+                                        id="country_id" name="country_id" data-location="country">
+                                    <option value="">Select country...</option>
+                                    @foreach($countries as $country)
+                                        <option value="{{ $country->id }}" {{ old('country_id') == $country->id ? 'selected' : '' }}>
+                                            {{ $country->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('country_id')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="city_id" class="form-label">State/Province</label>
+                                <select class="form-select @error('city_id') is-invalid @enderror"
+                                        id="city_id" name="city_id" data-location="city" disabled>
+                                    <option value="">Select state...</option>
+                                </select>
+                                @error('city_id')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="area_id" class="form-label">Area/City</label>
+                                <select class="form-select @error('area_id') is-invalid @enderror"
+                                        id="area_id" name="area_id" data-location="area" disabled>
+                                    <option value="">Select area...</option>
+                                </select>
+                                @error('area_id')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="col-md-6 mb-3">
                                 <label for="salary" class="form-label">Salary <span class="text-danger">*</span></label>
                                 <div class="input-group">
                                     <span class="input-group-text">$</span>
@@ -225,4 +265,66 @@
             </div>
         </div>
     </div>
+
+    @push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const countrySelect = document.getElementById('country_id');
+            const citySelect = document.getElementById('city_id');
+            const areaSelect = document.getElementById('area_id');
+            const citiesByCountryUrl = "{{ route('employees.cities.by-country') }}";
+            const areasByCityUrl = "{{ route('employees.areas.by-city') }}";
+
+            // Load cities when country changes
+            countrySelect.addEventListener('change', function() {
+                const countryId = this.value;
+
+                // Reset and disable city and area selects
+                citySelect.innerHTML = '<option value="">Select state...</option>';
+                citySelect.disabled = !countryId;
+                areaSelect.innerHTML = '<option value="">Select area...</option>';
+                areaSelect.disabled = true;
+
+                if (countryId) {
+                    fetch(`${citiesByCountryUrl}?country_id=${countryId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            citySelect.innerHTML = '<option value="">Select state...</option>';
+                            data.forEach(city => {
+                                const option = document.createElement('option');
+                                option.value = city.id;
+                                option.textContent = city.name;
+                                citySelect.appendChild(option);
+                            });
+                        })
+                        .catch(error => console.error('Error loading cities:', error));
+                }
+            });
+
+            // Load areas when city changes
+            citySelect.addEventListener('change', function() {
+                const cityId = this.value;
+
+                // Reset and disable area select
+                areaSelect.innerHTML = '<option value="">Select area...</option>';
+                areaSelect.disabled = !cityId;
+
+                if (cityId) {
+                    fetch(`${areasByCityUrl}?city_id=${cityId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            areaSelect.innerHTML = '<option value="">Select area...</option>';
+                            data.forEach(area => {
+                                const option = document.createElement('option');
+                                option.value = area.id;
+                                option.textContent = area.name;
+                                areaSelect.appendChild(option);
+                            });
+                        })
+                        .catch(error => console.error('Error loading areas:', error));
+                }
+            });
+        });
+    </script>
+    @endpush
 @endsection

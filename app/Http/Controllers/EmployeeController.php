@@ -11,6 +11,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Milenmk\LaravelLocations\Models\Area;
+use Milenmk\LaravelLocations\Models\City;
+use Milenmk\LaravelLocations\Models\Country;
 use Yajra\DataTables\Facades\DataTables;
 
 class EmployeeController extends Controller
@@ -18,10 +21,13 @@ class EmployeeController extends Controller
     public function index(Request $request): View|JsonResponse
     {
         if ($request->ajax()) {
-            $query = Employee::query()->with('departmentRelation', 'designation');
+            $query = Employee::query()->with('departmentRelation', 'designation', 'country', 'city', 'area');
 
             $query->byDepartmentId($request->input('filter_department_id'));
             $query->byDesignationId($request->input('filter_designation_id'));
+            $query->byCountry($request->input('filter_country_id'));
+            $query->byCity($request->input('filter_city_id'));
+            $query->byArea($request->input('filter_area_id'));
             $query->byStatus($request->input('filter_status'));
             $query->byHireDateRange(
                 $request->input('filter_hire_date_from'),
@@ -35,6 +41,7 @@ class EmployeeController extends Controller
                     if ($url) {
                         return '<img src="'.$url.'" alt="'.e($employee->name).'" class="rounded-circle" width="40" height="40" style="object-fit: cover;">';
                     }
+
                     return '<div class="bg-secondary rounded-circle d-inline-flex align-items-center justify-content-center text-white" style="width: 40px; height: 40px; font-size: 1.2rem;"><i class="bi bi-person-fill"></i></div>';
                 })
                 ->addColumn('department_name', function (Employee $employee) {
@@ -42,6 +49,15 @@ class EmployeeController extends Controller
                 })
                 ->addColumn('designation_name', function (Employee $employee) {
                     return $employee->designation?->name ?? $employee->position ?? '—';
+                })
+                ->addColumn('location', function (Employee $employee) {
+                    $parts = array_filter([
+                        $employee->area?->name,
+                        $employee->city?->name,
+                        $employee->country?->name,
+                    ]);
+
+                    return implode(', ', $parts) ?: '—';
                 })
                 ->addColumn('status_badge', function (Employee $employee) {
                     $class = $employee->status === 'active' ? 'bg-success' : 'bg-secondary';
@@ -83,7 +99,11 @@ class EmployeeController extends Controller
             ->orderBy('name')
             ->get(['id', 'name']);
 
-        return view('employees.index', compact('departments', 'designations'));
+        $countries = Country::activated()
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        return view('employees.index', compact('departments', 'designations', 'countries'));
     }
 
     public function create(): View
@@ -98,7 +118,11 @@ class EmployeeController extends Controller
             ->orderBy('name')
             ->get(['id', 'name']);
 
-        return view('employees.create', compact('departments', 'designations'));
+        $countries = Country::activated()
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        return view('employees.create', compact('departments', 'designations', 'countries'));
     }
 
     public function store(StoreEmployeeRequest $request): RedirectResponse
@@ -138,11 +162,15 @@ class EmployeeController extends Controller
 
     public function show(Employee $employee): View
     {
+        $employee->load('country', 'city', 'area');
+
         return view('employees.show', compact('employee'));
     }
 
     public function edit(Employee $employee): View
     {
+        $employee->load('country', 'city', 'area');
+
         $departments = Department::active()
             ->orderBy('sort_order')
             ->orderBy('name')
@@ -153,7 +181,19 @@ class EmployeeController extends Controller
             ->orderBy('name')
             ->get(['id', 'name']);
 
-        return view('employees.edit', compact('employee', 'departments', 'designations'));
+        $countries = Country::activated()
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        $cities = $employee->country_id
+            ? City::activated()->where('country_id', $employee->country_id)->get(['id', 'name'])
+            : collect();
+
+        $areas = $employee->city_id
+            ? Area::activated()->where('city_id', $employee->city_id)->get(['id', 'name'])
+            : collect();
+
+        return view('employees.edit', compact('employee', 'departments', 'designations', 'countries', 'cities', 'areas'));
     }
 
     public function update(UpdateEmployeeRequest $request, Employee $employee): RedirectResponse
@@ -202,5 +242,39 @@ class EmployeeController extends Controller
         $employee->delete();
 
         return response()->json(['message' => 'Employee deleted successfully.']);
+    }
+
+    /**
+     * Get cities by country for dynamic dropdown.
+     */
+    public function citiesByCountry(Request $request): JsonResponse
+    {
+        $request->validate([
+            'country_id' => ['required', 'exists:countries,id'],
+        ]);
+
+        $cities = City::activated()
+            ->where('country_id', $request->input('country_id'))
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        return response()->json($cities);
+    }
+
+    /**
+     * Get areas by city for dynamic dropdown.
+     */
+    public function areasByCity(Request $request): JsonResponse
+    {
+        $request->validate([
+            'city_id' => ['required', 'exists:cities,id'],
+        ]);
+
+        $areas = Area::activated()
+            ->where('city_id', $request->input('city_id'))
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        return response()->json($areas);
     }
 }
