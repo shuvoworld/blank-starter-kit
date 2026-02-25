@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\LandingPageSection;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -99,5 +100,19 @@ class HomeController extends Controller
             ->latest()
             ->limit(10)
             ->get();
+    }
+
+    public function publicPage()
+    {
+        // Get all landing page sections grouped by section
+        $sections = LandingPageSection::getGroupedBySection();
+
+        // Helper function to get section value
+        $getValue = fn (string $key, mixed $default = '') => LandingPageSection::getValue($key, $default);
+
+        return view('public.welcome', [
+            'sections' => $sections,
+            'getValue' => $getValue,
+        ]);
     }
 }

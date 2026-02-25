@@ -11,13 +11,16 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+// Route::get('/', function () {
+//     return view('welcome');
+// });
+
 
 Route::get('/dashboard', HomeController::class)
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
+Route::get('/', [HomeController::class, 'publicPage'])
+    ->name('public');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

@@ -1,113 +1,7 @@
+@extends('layouts.public.app')
 
-<!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="{{ $getValue('site_description', config('app.name')) }}">
-    <title>{{ $getValue('site_name', config('app.name', 'Laravel')) }} - Home</title>
 
-    @vite(['resources/scss/app.scss', 'resources/js/app.js'])
-
-    <style>
-        /* Hero gradient background */
-        .hero-gradient {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-        .hero-gradient-alt {
-            background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%);
-        }
-
-        /* Smooth scrolling */
-        html {
-            scroll-behavior: smooth;
-        }
-
-        /* Feature card hover effect */
-        .feature-card {
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        .feature-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-        }
-
-        /* Pricing card */
-        .pricing-card {
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        .pricing-card:hover {
-            transform: scale(1.03);
-        }
-        .pricing-card.popular {
-            border: 2px solid #6366f1;
-            position: relative;
-        }
-        .pricing-card.popular::before {
-            content: 'RECOMMENDED';
-            position: absolute;
-            top: -12px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #6366f1;
-            color: white;
-            padding: 4px 16px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-
-        /* CTA Section */
-        .cta-section {
-            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
-        }
-
-        /* Section spacing */
-        section {
-            scroll-margin-top: 76px;
-        }
-    </style>
-</head>
-<body class="bg-light">
-
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top shadow-sm">
-        <div class="container">
-            <a class="navbar-brand fw-bold text-primary" href="/">
-                <i class="bi bi-hexagon-fill me-2"></i>
-                {{ $getValue('site_name', config('app.name', 'Laravel')) }}
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav mx-auto">
-                    <li class="nav-item">
-                        <a class="nav-link active" href="#home">Home</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#features">Features</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#pricing">Pricing</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#about">About</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#contact">Contact</a>
-                    </li>
-                </ul>
-                <div class="d-flex gap-2 mt-3 mt-lg-0">
-                    <a href="{{ route('login') }}" class="btn btn-outline-primary">Login</a>
-                    @if (Route::has('register'))
-                        <a href="{{ route('register') }}" class="btn btn-primary">Get Started</a>
-                    @endif
-                </div>
-            </div>
-        </div>
-    </nav>
-
+@section('content')
     <!-- Hero Section -->
     <section id="home" class="hero-gradient text-white py-5">
         <div class="container py-lg-5">
@@ -181,7 +75,8 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="position-absolute bottom-0 end-0 bg-white rounded-4 shadow-lg p-4 d-flex align-items-center gap-3" style="transform: translateY(30%);">
+                        <div class="position-absolute bottom-0 end-0 bg-white rounded-4 shadow-lg p-4 d-flex align-items-center gap-3"
+                             style="transform: translateY(30%);">
                             <div class="bg-success bg-opacity-10 rounded-circle p-2">
                                 <i class="bi bi-check-lg text-success fs-4"></i>
                             </div>
@@ -201,11 +96,21 @@
         <div class="container">
             <p class="text-center text-muted mb-4 small text-uppercase fw-semibold">Trusted by 10,000+ businesses worldwide</p>
             <div class="row justify-content-center align-items-center g-4">
-                <div class="col-auto"><div class="text-muted opacity-50 fw-bold">TechCorp</div></div>
-                <div class="col-auto"><div class="text-muted opacity-50 fw-bold">InnovateCo</div></div>
-                <div class="col-auto"><div class="text-muted opacity-50 fw-bold">ScaleUp</div></div>
-                <div class="col-auto"><div class="text-muted opacity-50 fw-bold">GlobalTech</div></div>
-                <div class="col-auto"><div class="text-muted opacity-50 fw-bold">FutureLabs</div></div>
+                <div class="col-auto">
+                    <div class="text-muted opacity-50 fw-bold">TechCorp</div>
+                </div>
+                <div class="col-auto">
+                    <div class="text-muted opacity-50 fw-bold">InnovateCo</div>
+                </div>
+                <div class="col-auto">
+                    <div class="text-muted opacity-50 fw-bold">ScaleUp</div>
+                </div>
+                <div class="col-auto">
+                    <div class="text-muted opacity-50 fw-bold">GlobalTech</div>
+                </div>
+                <div class="col-auto">
+                    <div class="text-muted opacity-50 fw-bold">FutureLabs</div>
+                </div>
             </div>
         </div>
     </section>
@@ -528,7 +433,8 @@
                             <i class="bi bi-star-fill text-warning"></i>
                         </div>
                         <p class="text-muted mb-4">
-                            "{{ $getValue('site_name', config('app.name')) }} has transformed how we manage our business. The intuitive interface and powerful features have saved us countless hours."
+                            "{{ $getValue('site_name', config('app.name')) }} has transformed how we manage our business. The intuitive interface and powerful
+                            features have saved us countless hours."
                         </p>
                         <div class="d-flex align-items-center gap-3">
                             <div class="bg-primary bg-opacity-10 rounded-circle p-2">
@@ -574,7 +480,8 @@
                             <i class="bi bi-star-fill text-warning"></i>
                         </div>
                         <p class="text-muted mb-4">
-                            "We've tried many solutions, but {{ $getValue('site_name', config('app.name')) }} is by far the best. It's reliable, fast, and does exactly what we need."
+                            "We've tried many solutions, but {{ $getValue('site_name', config('app.name')) }} is by far the best. It's reliable, fast, and does
+                            exactly what we need."
                         </p>
                         <div class="d-flex align-items-center gap-3">
                             <div class="bg-info bg-opacity-10 rounded-circle p-2">
@@ -685,101 +592,8 @@
             </div>
         </div>
     </section>
+@endsection
 
-    <!-- Footer -->
-    <footer class="bg-dark text-white py-5">
-        <div class="container">
-            <div class="row g-4 mb-4">
-                <div class="col-lg-4">
-                    <h5 class="fw-bold mb-3">
-                        <i class="bi bi-hexagon-fill me-2"></i>
-                        {{ $getValue('site_name', config('app.name', 'Laravel')) }}
-                    </h5>
-                    <p class="text-muted">
-                        {{ $getValue('footer_description', 'The modern platform for businesses to manage, grow, and scale with confidence.') }}
-                    </p>
-                    <div class="d-flex gap-3">
-                        <a href="{{ $getValue('footer_facebook', '#') }}" class="text-muted text-decoration-none">
-                            <i class="bi bi-facebook fs-5"></i>
-                        </a>
-                        <a href="{{ $getValue('footer_twitter', '#') }}" class="text-muted text-decoration-none">
-                            <i class="bi bi-twitter fs-5"></i>
-                        </a>
-                        <a href="{{ $getValue('footer_linkedin', '#') }}" class="text-muted text-decoration-none">
-                            <i class="bi bi-linkedin fs-5"></i>
-                        </a>
-                        <a href="{{ $getValue('footer_github', '#') }}" class="text-muted text-decoration-none">
-                            <i class="bi bi-github fs-5"></i>
-                        </a>
-                    </div>
-                </div>
-                <div class="col-lg-2 col-md-4">
-                    <h6 class="fw-semibold mb-3">Product</h6>
-                    <ul class="list-unstyled">
-                        <li class="mb-2"><a href="#features" class="text-muted text-decoration-none">Features</a></li>
-                        <li class="mb-2"><a href="#pricing" class="text-muted text-decoration-none">Pricing</a></li>
-                        <li class="mb-2"><a href="#" class="text-muted text-decoration-none">Integrations</a></li>
-                        <li class="mb-2"><a href="#" class="text-muted text-decoration-none">API</a></li>
-                    </ul>
-                </div>
-                <div class="col-lg-2 col-md-4">
-                    <h6 class="fw-semibold mb-3">Company</h6>
-                    <ul class="list-unstyled">
-                        <li class="mb-2"><a href="#about" class="text-muted text-decoration-none">About</a></li>
-                        <li class="mb-2"><a href="#" class="text-muted text-decoration-none">Blog</a></li>
-                        <li class="mb-2"><a href="#" class="text-muted text-decoration-none">Careers</a></li>
-                        <li class="mb-2"><a href="#contact" class="text-muted text-decoration-none">Contact</a></li>
-                    </ul>
-                </div>
-                <div class="col-lg-2 col-md-4">
-                    <h6 class="fw-semibold mb-3">Account</h6>
-                    <ul class="list-unstyled">
-                        <li class="mb-2"><a href="{{ route('login') }}" class="text-muted text-decoration-none">Login</a></li>
-                        @if (Route::has('register'))
-                            <li class="mb-2"><a href="{{ route('register') }}" class="text-muted text-decoration-none">Register</a></li>
-                        @endif
-                        <li class="mb-2"><a href="#" class="text-muted text-decoration-none">Forgot Password</a></li>
-                    </ul>
-                </div>
-                <div class="col-lg-2 col-md-4">
-                    <h6 class="fw-semibold mb-3">Legal</h6>
-                    <ul class="list-unstyled">
-                        <li class="mb-2"><a href="#" class="text-muted text-decoration-none">Privacy Policy</a></li>
-                        <li class="mb-2"><a href="#" class="text-muted text-decoration-none">Terms of Service</a></li>
-                        <li class="mb-2"><a href="#" class="text-muted text-decoration-none">Cookie Policy</a></li>
-                    </ul>
-                </div>
-            </div>
-            <hr class="border-secondary">
-            <div class="row align-items-center">
-                <div class="col-md-6 text-center text-md-start">
-                    <p class="text-muted mb-0">
-                        &copy; {{ date('Y') }} {{ $getValue('site_name', config('app.name', 'Laravel')) }}. All rights reserved.
-                    </p>
-                </div>
-                <div class="col-md-6 text-center text-md-end">
-                    <p class="text-muted mb-0">
-                        {{ $getValue('footer_copyright', 'Made with love using Laravel & Bootstrap 5') }}
-                    </p>
-                </div>
-            </div>
-        </div>
-    </footer>
 
-    <!-- Bootstrap JS Bundle -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-    <!-- Close mobile menu on link click -->
-    <script>
-        document.querySelectorAll('.navbar-nav .nav-link').forEach(link => {
-            link.addEventListener('click', () => {
-                const navbarCollapse = document.getElementById('navbarNav');
-                if (navbarCollapse.classList.contains('show')) {
-                    new bootstrap.Collapse(navbarCollapse).hide();
-                }
-            });
-        });
-    </script>
 
-</body>
-</html>
