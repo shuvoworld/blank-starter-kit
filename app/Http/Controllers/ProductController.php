@@ -15,6 +15,9 @@ class ProductController extends Controller
 {
     public function index(Request $request): View|JsonResponse
     {
+        // Verify the current user can view the product list before loading any data.
+        $this->authorize('viewAny', Product::class);
+
         if ($request->ajax()) {
             return DataTables::of(Product::query())
                 ->addIndexColumn()
@@ -56,11 +59,17 @@ class ProductController extends Controller
 
     public function create(): View
     {
+        // Verify the current user can create products before showing the form.
+        $this->authorize('create', Product::class);
+
         return view('products.create');
     }
 
     public function store(StoreProductRequest $request): RedirectResponse
     {
+        // Re-check on form submit to prevent direct POST requests bypassing the form.
+        $this->authorize('create', Product::class);
+
         Product::create($request->validated());
 
         return to_route('products.index')->with('status', 'Product created successfully.');
@@ -68,16 +77,25 @@ class ProductController extends Controller
 
     public function show(Product $product): View
     {
+        // Verify the current user can view this specific product record.
+        $this->authorize('view', $product);
+
         return view('products.show', compact('product'));
     }
 
     public function edit(Product $product): View
     {
+        // Verify the current user can edit this specific product record.
+        $this->authorize('update', $product);
+
         return view('products.edit', compact('product'));
     }
 
     public function update(UpdateProductRequest $request, Product $product): RedirectResponse
     {
+        // Re-check on form submit to prevent direct PUT requests bypassing the form.
+        $this->authorize('update', $product);
+
         $product->update($request->validated());
 
         return to_route('products.index')->with('status', 'Product updated successfully.');
@@ -85,6 +103,9 @@ class ProductController extends Controller
 
     public function destroy(Product $product): JsonResponse
     {
+        // Verify the current user can delete this specific product record.
+        $this->authorize('delete', $product);
+
         $product->delete();
 
         return response()->json(['message' => 'Product deleted successfully.']);

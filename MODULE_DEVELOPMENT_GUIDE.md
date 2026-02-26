@@ -1,392 +1,265 @@
 # Module Development Guide
 
-This guide provides instructions for developing modules in the Blank Starter Kit application.
+This document defines the standard architecture every module in this application must follow.
+All existing modules (Department, Designation, Product, Employee) implement this pattern and serve as reference.
+
+---
 
 ## Table of Contents
 
-1. [Overview](#overview)
-2. [File Upload Guidelines](#file-upload-guidelines)
-3. [Creating a New Module](#creating-a-new-module)
-4. [Spatie Media Library Integration](#spatie-media-library-integration)
-5. [Best Practices](#best-practices)
+1. [Module Architecture Overview](#1-module-architecture-overview)
+2. [Request & Permission Flow](#2-request--permission-flow)
+3. [File Structure Per Module](#3-file-structure-per-module)
+4. [Layer Responsibilities](#4-layer-responsibilities)
+5. [Permission Naming Convention](#5-permission-naming-convention)
+6. [Creating a New Module — Checklist](#6-creating-a-new-module--checklist)
+7. [File Upload Modules](#7-file-upload-modules)
 
 ---
 
-## Overview
+## 1. Module Architecture Overview
 
-This application uses **Laravel 12** with the following key packages:
-- **Spatie Permission** - Role & Permission management
-- **Spatie Media Library** - File & Media management
-- **Spatie Activity Log** - Activity tracking
-- **Yajra DataTables** - Server-side tables
+Every module is composed of six layers, each with a single clear responsibility:
 
----
-
-## File Upload Guidelines
-
-### Supported File Types
-
-| File Type | Purpose | Allowed Extensions | Max Size |
-|-----------|---------|-------------------|----------|
-| **Images** | Profile pictures, avatars | jpg, jpeg, png, gif, webp | 5 MB |
-| **Documents** | Resumes, certificates, PDFs | pdf only | 5 MB per file |
-
-### Media Collections
-
-| Collection Name | Type | Max Files | Purpose |
-|-----------------|------|-----------|---------|
-| `profile_picture` | Image | 1 | User/Employee profile photo |
-| `resume` | Document (PDF) | 1 | Employee resume/CV |
-| `certificates` | Document (PDF) | 5 | Employee certificates |
-| `documents` | Document (PDF) | 10 | Other employee documents |
-
-### File Upload Validation Rules
-
-```php
-// Image files (profile pictures)
-'profile_picture' => ['nullable', 'image', 'mimes:jpeg,png,gif,webp', 'max:5120'];
-
-// PDF documents (single)
-'resume' => ['nullable', 'file', 'mimes:pdf', 'max:5120'];
-
-// PDF documents (multiple)
-'certificates' => ['nullable', 'array', 'max:5'],
-'certificates.*' => ['nullable', 'file', 'mimes:pdf', 'max:5120'],
-'documents' => ['nullable', 'array', 'max:10'],
-'documents.*' => ['nullable', 'file', 'mimes:pdf', 'max:5120'];
 ```
-
-### Form Requirements
-
-When creating file upload forms:
-
-1. **Add enctype to form tag:**
-   ```blade
-   <form action="{{ route('route.name') }}" method="POST" enctype="multipart/form-data">
-   ```
-
-2. **Use appropriate accept attribute:**
-   ```blade
-   <!-- Images -->
-   <input type="file" name="profile_picture" accept="image/jpeg,image/png,image/gif,image/webp">
-
-   <!-- PDF Documents -->
-   <input type="file" name="resume" accept=".pdf,application/pdf">
-   ```
-
-3. **For multiple file uploads:**
-   ```blade
-   <input type="file" name="certificates[]" accept=".pdf,application/pdf" multiple>
-   ```
-
-### Storing Files
-
-```php
-// Single file (replaces existing)
-if ($request->hasFile('profile_picture')) {
-    $employee->clearMediaCollection('profile_picture');
-    $employee->addMediaFromRequest('profile_picture')
-        ->toMediaCollection('profile_picture');
-}
-
-// Multiple files (adds to existing)
-if ($request->hasFile('certificates')) {
-    foreach ($request->file('certificates') as $file) {
-        $employee->addMedia($file)
-            ->toMediaCollection('certificates');
-    }
-}
-```
-
-### Retrieving Files
-
-```php
-// Get single file
-$url = $employee->getFirstMediaUrl('profile_picture');
-$media = $employee->getFirstMedia('profile_picture');
-
-// Get multiple files
-$certificates = $employee->getMedia('certificates');
-
-// Get file with conversion (thumbnail)
-$thumbUrl = $employee->getFirstMediaUrl('profile_picture', 'thumb');
-```
-
-### Displaying Files in Views
-
-```blade
-<!-- Display image -->
-@if($employee->getFirstMediaUrl('profile_picture'))
-    <img src="{{ $employee->getFirstMediaUrl('profile_picture') }}" alt="{{ $employee->name }}">
-@else
-    <div class="placeholder">No image</div>
-@endif
-
-<!-- Display documents list -->
-@foreach($employee->getMedia('certificates') as $cert)
-    <a href="{{ $cert->getUrl() }}" target="_blank">
-        {{ $cert->file_name }}
-    </a>
-@endforeach
+┌─────────────────────────────────────────────────────────┐
+│                     HTTP Request                        │
+└────────────────────────┬────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────┐
+│  ROUTE MIDDLEWARE  (routes/web.php)                     │
+│  permission:view any {module}                           │
+│  Coarse gate — "Does this role have access at all?"     │
+└────────────────────────┬────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────┐
+│  FORM REQUEST  (app/Http/Requests/)                     │
+│  Store{Model}Request / Update{Model}Request             │
+│  Validates input before it reaches the controller       │
+└────────────────────────┬────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────┐
+│  CONTROLLER  (app/Http/Controllers/)                    │
+│  Calls $this->authorize() → delegates to Policy        │
+│  Calls Model methods, returns View or JsonResponse      │
+└────────────────────────┬────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────┐
+│  POLICY  (app/Policies/)                                │
+│  Fine gate — "Can THIS user act on THIS record?"        │
+│  Wraps Spatie permission checks + row-level logic       │
+│  Super Admin bypasses via before() hook                 │
+└────────────────────────┬────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────┐
+│  MODEL + OBSERVER  (app/Models/ + app/Observers/)       │
+│  Model holds business rules, scopes, relationships      │
+│  Observer fires side effects on every lifecycle event   │
+│  HasActivityLog trait writes audit trail automatically  │
+└─────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Creating a New Module
+## 2. Request & Permission Flow
 
-### 1. Model Setup
+### Step-by-step for a typical `update` action
 
-```php
-<?php
+| Step | Layer | What happens |
+|------|-------|--------------|
+| 1 | Route middleware | Checks `permission:view any {module}` — aborts 403 if user's role lacks it |
+| 2 | Controller `edit()` | Calls `$this->authorize('update', $record)` |
+| 3 | Policy `before()` | If user is Super Admin → returns `true`, skips everything else |
+| 4 | Policy `update()` | Checks `$user->can('update {module}')` via Spatie + any row-level logic |
+| 5 | Form Request | `authorize()` returns `true`; `rules()` validates the submitted data |
+| 6 | Controller `update()` | Calls `$this->authorize('update', $record)` again (POST re-check), then saves |
+| 7 | Model Observer `updating()` | Fires before the DB write |
+| 8 | Model Observer `updated()` | Fires after the DB write — cascade events run here |
+| 9 | HasActivityLog trait | Records the change to `activity_log` automatically |
 
-namespace App\Models;
+### Why the controller re-checks on submit
 
-use Illuminate\Database\Eloquent\Model;
-use Spatie\MediaLibrary\HasMedia;
-use Spatie\MediaLibrary\InteractsWithMedia;
-use Spatie\MediaLibrary\MediaCollections\Models\Media;
+The `edit()` and `update()` methods both call `$this->authorize('update', $record)`.
+This prevents a user from bypassing the form by sending a direct `PUT` request even if they somehow obtained the URL.
+Same pattern applies to `create()` / `store()`.
 
-class YourModel extends Model implements HasMedia
-{
-    use InteractsWithMedia;
+### Two types of authorization checks
 
-    protected $fillable = [
-        // Your fields...
-    ];
+| Type | Where | Example |
+|------|-------|---------|
+| **Role-based** | Route middleware | "Managers can view any employee" |
+| **Row-level** | Policy method | "An employee can edit only their own profile" |
 
-    // Define media collections
-    public function registerMediaCollections(): void
-    {
-        $this->addMediaCollection('thumbnail')
-            ->singleFile()
-            ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
-            ->useDisk('public');
-    }
+Row-level logic lives exclusively in the Policy — never in the controller or middleware.
+See `EmployeePolicy::view()` and `EmployeePolicy::update()` for a working example.
 
-    // Define media conversions (thumbnails, etc.)
-    public function registerMediaConversions(Media $media = null): void
-    {
-        $this->addMediaConversion('thumb')
-            ->width(150)
-            ->height(150)
-            ->sharpen(10);
-    }
-}
+---
+
+## 3. File Structure Per Module
+
+Using `BlogPost` as an example name:
+
 ```
+app/
+  Models/
+    BlogPost.php                      — Fillable, casts, scopes, relationships, booted()
+  Policies/
+    BlogPostPolicy.php                — before(), viewAny(), view(), create(), update(), delete()
+  Observers/
+    BlogPostObserver.php              — created(), updated(), deleting(), deleted()
+  Http/
+    Controllers/
+      BlogPostController.php          — CRUD methods, authorize() calls, DataTables AJAX
+    Requests/
+      StoreBlogPostRequest.php        — rules() + messages() for create
+      UpdateBlogPostRequest.php       — rules() + messages() for update (ignore-self unique)
 
-### 2. Migration
+database/
+  migrations/
+    TIMESTAMP_create_blog_posts_table.php
+  factories/
+    BlogPostFactory.php
+  seeders/
+    BlogPostSeeder.php
 
-```php
-Schema::create('your_models', function (Blueprint $table) {
-    $table->id();
-    $table->string('name');
-    // Add your columns...
-    $table->timestamps();
-});
-```
+resources/views/blog-posts/
+  index.blade.php                     — DataTable + delete modal + JS
+  create.blade.php                    — Create form
+  edit.blade.php                      — Pre-filled form + danger zone
+  show.blade.php                      — Read-only detail view
 
-### 3. Controller
+tests/Feature/
+  BlogPostTest.php                    — CRUD tests + permission denial tests
 
-```php
-<?php
-
-namespace App\Http\Controllers;
-
-use App\Models\YourModel;
-use App\Http\Requests\StoreYourModelRequest;
-use Illuminate\View\View;
-use Illuminate\Http\RedirectResponse;
-
-class YourModelController extends Controller
-{
-    public function index(): View
-    {
-        $items = YourModel::latest()->paginate(10);
-        return view('your_models.index', compact('items'));
-    }
-
-    public function create(): View
-    {
-        return view('your_models.create');
-    }
-
-    public function store(StoreYourModelRequest $request): RedirectResponse
-    {
-        $item = YourModel::create($request->validated());
-
-        // Handle file upload
-        if ($request->hasFile('thumbnail')) {
-            $item->addMediaFromRequest('thumbnail')
-                ->toMediaCollection('thumbnail');
-        }
-
-        return to_route('your_models.index')
-            ->with('status', 'Item created successfully.');
-    }
-
-    public function show(YourModel $yourModel): View
-    {
-        return view('your_models.show', ['item' => $yourModel]);
-    }
-
-    public function edit(YourModel $yourModel): View
-    {
-        return view('your_models.edit', ['item' => $yourModel]);
-    }
-
-    public function update(UpdateYourModelRequest $request, YourModel $yourModel): RedirectResponse
-    {
-        $yourModel->update($request->validated());
-
-        // Handle file update
-        if ($request->hasFile('thumbnail')) {
-            $yourModel->clearMediaCollection('thumbnail');
-            $yourModel->addMediaFromRequest('thumbnail')
-                ->toMediaCollection('thumbnail');
-        }
-
-        return to_route('your_models.index')
-            ->with('status', 'Item updated successfully.');
-    }
-
-    public function destroy(YourModel $yourModel): RedirectResponse
-    {
-        $yourModel->delete();
-        return back()->with('status', 'Item deleted successfully.');
-    }
-}
-```
-
-### 4. Form Request Validation
-
-```php
-<?php
-
-namespace App\Http\Requests;
-
-use Illuminate\Foundation\Http\FormRequest;
-
-class StoreYourModelRequest extends FormRequest
-{
-    public function authorize(): bool
-    {
-        return true;
-    }
-
-    public function rules(): array
-    {
-        return [
-            'name' => ['required', 'string', 'max:255'],
-            'thumbnail' => ['nullable', 'image', 'mimes:jpeg,png,gif,webp', 'max:5120'],
-        ];
-    }
-}
-```
-
-### 5. Routes
-
-```php
-// routes/web.php
-Route::resource('your-models', YourModelController::class);
-```
-
-### 6. Views
-
-**Create Form:**
-```blade
-<form action="{{ route('your-models.store') }}" method="POST" enctype="multipart/form-data">
-    @csrf
-    <input type="text" name="name" required>
-    <input type="file" name="thumbnail" accept="image/*">
-    <button type="submit">Submit</button>
-</form>
+routes/
+  web.php                             — Permission-protected route group added here
 ```
 
 ---
 
-## Spatie Media Library Integration
+## 4. Layer Responsibilities
 
-### Model Requirements
+### Model (`app/Models/`)
 
-1. Implement `HasMedia` interface
-2. Use `InteractsWithMedia` trait
-3. Define collections in `registerMediaCollections()`
-4. Define conversions in `registerMediaConversions()`
+- Defines `$fillable`, `casts()`, relationships, query scopes
+- Registers the Observer in `booted()` — this is the only place
+- Uses `HasActivityLog` trait for automatic audit logging
+- Uses `HasFactory` trait for test factories
+- Does **not** contain authorization or HTTP logic
 
-### Common Methods
+### Policy (`app/Policies/`)
 
-| Method | Description |
-|--------|-------------|
-| `addMedia($file)` | Add a file from path |
-| `addMediaFromRequest($field)` | Add from form request |
-| `addMediaFromUrl($url)` | Add from remote URL |
-| `getMedia($collection)` | Get all files from collection |
-| `getFirstMedia($collection)` | Get first file |
-| `getFirstMediaUrl($collection, $conversion)` | Get file URL |
-| `clearMediaCollection($collection)` | Remove all files |
+- One Policy per Model, auto-discovered by Laravel via naming convention
+- `before(User $user, string $ability): ?bool` — grants Super Admin full bypass
+- One method per action: `viewAny`, `view`, `create`, `update`, `delete`
+- Each method calls `$user->can('{permission name}')` via Spatie
+- Row-level conditions (e.g., "own record only") go in `view()` and `update()`
+- Returns `bool` only — no side effects, no DB writes
 
----
+### Observer (`app/Observers/`)
 
-## Best Practices
+- Registered in the Model's `booted()` method, not in a service provider
+- Six lifecycle hooks: `creating`, `created`, `updating`, `updated`, `deleting`, `deleted`
+- `deleting()` is the correct place for **cascade cleanup** — the record still exists
+- `created()` / `updated()` are for **side effects** — notifications, sync, cache busting
+- Loops through related records individually (not mass updates) so `HasActivityLog` captures each change
+- Does **not** contain HTTP logic or redirect/response code
 
-### Security
-- Always validate file types and sizes
-- Use `mimes` and `max` validation rules
-- Never trust client-side validation only
-- Scan uploaded files for malware in production
+### Controller (`app/Http/Controllers/`)
 
-### Performance
-- Use media conversions for thumbnails
-- Lazy load media collections when possible
-- Consider using queues for bulk uploads
+- Calls `$this->authorize('{ability}', ModelClass::class)` for collection actions (`viewAny`, `create`)
+- Calls `$this->authorize('{ability}', $record)` for record actions (`view`, `update`, `delete`)
+- Both the form-display method and the form-submit method call `authorize()`
+- Returns `View` for page renders, `JsonResponse` for AJAX/DataTables, `RedirectResponse` after writes
+- Contains no business logic — delegates to Model, Service, or Observer
 
-### User Experience
-- Show file size and type hints
-- Display upload progress for large files
-- Allow file replacement without deleting entire record
-- Show existing files with download options in edit forms
+### Form Request (`app/Http/Requests/`)
 
-### Storage
-- Use `public` disk for user-accessible files
-- Use `s3` or cloud storage for production
-- Configure proper permissions
-- Regular cleanup of orphaned media files
+- `authorize()` always returns `true` — authorization is handled by the Policy, not the Request
+- `rules()` contains all validation rules as arrays of strings
+- `UpdateRequest` uses `unique:table,column,{$id}` to exclude the record being edited
+- `messages()` provides human-readable error messages per field
 
----
+### Routes (`routes/web.php`)
 
-## Quick Reference
-
-### Standard File Upload Rules
+Standard permission-protected group pattern:
 
 ```php
-// Images (JPG, PNG, GIF, WebP - Max 5MB)
-'avatar' => ['nullable', 'image', 'mimes:jpeg,png,gif,webp', 'max:5120']
-
-// PDF Documents (Max 5MB)
-'document' => ['nullable', 'file', 'mimes:pdf', 'max:5120']
-
-// Multiple PDF (Max 5 files, 5MB each)
-'documents' => ['nullable', 'array', 'max:5'],
-'documents.*' => ['nullable', 'file', 'mimes:pdf', 'max:5120']
-```
-
-### Standard Media Collections
-
-```php
-// Single image
-$this->addMediaCollection('avatar')
-    ->singleFile()
-    ->acceptsMimeTypes(['image/jpeg', 'image/png'])
-    ->useDisk('public');
-
-// Multiple documents
-$this->addMediaCollection('documents')
-    ->acceptsMimeTypes(['application/pdf'])
-    ->useDisk('public');
+Route::prefix('{route-prefix}')
+    ->name('{route-prefix}.')
+    ->middleware('permission:view any {permission name}')
+    ->group(function () {
+        Route::get('/', [Controller::class, 'index'])->name('index');
+        Route::get('/create', [Controller::class, 'create'])->name('create')->middleware('permission:create {permission name}');
+        Route::post('/', [Controller::class, 'store'])->name('store')->middleware('permission:create {permission name}');
+        Route::get('/{model}', [Controller::class, 'show'])->name('show');
+        Route::get('/{model}/edit', [Controller::class, 'edit'])->name('edit')->middleware('permission:update {permission name}');
+        Route::put('/{model}', [Controller::class, 'update'])->name('update')->middleware('permission:update {permission name}');
+        Route::delete('/{model}', [Controller::class, 'destroy'])->name('destroy')->middleware('permission:delete {permission name}');
+    });
 ```
 
 ---
 
-For more information, refer to:
-- [Spatie Media Library Docs](https://spatie.be/docs/laravel-medialibrary/v11)
-- [Laravel Validation Docs](https://laravel.com/docs/validation)
+## 5. Permission Naming Convention
+
+| Action | Permission string | Middleware alias |
+|--------|-------------------|-----------------|
+| List | `view any {module}` | `permission:view any {module}` |
+| Create | `create {module}` | `permission:create {module}` |
+| Update | `update {module}` | `permission:update {module}` |
+| Delete | `delete {module}` | `permission:delete {module}` |
+
+The `{module}` segment is the **lowercase, space-separated plural** of the model name:
+
+| Model | Module string | Route prefix |
+|-------|---------------|--------------|
+| `Department` | `departments` | `departments` |
+| `LeaveType` | `leave types` | `leave-types` |
+| `BlogPost` | `blog posts` | `blog-posts` |
+
+Note: the permission string uses spaces (`blog posts`), the route prefix uses hyphens (`blog-posts`).
+
+Permission records must exist in the database. Add new permissions to `database/seeders/RbacSeeder.php`.
+
+---
+
+## 6. Creating a New Module — Checklist
+
+Follow this order to avoid dependency issues:
+
+- [ ] **Migration** — define columns, run `php artisan migrate`
+- [ ] **Model** — fillable, casts, scopes, `booted()` registering the Observer
+- [ ] **Observer** — all six lifecycle hooks with cascade logic
+- [ ] **Policy** — `before()` + five action methods using Spatie `can()`
+- [ ] **Factory** — realistic fake data for tests and seeders
+- [ ] **Seeder** — uses Factory, add to `DatabaseSeeder` if needed
+- [ ] **StoreRequest** — validation rules + messages
+- [ ] **UpdateRequest** — same rules with unique-ignore-self
+- [ ] **Controller** — CRUD methods, `authorize()` per method, DataTables for `index()`
+- [ ] **Views** — `index`, `create`, `edit`, `show` following existing module layout
+- [ ] **Routes** — permission-protected group added to `routes/web.php`
+- [ ] **Permissions** — add four permission records to `RbacSeeder`
+- [ ] **Test** — feature test covering CRUD success paths and 403 denial cases
+
+---
+
+## 7. File Upload Modules
+
+If a module handles file uploads, additionally:
+
+- Implement `HasMedia` interface and use `InteractsWithMedia` trait on the Model
+- Define collections in `registerMediaCollections()` — set `singleFile()` for avatars
+- Define conversions in `registerMediaConversions()` — generate `thumb` and `medium` sizes for images
+- Add file validation rules to both `StoreRequest` and `UpdateRequest`
+- Add `enctype="multipart/form-data"` to the form tag in views
+- In `store()`: upload files after `Model::create()`
+- In `update()`: call `clearMediaCollection()` before re-uploading single-file collections
+- In `destroy()`: Spatie automatically deletes associated media when the model is deleted
+
+Reference implementation: `Employee` model, `EmployeeController`, `StoreEmployeeRequest`.

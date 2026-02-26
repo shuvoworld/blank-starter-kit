@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Observers\ProductObserver;
 use App\Traits\HasActivityLog;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -37,5 +38,17 @@ class Product extends Model
     public function scopeInStock(Builder $query): Builder
     {
         return $query->where('stock', '>', 0);
+    }
+
+    /**
+     * Register model event listeners.
+     *
+     * booted() is called once when the model class is first loaded.
+     * Attaching the observer here means every Product create/update/delete
+     * will automatically trigger the matching method in ProductObserver.
+     */
+    protected static function booted(): void
+    {
+        static::observe(ProductObserver::class);
     }
 }
