@@ -149,15 +149,15 @@ class RoleService
     }
 
     /**
-     * Create or get the Super Admin role.
+     * Create or get the Superuser role.
      */
     public function getOrCreateSuperAdmin(): Role
     {
         return Role::firstOrCreate(
-            ['name' => 'Super Admin'],
+            ['name' => 'Superuser'],
             [
                 'guard_name' => 'web',
-                'description' => 'Super Administrator with all permissions',
+                'description' => 'Full system access with all permissions',
             ]
         );
     }

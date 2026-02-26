@@ -16,26 +16,28 @@ class RbacSeeder extends Seeder
         // Reset cached roles and permissions
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
-        // Create permissions for each module
+        // Create permissions for schedule management system
         $modules = [
-            'users' => ['view any', 'view', 'create', 'update', 'delete', 'restore'],
-            'roles' => ['view any', 'view', 'create', 'update', 'delete', 'restore'],
-            'permissions' => ['view any', 'view', 'create', 'update', 'delete'],
-            'posts' => ['view any', 'view', 'create', 'update', 'delete', 'restore', 'force delete'],
-            'categories' => ['view any', 'view', 'create', 'update', 'delete', 'restore'],
-            'settings' => ['view any', 'view', 'update'],
+            'users' => ['view any', 'view', 'create', 'update', 'delete'],
+            'roles' => ['view any', 'view', 'create', 'update', 'delete'],
+            'permissions' => ['view any', 'view'],
+            'employees' => ['view any', 'view', 'create', 'update', 'delete'],
+            'schedules' => ['view any', 'view', 'create', 'update', 'delete', 'assign'],
+            'shifts' => ['view any', 'view', 'create', 'update', 'delete'],
+            'departments' => ['view any', 'view', 'create', 'update', 'delete'],
+            'designations' => ['view any', 'view', 'create', 'update', 'delete'],
+            'leave types' => ['view any', 'view', 'create', 'update', 'delete'],
+            'holidays' => ['view any', 'view', 'create', 'update', 'delete'],
+            'leave requests' => ['view any', 'view', 'create', 'approve', 'reject', 'cancel'],
+            'leave balances' => ['view any', 'view'],
             'dashboard' => ['view'],
-            'landing page' => ['manage'],
         ];
-
-        $permissionsMap = [];
 
         foreach ($modules as $module => $actions) {
             foreach ($actions as $action) {
-                $permissionName = "{$action} {$module}";
-                $permission = Permission::firstOrCreate(
+                Permission::firstOrCreate(
                     [
-                        'name' => $permissionName,
+                        'name' => "{$action} {$module}",
                         'guard_name' => 'web',
                     ],
                     [
@@ -43,59 +45,48 @@ class RbacSeeder extends Seeder
                         'description' => ucfirst($action).' '.ucfirst($module),
                     ]
                 );
-                $permissionsMap[$module][] = $permission->id;
             }
         }
 
-        // Create roles and assign permissions
-        $superAdmin = Role::firstOrCreate(
-            ['name' => 'Super Admin', 'guard_name' => 'web'],
-            ['description' => 'Super Administrator with all permissions']
+        // Create Superuser role with all permissions
+        $superuser = Role::firstOrCreate(
+            ['name' => 'Superuser', 'guard_name' => 'web'],
+            ['description' => 'Full system access with all permissions']
         );
-        $superAdmin->syncPermissions(Permission::all());
+        $superuser->syncPermissions(Permission::all());
 
+        // Create Admin role with management permissions (except delete users/roles)
         $admin = Role::firstOrCreate(
             ['name' => 'Admin', 'guard_name' => 'web'],
-            ['description' => 'Administrator with most permissions']
+            ['description' => 'Administrator with schedule and employee management permissions']
         );
-        // Admin has all permissions except delete/force delete
         $admin->syncPermissions(
-            Permission::where('name', 'not like', '%delete%')
-                ->where('name', 'not like', '%force%')
+            Permission::where('name', 'not like', '%delete users%')
+                ->where('name', 'not like', '%delete roles%')
                 ->get()
         );
 
-        $manager = Role::firstOrCreate(
-            ['name' => 'Manager', 'guard_name' => 'web'],
-            ['description' => 'Manager with content management permissions']
+        // Create Employee role with limited permissions
+        $employee = Role::firstOrCreate(
+            ['name' => 'Employee', 'guard_name' => 'web'],
+            ['description' => 'Employee with view-only access to own schedule']
         );
-        $manager->syncPermissions(
-            Permission::whereIn('module', ['posts', 'categories'])
-                ->where('name', 'not like', '%delete%')
-                ->where('name', 'not like', '%restore%')
+        $employee->syncPermissions(
+            Permission::whereIn('module', ['dashboard', 'employees', 'departments', 'designations', 'holidays', 'leave requests', 'leave balances'])
+                ->where(function ($query) {
+                    $query->where('name', 'view dashboard')
+                        ->orWhere('name', 'view any employees')
+                        ->orWhere('name', 'view any departments')
+                        ->orWhere('name', 'view any designations')
+                        ->orWhere('name', 'view any holidays')
+                        ->orWhere('name', 'create leave requests')
+                        ->orWhere('name', 'view leave balances');
+                })
                 ->get()
         );
-
-        $editor = Role::firstOrCreate(
-            ['name' => 'Editor', 'guard_name' => 'web'],
-            ['description' => 'Editor with content editing permissions']
-        );
-        $editor->syncPermissions(
-            Permission::where('module', 'posts')
-                ->whereIn('name', ['view posts', 'view any posts', 'create posts', 'update posts'])
-                ->get()
-        );
-
-        $user = Role::firstOrCreate(
-            ['name' => 'User', 'guard_name' => 'web'],
-            ['description' => 'Standard user with basic permissions']
-        );
-        $user->syncPermissions([
-            Permission::where('name', 'view dashboard')->first(),
-        ]);
 
         $this->command->info('RBAC seeded successfully.');
-        $this->command->info('Roles created: Super Admin, Admin, Manager, Editor, User');
-        $this->command->info('Permissions created for modules: users, roles, permissions, posts, categories, settings, dashboard');
+        $this->command->info('Roles created: Superuser, Admin, Employee');
+        $this->command->info('Permissions created for modules: users, roles, permissions, employees, schedules, shifts, departments, designations, leave types, holidays, leave requests, leave balances, dashboard');
     }
 }

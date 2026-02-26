@@ -18,19 +18,19 @@
                 <form id="filterForm" class="row g-2 align-items-end">
                     <div class="col-md-3">
                         <label class="form-label small mb-1">Department</label>
-                        <select name="filter_department" class="form-select form-select-sm">
+                        <select name="filter_department_id" class="form-select form-select-sm">
                             <option value="">All Departments</option>
                             @foreach($departments as $department)
-                                <option value="{{ $department }}">{{ $department }}</option>
+                                <option value="{{ $department->id }}">{{ $department->name }}</option>
                             @endforeach
                         </select>
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label small mb-1">Position</label>
-                        <select name="filter_position" class="form-select form-select-sm">
-                            <option value="">All Positions</option>
-                            @foreach($positions as $position)
-                                <option value="{{ $position }}">{{ $position }}</option>
+                        <label class="form-label small mb-1">Designation</label>
+                        <select name="filter_designation_id" class="form-select form-select-sm">
+                            <option value="">All Designations</option>
+                            @foreach($designations as $designation)
+                                <option value="{{ $designation->id }}">{{ $designation->name }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -81,10 +81,12 @@
                     <thead>
                         <tr>
                             <th width="50">#</th>
+                            <th width="60">Photo</th>
                             <th>Name</th>
                             <th>Email</th>
+                            <th>System User</th>
                             <th>Department</th>
-                            <th>Position</th>
+                            <th>Designation</th>
                             <th>Status</th>
                             <th width="180">Actions</th>
                         </tr>
@@ -134,8 +136,8 @@
                             url: '{{ route('employees.index') }}',
                             type: 'GET',
                             data: function(d) {
-                                d.filter_department = $('select[name="filter_department"]').val();
-                                d.filter_position = $('select[name="filter_position"]').val();
+                                d.filter_department_id = $('select[name="filter_department_id"]').val();
+                                d.filter_designation_id = $('select[name="filter_designation_id"]').val();
                                 d.filter_status = $('select[name="filter_status"]').val();
                                 d.filter_hire_date_from = $('input[name="filter_hire_date_from"]').val();
                                 d.filter_hire_date_to = $('input[name="filter_hire_date_to"]').val();
@@ -143,10 +145,12 @@
                         },
                         columns: [
                             {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false, className: 'text-center'},
+                            {data: 'profile_picture', name: 'profile_picture', orderable: false, searchable: false, className: 'text-center'},
                             {data: 'name', name: 'name'},
                             {data: 'email', name: 'email'},
-                            {data: 'department', name: 'department'},
-                            {data: 'position', name: 'position'},
+                            {data: 'user_badge', name: 'user_badge', orderable: false, searchable: false},
+                            {data: 'department_name', name: 'department_name'},
+                            {data: 'designation_name', name: 'designation_name'},
                             {data: 'status_badge', name: 'status', orderable: false, searchable: false, className: 'text-center'},
                             {data: 'action', name: 'action', orderable: false, searchable: false, className: 'text-center'}
                         ],

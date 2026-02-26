@@ -70,11 +70,11 @@ class RbacService
     }
 
     /**
-     * Check if user is super admin.
+     * Check if user is superuser.
      */
     public function isSuperAdmin(User $user): bool
     {
-        return $user->hasRole('Super Admin');
+        return $user->hasRole('Superuser');
     }
 
     /**

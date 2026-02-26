@@ -1,0 +1,42 @@
+{
+  "name": "milenmk/laravel-locations",
+  "description": "Add Countries, Cities, Areas, Languages and Currencies models to your Laravel application",
+  "license": "MIT",
+  "autoload": {
+    "psr-4": {
+      "Milenmk\\LaravelLocations\\": "src/"
+    }
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "Milenmk\\LaravelLocations\\MilenmkLocationsServiceProvider"
+      ]
+    }
+  },
+  "authors": [
+    {
+      "name": "Milen Karaganski",
+      "email": "milenmk@gmail.com"
+    }
+  ],
+  "repository": [
+    {
+      "type": "git",
+      "url": "https://github.com/milenmk/laravel-locations.git"
+    }
+  ],
+  "require": {
+    "php": "^8.2"
+  },
+  "conflict": {
+    "laravel/framework": "<9.0"
+  },
+  "require-dev": {
+    "orchestra/testbench": "^8.21",
+    "laravel/pint": "^1.20",
+    "tightenco/duster": "^2.7"
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true
+}

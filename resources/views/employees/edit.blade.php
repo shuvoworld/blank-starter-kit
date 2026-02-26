@@ -20,10 +20,43 @@
                         Edit Employee: {{ $employee->name }}
                     </h3>
                 </div>
-                <form action="{{ route('employees.update', $employee) }}" method="POST">
+                <form action="{{ route('employees.update', $employee) }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
                     <div class="card-body">
+                        {{-- Profile Picture Section --}}
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <label class="form-label">Profile Picture</label>
+                                <div class="d-flex align-items-center gap-3">
+                                    @if($employee->getFirstMediaUrl('profile_picture'))
+                                        <img src="{{ $employee->getFirstMediaUrl('profile_picture', 'thumb') }}"
+                                             alt="{{ $employee->name }}"
+                                             class="rounded-circle"
+                                             width="80"
+                                             height="80"
+                                             style="object-fit: cover;">
+                                    @else
+                                        <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center text-white"
+                                             style="width: 80px; height: 80px; font-size: 2rem;">
+                                            <i class="bi bi-person-fill"></i>
+                                        </div>
+                                    @endif
+                                    <div class="flex-grow-1">
+                                        <input type="file"
+                                               class="form-control @error('profile_picture') is-invalid @enderror"
+                                               id="profile_picture"
+                                               name="profile_picture"
+                                               accept="image/jpeg,image/png,image/gif,image/webp">
+                                        @error('profile_picture')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                        <div class="form-text">Leave empty to keep current image</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="name" class="form-label">Name <span class="text-danger">*</span></label>
@@ -43,6 +76,34 @@
                                 @error('email')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="user_id" class="form-label">Associate User</label>
+                                @if(Auth::user()->hasRole(['Superuser', 'Admin']))
+                                    <select class="form-select @error('user_id') is-invalid @enderror"
+                                            id="user_id" name="user_id">
+                                        <option value="">Select user...</option>
+                                        @foreach($users as $user)
+                                            <option value="{{ $user->id }}" {{ old('user_id', $employee->user_id) == $user->id ? 'selected' : '' }}>
+                                                {{ $user->name }} ({{ $user->email }})
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('user_id')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                    <div class="form-text">Link this employee to a system user account</div>
+                                @else
+                                    @if($employee->user)
+                                        <input type="text" class="form-control"
+                                               value="{{ $employee->user->name }} ({{ $employee->user->email }})" readonly>
+                                    @else
+                                        <input type="text" class="form-control"
+                                               value="No user associated" readonly>
+                                    @endif
+                                    <div class="form-text">Only administrators can change user association</div>
+                                @endif
                             </div>
                         </div>
 
@@ -70,33 +131,99 @@
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="department" class="form-label">Department <span class="text-danger">*</span></label>
-                                <select class="form-select @error('department') is-invalid @enderror"
-                                        id="department" name="department" required>
+                                <label for="department_id" class="form-label">Department</label>
+                                <select class="form-select @error('department_id') is-invalid @enderror"
+                                        id="department_id" name="department_id">
                                     <option value="">Select department...</option>
-                                    @foreach(['Engineering', 'Marketing', 'Sales', 'HR', 'Finance', 'IT', 'Operations'] as $dept)
-                                        <option value="{{ $dept }}" {{ old('department', $employee->department) === $dept ? 'selected' : '' }}>
-                                            {{ $dept }}
+                                    @foreach($departments as $dept)
+                                        <option value="{{ $dept->id }}" {{ old('department_id', $employee->department_id) == $dept->id ? 'selected' : '' }}>
+                                            {{ $dept->name }}
                                         </option>
                                     @endforeach
                                 </select>
-                                @error('department')
+                                @error('department_id')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                                <div class="form-text">
+                                    <a href="{{ route('departments.index') }}" target="_blank" class="text-info">
+                                        <i class="bi bi-plus-circle"></i> Add New Department
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="designation_id" class="form-label">Designation</label>
+                                <select class="form-select @error('designation_id') is-invalid @enderror"
+                                        id="designation_id" name="designation_id">
+                                    <option value="">Select designation...</option>
+                                    @foreach($designations as $designation)
+                                        <option value="{{ $designation->id }}" {{ old('designation_id', $employee->designation_id) == $designation->id ? 'selected' : '' }}>
+                                            {{ $designation->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('designation_id')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                                <div class="form-text">
+                                    <a href="{{ route('designations.index') }}" target="_blank" class="text-info">
+                                        <i class="bi bi-plus-circle"></i> Add New Designation
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="country_id" class="form-label">Country</label>
+                                <select class="form-select @error('country_id') is-invalid @enderror"
+                                        id="country_id" name="country_id" data-location="country">
+                                    <option value="">Select country...</option>
+                                    @foreach($countries as $country)
+                                        <option value="{{ $country->id }}" {{ old('country_id', $employee->country_id) == $country->id ? 'selected' : '' }}>
+                                            {{ $country->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('country_id')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
 
                             <div class="col-md-6 mb-3">
-                                <label for="position" class="form-label">Position <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control @error('position') is-invalid @enderror"
-                                       id="position" name="position" value="{{ old('position', $employee->position) }}"
-                                       placeholder="e.g. Senior Developer" required>
-                                @error('position')
+                                <label for="city_id" class="form-label">State/Province</label>
+                                <select class="form-select @error('city_id') is-invalid @enderror"
+                                        id="city_id" name="city_id" data-location="city" {{ !$employee->country_id ? 'disabled' : '' }}>
+                                    <option value="">Select state...</option>
+                                    @foreach($cities as $city)
+                                        <option value="{{ $city->id }}" {{ old('city_id', $employee->city_id) == $city->id ? 'selected' : '' }}>
+                                            {{ $city->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('city_id')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
                         </div>
 
                         <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="area_id" class="form-label">Area/City</label>
+                                <select class="form-select @error('area_id') is-invalid @enderror"
+                                        id="area_id" name="area_id" data-location="area" {{ !$employee->city_id ? 'disabled' : '' }}>
+                                    <option value="">Select area...</option>
+                                    @foreach($areas as $area)
+                                        <option value="{{ $area->id }}" {{ old('area_id', $employee->area_id) == $area->id ? 'selected' : '' }}>
+                                            {{ $area->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('area_id')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
                             <div class="col-md-6 mb-3">
                                 <label for="salary" class="form-label">Salary <span class="text-danger">*</span></label>
                                 <div class="input-group">
@@ -120,6 +247,83 @@
                                 @error('status')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
+                            </div>
+                        </div>
+
+                        {{-- Documents Section --}}
+                        <hr class="my-4">
+                        <h5 class="mb-3"><i class="bi bi-file-earmark-pdf me-2"></i>Documents</h5>
+
+                        {{-- Resume --}}
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <label for="resume" class="form-label">Resume/CV</label>
+                                @if($employee->getFirstMedia('resume'))
+                                    <div class="alert alert-info alert-dismissible fade show" role="alert">
+                                        <i class="bi bi-file-earmark-pdf-fill me-2"></i>
+                                        <strong>Current:</strong> {{ $employee->getFirstMedia('resume')->file_name }}
+                                        <a href="{{ $employee->getFirstMediaUrl('resume') }}" target="_blank" class="btn btn-sm btn-outline-primary ms-2">
+                                            <i class="bi bi-download"></i> Download
+                                        </a>
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                    </div>
+                                @endif
+                                <input type="file" class="form-control @error('resume') is-invalid @enderror"
+                                       id="resume" name="resume" accept=".pdf,application/pdf">
+                                @error('resume')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                                <div class="form-text">Upload employee resume in PDF format (Max: 5MB). New file will replace the existing one.</div>
+                            </div>
+                        </div>
+
+                        {{-- Certificates --}}
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <label for="certificates" class="form-label">Certificates</label>
+                                @if($employee->getMedia('certificates')->count() > 0)
+                                    <div class="mb-2">
+                                        <small class="text-muted">Current certificates:</small>
+                                        @foreach($employee->getMedia('certificates') as $cert)
+                                            <div class="d-inline-block me-2">
+                                                <a href="{{ $cert->getUrl() }}" target="_blank" class="badge bg-info text-decoration-none">
+                                                    <i class="bi bi-file-earmark-pdf-fill me-1"></i>{{ $cert->file_name }}
+                                                </a>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @endif
+                                <input type="file" class="form-control @error('certificates') is-invalid @enderror"
+                                       id="certificates" name="certificates[]" accept=".pdf,application/pdf" multiple>
+                                @error('certificates')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                                <div class="form-text">Upload employee certificates (PDF only, Max: 5 files, 5MB each). New files will be added to existing ones.</div>
+                            </div>
+                        </div>
+
+                        {{-- Other Documents --}}
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <label for="documents" class="form-label">Other Documents</label>
+                                @if($employee->getMedia('documents')->count() > 0)
+                                    <div class="mb-2">
+                                        <small class="text-muted">Current documents:</small>
+                                        @foreach($employee->getMedia('documents') as $doc)
+                                            <div class="d-inline-block me-2">
+                                                <a href="{{ $doc->getUrl() }}" target="_blank" class="badge bg-info text-decoration-none">
+                                                    <i class="bi bi-file-earmark-pdf-fill me-1"></i>{{ $doc->file_name }}
+                                                </a>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @endif
+                                <input type="file" class="form-control @error('documents') is-invalid @enderror"
+                                       id="documents" name="documents[]" accept=".pdf,application/pdf" multiple>
+                                @error('documents')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                                <div class="form-text">Upload other employee documents (PDF only, Max: 10 files, 5MB each). New files will be added to existing ones.</div>
                             </div>
                         </div>
                     </div>
@@ -184,4 +388,66 @@
             @endcan
         </div>
     </div>
+
+    @push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const countrySelect = document.getElementById('country_id');
+            const citySelect = document.getElementById('city_id');
+            const areaSelect = document.getElementById('area_id');
+            const citiesByCountryUrl = "{{ route('employees.cities.by-country') }}";
+            const areasByCityUrl = "{{ route('employees.areas.by-city') }}";
+
+            // Load cities when country changes
+            countrySelect.addEventListener('change', function() {
+                const countryId = this.value;
+
+                // Reset and disable city and area selects
+                citySelect.innerHTML = '<option value="">Select state...</option>';
+                citySelect.disabled = !countryId;
+                areaSelect.innerHTML = '<option value="">Select area...</option>';
+                areaSelect.disabled = true;
+
+                if (countryId) {
+                    fetch(`${citiesByCountryUrl}?country_id=${countryId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            citySelect.innerHTML = '<option value="">Select state...</option>';
+                            data.forEach(city => {
+                                const option = document.createElement('option');
+                                option.value = city.id;
+                                option.textContent = city.name;
+                                citySelect.appendChild(option);
+                            });
+                        })
+                        .catch(error => console.error('Error loading cities:', error));
+                }
+            });
+
+            // Load areas when city changes
+            citySelect.addEventListener('change', function() {
+                const cityId = this.value;
+
+                // Reset and disable area select
+                areaSelect.innerHTML = '<option value="">Select area...</option>';
+                areaSelect.disabled = !cityId;
+
+                if (cityId) {
+                    fetch(`${areasByCityUrl}?city_id=${cityId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            areaSelect.innerHTML = '<option value="">Select area...</option>';
+                            data.forEach(area => {
+                                const option = document.createElement('option');
+                                option.value = area.id;
+                                option.textContent = area.name;
+                                areaSelect.appendChild(option);
+                            });
+                        })
+                        .catch(error => console.error('Error loading areas:', error));
+                }
+            });
+        });
+    </script>
+    @endpush
 @endsection

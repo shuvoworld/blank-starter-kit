@@ -34,6 +34,6 @@ class DatabaseSeeder extends Seeder
             'name' => 'Admin User',
             'email' => 'admin@example.com',
         ]);
-        $admin->assignRole('Super Admin');
+        $admin->assignRole('Superuser');
     }
 }
