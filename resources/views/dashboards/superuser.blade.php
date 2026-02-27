@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.form.app')
 
 @section('header')
 <h1 class="m-0">Superuser Dashboard</h1>
