@@ -42,7 +42,7 @@ class HomeController extends Controller
                 break;
             }
         }
-      
+
         // Prepare common data for all dashboards
         $stats = $this->getStats($user);
         $recentActivities = $this->getRecentActivities();

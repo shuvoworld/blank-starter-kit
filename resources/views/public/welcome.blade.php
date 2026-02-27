@@ -1,6 +1,11 @@
 @extends('layouts.public.app')
-
-
+@push('styles')
+    <style>
+        .hero-gradient {
+            background: linear-gradient(135deg, #c2c7d0 0%, #20c997 100%);
+        }
+    </style>
+@endpush
 @section('content')
     <!-- Hero Section -->
     <section id="home" class="hero-gradient text-white py-5">
@@ -594,6 +599,10 @@
     </section>
 @endsection
 
-
+@push('scripts')
+    <script>
+        console.log('push from child')
+    </script>
+@endpush
 
 

@@ -11,13 +11,8 @@
     <title>
         @yield('title', $getValue('site_name', config('app.name', 'Laravel')) . ' - Home')
     </title>
-
     {{-- Assets --}}
     @vite(['resources/scss/app.scss', 'resources/js/app.js'])
-
-    {{-- Page Specific CSS --}}
-    @stack('styles')
-
     {{-- Default Layout CSS --}}
     <style>
         /* Hero gradient background */
@@ -77,6 +72,8 @@
             scroll-margin-top: 76px;
         }
     </style>
+    {{-- Page Specific CSS --}}
+    @stack('styles')
 </head>
 
 <body class="bg-light">
@@ -111,9 +108,6 @@
 
 {{-- Page Specific JS --}}
 @stack('scripts')
-
-{{-- Bootstrap JS --}}
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 </body>
 </html>
