@@ -1,4 +1,4 @@
-@extends('layouts.auth.guest')
+@extends('layouts.auth.app')
 
 @section('content')
 <div class="card">
