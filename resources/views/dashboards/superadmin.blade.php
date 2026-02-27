@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.dashboard.app')
 
 @section('header')
     <h1 class="m-0">Super Admin Dashboard</h1>
@@ -326,8 +326,7 @@
 @endsection
 
 @push('scripts')
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
 
     <script>
         $(function () {
