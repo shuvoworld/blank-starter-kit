@@ -24,7 +24,7 @@
                     @csrf
                     <div class="card-body">
                         <div class="row">
-                            @include('form.text', ['var' => ['name'=> 'name','label'=> 'Name','placeholder' => 'Enter Name','div'=> 'col-md-6 col-sm-6']])
+                            @include('layouts.form.text', ['var' => ['name'=> 'name','label'=> 'Name','placeholder' => 'Enter Name','div'=> 'col-md-6 col-sm-6']])
                             <div class="col-md-6 mb-3">
                                 <label for="name" class="form-label">Name <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control @error('name') is-invalid @enderror"

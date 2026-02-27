@@ -26,7 +26,7 @@ class HomeController extends Controller
 
         // Define role-to-dashboard mapping with priority order
         $roleDashboardMap = [
-            'Superuser' => 'superuser',
+            'Super Admin' => 'superadmin',
             'Admin' => 'admin',
             'Employee' => 'employee',
         ];
@@ -35,13 +35,14 @@ class HomeController extends Controller
         $dashboardView = 'dashboards.employee'; // default fallback
         $userRole = 'employee';
         foreach ($roleDashboardMap as $role => $view) {
+
             if (in_array($role, $roles)) {
                 $dashboardView = "dashboards.{$view}";
                 $userRole = $role;
                 break;
             }
         }
-
+      
         // Prepare common data for all dashboards
         $stats = $this->getStats($user);
         $recentActivities = $this->getRecentActivities();
