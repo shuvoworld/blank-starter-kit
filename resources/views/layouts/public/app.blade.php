@@ -79,8 +79,12 @@
 <body class="bg-light">
 
 {{-- ================= NAVBAR ================= --}}
-@includeIf('layouts.public.partials.navbar')
 
+@hasSection('navbar')
+    @yield('navbar')
+@else
+    @include('layouts.public.partials.navbar')
+@endif
 {{-- Optional Top Section --}}
 @yield('content-top')
 
@@ -104,8 +108,13 @@
 </main>
 
 {{-- ================= FOOTER ================= --}}
-@includeIf('layouts.public.partials.footer')
+@hasSection('footer')
+    @yield('footer')
+@else
+    @include('layouts.public.partials.footer')
+@endif
 
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 {{-- Page Specific JS --}}
 @stack('scripts')
 

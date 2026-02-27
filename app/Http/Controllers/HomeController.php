@@ -10,9 +10,9 @@ use App\Models\LandingPageSection;
 
 class HomeController extends Controller
 {
-    public function __construct(
-        private LeaveBalanceService $balanceService
-    ) {}
+    public function __construct(private LeaveBalanceService $balanceService) {
+
+    }
 
     /**
      * Display the user's dashboard based on their role.
@@ -29,6 +29,7 @@ class HomeController extends Controller
             'Super Admin' => 'superadmin',
             'Admin' => 'admin',
             'Employee' => 'employee',
+            'Superuser' => 'superuser',
         ];
 
         // Find the first matching role (higher priority roles first)
@@ -42,6 +43,9 @@ class HomeController extends Controller
                 break;
             }
         }
+        // dump($roleDashboardMap);
+        // dump($roles);
+        // dd("test");
 
         // Prepare common data for all dashboards
         $stats = $this->getStats($user);

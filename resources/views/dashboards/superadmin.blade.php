@@ -1,5 +1,11 @@
 @extends('layouts.dashboard.app')
-
+@push('styles')
+    <style>
+        .info-box{
+            background-color:#20c997;
+        }
+    </style>
+    @endpush
 @section('header')
     <h1 class="m-0">Super Admin Dashboard</h1>
 @endsection
@@ -326,7 +332,9 @@
 @endsection
 
 @push('scripts')
-
+    <script>
+        console.log("Console from Child")
+    </script>
 
     <script>
         $(function () {

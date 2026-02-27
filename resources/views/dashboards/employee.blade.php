@@ -204,7 +204,7 @@
         <div class="card card-info card-outline mb-3">
             <div class="card-header">
                 <h3 class="card-title">
-{{--                    <i class="bi bi-bar-chart me-1"></i> Leave Stats ({{ $currentYear }})--}}
+                    <i class="bi bi-bar-chart me-1"></i> Leave Stats ({{ $currentYear }})
                 </h3>
             </div>
             <div class="card-body">

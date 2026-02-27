@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ config('app.name', 'Laravel') }}</title>
+    <title>  @yield('title', $getValue('site_name', config('app.name', 'Laravel')) . ' - Login/Register')</title>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
@@ -14,10 +14,7 @@
     <!-- Scripts -->
     @vite(['resources/scss/app.scss', 'resources/js/app.js'])
 
-    <!-- Google Font: Source Sans Pro -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.2/css/all.min.css">
+
     @stack('styles')
 </head>
 <body class="login-page bg-body-secondary">
@@ -33,7 +30,7 @@
 
         @yield('content')
     </div>
-
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     @stack('scripts')
 </body>
 </html>
