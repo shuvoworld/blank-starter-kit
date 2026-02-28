@@ -35,7 +35,11 @@ class InputSelect extends BaseInput
 
     public function isSelected(mixed $optVal): bool
     {
-        $current = old($this->name) ?? $this->value;
+        if ($this->hasOldInput()) {
+            $current = old($this->oldKey);
+        } else {
+            $current = $this->value;
+        }
 
         if (is_array($current)) {
             return in_array((string) $optVal, array_map('strval', $current));

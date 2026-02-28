@@ -23,15 +23,22 @@
                 <form action="{{ route('users.store') }}" method="POST">
                     @csrf
                     <div class="card-body">
-                        <div class="mb-3">
-                            <label for="name" class="form-label">Name <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control @error('name') is-invalid @enderror"
-                                   id="name" name="name" value="{{ old('name') }}"
-                                   placeholder="Enter full name" required autofocus>
-                            @error('name')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
+                        @include('layouts.form.inputs.text', ['var' => [
+    'name'        => 'name',
+    'label'       => 'Name',
+    'placeholder' => 'Name',
+    'div'         => 'col-md-12 col-sm-12',
+]])
+
+{{--                        <div class="mb-3">--}}
+{{--                            <label for="name" class="form-label">Name <span class="text-danger">*</span></label>--}}
+{{--                            <input type="text" class="form-control @error('name') is-invalid @enderror"--}}
+{{--                                   id="name" name="name" value="{{ old('name') }}"--}}
+{{--                                   placeholder="Enter full name" required autofocus>--}}
+{{--                            @error('name')--}}
+{{--                                <div class="invalid-feedback">{{ $message }}</div>--}}
+{{--                            @enderror--}}
+{{--                        </div>--}}
 
                         <div class="mb-3">
                             <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
