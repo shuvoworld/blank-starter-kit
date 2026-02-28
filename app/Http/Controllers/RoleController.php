@@ -51,7 +51,7 @@ class RoleController extends Controller
                     $actions = '<div class="btn-group btn-group-sm">';
                     $actions .= '<a href="'.$viewUrl.'" class="btn btn-info" title="View"><i class="bi bi-eye"></i></a>';
 
-                    if ($canUpdate && ! $role->isSuperAdmin()) {
+                    if ($canUpdate && ! $role->isSuperuser()) {
                         $actions .= '<a href="'.$editUrl.'" class="btn btn-primary" title="Edit"><i class="bi bi-pencil"></i></a>';
                     }
 
@@ -141,9 +141,9 @@ class RoleController extends Controller
      */
     public function destroy(Role $role): RedirectResponse
     {
-        // Prevent deletion of Super Admin role
-        if ($role->isSuperAdmin()) {
-            return back()->with('error', 'Cannot delete Super Admin role.');
+        // Prevent deletion of Superuser role
+        if ($role->isSuperuser()) {
+            return back()->with('error', 'Cannot delete Superuser role.');
         }
 
         // Check if role has users

@@ -17,7 +17,7 @@ class ActivityLogPermissionsSeeder extends Seeder
             ['module' => 'activity-log', 'description' => 'View activity log']
         );
 
-        foreach (['Super Admin', 'Admin'] as $roleName) {
+        foreach (['Superuser', 'Admin'] as $roleName) {
             $role = Role::where('name', $roleName)->first();
             if ($role) {
                 $role->givePermissionTo($permission);

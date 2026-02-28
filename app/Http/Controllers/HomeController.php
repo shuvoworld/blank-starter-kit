@@ -3,16 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Holiday;
+use App\Models\LandingPageSection;
 use App\Services\LeaveBalanceService;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
-use App\Models\LandingPageSection;
 
 class HomeController extends Controller
 {
-    public function __construct(private LeaveBalanceService $balanceService) {
-
-    }
+    public function __construct(private LeaveBalanceService $balanceService) {}
 
     /**
      * Display the user's dashboard based on their role.
@@ -26,10 +24,9 @@ class HomeController extends Controller
 
         // Define role-to-dashboard mapping with priority order
         $roleDashboardMap = [
-            'Super Admin' => 'superadmin',
+            'Superuser' => 'superuser',
             'Admin' => 'admin',
             'Employee' => 'employee',
-            'Superuser' => 'superuser',
         ];
 
         // Find the first matching role (higher priority roles first)

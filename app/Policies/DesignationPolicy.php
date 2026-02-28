@@ -15,7 +15,7 @@ class DesignationPolicy
      */
     public function before(User $user, string $ability): ?bool
     {
-        if ($user->hasRole('Super Admin')) {
+        if ($user->hasRole('Superuser')) {
             return true;
         }
 
