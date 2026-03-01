@@ -82,7 +82,7 @@
             </div>
         </div>
 
-        <div class="col-lg-4">
+        <div class="col-lg-12">
             <div class="card card-info card-outline">
                 <div class="card-header">
                     <h3 class="card-title">
@@ -156,23 +156,22 @@
                 </div>
             </div>
         </div>
-
-        @push('scripts')
-            <script>
-                $(function () {
-                    $('.select2').select2({
-                        theme: 'bootstrap-5',
-                        placeholder: 'Select roles',
-                        allowClear: true,
-                        width: '100%'
-                    });
-
-                    $('#deleteUserBtn').on('click', function () {
-                        var deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
-                        deleteModal.show();
-                    });
-                });
-            </script>
-        @endpush
     @endif
 @endsection
+@push('scripts')
+    <script>
+        $(function () {
+            $('.select2').select2({
+                theme: 'bootstrap-5',
+                placeholder: 'Select roles',
+                allowClear: true,
+                width: '100%'
+            });
+
+            $('#deleteUserBtn').on('click', function () {
+                var deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+                deleteModal.show();
+            });
+        });
+    </script>
+@endpush
