@@ -26,9 +26,14 @@
                         <div class="card-body">
                             @include('layouts.form.inputs.text', ['var' => ['name'=> 'name','label'=> 'Name','placeholder' => 'Name','div'=> 'col-md-12 col-sm-12','value'=> $user->name,'required' => true]])
                             @include('layouts.form.inputs.text', ['var' => ['name'=> 'email','label'=> 'Email','placeholder' => 'email','div'=> 'col-md-12 col-sm-12','value'=> $user->email,'required' => true]])
-{{--                            @include('layouts.form.inputs.select', ['var' => ['name'=> 'email','label'=> 'Email','options' => ['active' => 'Active', 'inactive' => 'Inactive'],'div'=> 'col-md-12 col-sm-12','value'=> $user->email,'required' => true]])--}}
-
-
+                            @include('layouts.form.inputs.select-model', ['var' => [
+    'name'=> 'roles',
+'label'=> 'Roles',
+'model' => \App\Models\Role::class,
+'div'=> 'col-md-12 col-sm-12',
+'class'=>'select2',
+'required' => true]
+])
 
                             <div class="mb-3">
                                 <label for="roles" class="form-label">Roles</label>
@@ -48,7 +53,6 @@
 
                             <hr class="my-4">
                             <p class="text-muted small">Leave password fields empty to keep the current password.</p>
-
                             <div class="mb-3">
                                 <label for="password" class="form-label">New Password</label>
                                 <input type="password" class="form-control @error('password') is-invalid @enderror"
