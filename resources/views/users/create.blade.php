@@ -23,13 +23,9 @@
                 <form action="{{ route('users.store') }}" method="POST">
                     @csrf
                     <div class="card-body">
-                        @include('layouts.form.inputs.text', ['var' => [
-    'name'        => 'name',
-    'label'       => 'Name',
-    'placeholder' => 'Name',
-    'div'         => 'col-md-12 col-sm-12',
-]])
-
+                        @include('layouts.form.inputs.text', ['var' => ['name'=> 'name','label'=> 'Name','placeholder' => 'Name','div'=> 'col-md-12 col-sm-12','required' => true]])
+                        @include('layouts.form.inputs.text', ['var' => ['name'=> 'email','label'=> 'Email','placeholder' => 'email','div'=> 'col-md-12 col-sm-12','required' => true]])
+                        @include('layouts.form.inputs.select-model', ['var' => ['name'=> 'roles','label'=> 'Roles','model' => \App\Models\Role::class,'div'=> 'col-md-12 col-sm-12','class'=>'select2','required' => true]])
 {{--                        <div class="mb-3">--}}
 {{--                            <label for="name" class="form-label">Name <span class="text-danger">*</span></label>--}}
 {{--                            <input type="text" class="form-control @error('name') is-invalid @enderror"--}}
@@ -67,19 +63,19 @@
                                    placeholder="Confirm password" required>
                         </div>
 
-                        <div class="mb-3">
-                            <label for="roles" class="form-label">Roles</label>
-                            <select class="form-select select2 @error('roles') is-invalid @enderror"
-                                    id="roles" name="roles[]" multiple>
-                                @foreach($roles as $role)
-                                    <option value="{{ $role->id }}">{{ $role->name }}</option>
-                                @endforeach
-                            </select>
-                            @error('roles')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                            <div class="form-text">Select one or more roles for this user</div>
-                        </div>
+{{--                        <div class="mb-3">--}}
+{{--                            <label for="roles" class="form-label">Roles</label>--}}
+{{--                            <select class="form-select select2 @error('roles') is-invalid @enderror"--}}
+{{--                                    id="roles" name="roles[]" multiple>--}}
+{{--                                @foreach($roles as $role)--}}
+{{--                                    <option value="{{ $role->id }}">{{ $role->name }}</option>--}}
+{{--                                @endforeach--}}
+{{--                            </select>--}}
+{{--                            @error('roles')--}}
+{{--                                <div class="invalid-feedback">{{ $message }}</div>--}}
+{{--                            @enderror--}}
+{{--                            <div class="form-text">Select one or more roles for this user</div>--}}
+{{--                        </div>--}}
                     </div>
                     <div class="card-footer">
                         <button type="submit" class="btn btn-primary">
