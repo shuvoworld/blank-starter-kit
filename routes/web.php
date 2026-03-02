@@ -10,6 +10,7 @@ use App\Http\Controllers\LandingPageSectionController;
 use App\Http\Controllers\LeaveBalanceController;
 use App\Http\Controllers\LeaveRequestController;
 use App\Http\Controllers\LeaveTypeController;
+use App\Http\Controllers\LeaveTypeDataTableController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
@@ -106,7 +107,10 @@ Route::middleware('auth')->group(function () {
 
     // Leave Type Routes
     Route::prefix('leave-types')->name('leave-types.')->middleware('permission:view any leave types')->group(function () {
+        Route::get('leave-types/datatable', [LeaveTypeDataTableController::class, 'datatable'])
+            ->name('datatable');
         Route::get('/', [LeaveTypeController::class, 'index'])->name('index');
+
         Route::get('/create', [LeaveTypeController::class, 'create'])->name('create')->middleware('permission:create leave types');
         Route::post('/', [LeaveTypeController::class, 'store'])->name('store')->middleware('permission:create leave types');
         Route::get('/{leaveType}', [LeaveTypeController::class, 'show'])->name('show');

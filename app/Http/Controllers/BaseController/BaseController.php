@@ -1,0 +1,140 @@
+<?php
+
+namespace App\Http\Controllers\BaseController;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\View\View;
+
+abstract class BaseController extends Controller
+{
+    protected string $routePrefix;
+    protected string $viewPrefix;
+    protected string $resourceName;
+    protected ?BaseDataTableController $dataTableController = null;
+    /**
+     * Override to customize flash messages per action.
+     * Only specify what differs — merged with defaults.
+     */
+    protected function messages(): array
+    {
+        return [];
+    }
+
+    private function resolveMessage(string $action): string
+    {
+        $defaults = [
+            'created' => "{$this->resourceName} created successfully.",
+            'updated' => "{$this->resourceName} updated successfully.",
+            'deleted' => "{$this->resourceName} deleted successfully.",
+        ];
+
+        return array_merge($defaults, $this->messages())[$action]
+            ?? "Action completed successfully.";
+    }
+
+    protected function successRedirect(string $action): RedirectResponse
+    {
+        return to_route("{$this->routePrefix}.index")
+            ->with('status', $this->resolveMessage($action));
+    }
+
+    /**
+     * Authorization hook — override to add gate/policy checks.
+     * Example: $this->authorize($ability, $record ?? User::class);
+     */
+    protected function authorizeAction(string $ability, ?Model $record = null): void {}
+
+    public function index(Request $request): View
+    {
+        $this->authorizeAction('viewAny');
+        $tableColumns = $this->dataTableController?->tableColumns() ?? [];
+        // JS only needs data/name/orderable/searchable/className — not label or width
+        $dtColumns = collect($tableColumns)->map(fn($col) => [
+            'data'       => $col['data'],
+            'name'       => $col['name'],
+            'orderable'  => $col['orderable']  ?? true,
+            'searchable' => $col['searchable'] ?? true,
+            'className'  => $col['className']  ?? '',
+        ])->values()->all();
+        return view("{$this->viewPrefix}.index", compact('tableColumns', 'dtColumns'));
+    }
+
+    public function create(): View
+    {
+        $this->authorizeAction('create');
+
+        return view("{$this->viewPrefix}.create", $this->createViewData());
+    }
+
+    /**
+     * Override to pass extra data to the create view.
+     */
+    protected function createViewData(): array
+    {
+        return [];
+    }
+
+    /**
+     * Default redirects to edit. Override when show renders a view.
+     * Child return type can be narrowed to View since View is within View|RedirectResponse.
+     */
+    public function show(Model $record): View|RedirectResponse
+    {
+        return to_route("{$this->routePrefix}.edit", $record);
+    }
+
+    public function edit(Model $record): View
+    {
+        $this->authorizeAction('update', $record);
+
+        return view("{$this->viewPrefix}.edit", $this->editViewData($record));
+    }
+
+    /**
+     * Override to pass extra data to the edit view.
+     */
+    protected function editViewData(Model $record): array
+    {
+        return compact('record');
+    }
+
+    /**
+     * Handles both ajax (JSON) and standard (redirect) delete requests.
+     * Override beforeDestroy() for guards instead of overriding this method.
+     */
+    public function destroy(Model $record): JsonResponse|RedirectResponse
+    {
+        $this->authorizeAction('delete', $record);
+
+        $this->beforeDestroy($record);
+        $record->delete();
+        $this->afterDestroy($record);
+
+        if (request()->ajax()) {
+            return response()->json(['message' => $this->resolveMessage('deleted')]);
+        }
+
+        return $this->successRedirect('deleted');
+    }
+
+    /**
+     * Hook called before deletion.
+     * Throw an exception or abort() here to cancel the delete.
+     *
+     * Example:
+     *   protected function beforeDestroy(Model $record): void {
+     *       abort_if($record->is_system, 403, 'System records cannot be deleted.');
+     *   }
+     */
+    protected function beforeDestroy(Model $record): void {}
+
+    /**
+     * Hook called after deletion.
+     * Use for cleanup, logging, firing events, etc.
+     */
+    protected function afterDestroy(Model $record): void {}
+}

@@ -54,8 +54,6 @@ class UserController extends Controller
     public function create(): View
     {
         // $roles = Role::all();
-        $routeName='users';
-        $moduleName='User';
         return view('users.create', compact('routeName', 'moduleName'));
     }
 
