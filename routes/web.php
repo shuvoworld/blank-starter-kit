@@ -22,7 +22,6 @@ use Illuminate\Support\Facades\Route;
 //     return view('welcome');
 // });
 
-
 Route::get('/dashboard', HomeController::class)
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
@@ -113,10 +112,10 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/create', [LeaveTypeController::class, 'create'])->name('create')->middleware('permission:create leave types');
         Route::post('/', [LeaveTypeController::class, 'store'])->name('store')->middleware('permission:create leave types');
-        Route::get('/{leaveType}', [LeaveTypeController::class, 'show'])->name('show');
-        Route::get('/{leaveType}/edit', [LeaveTypeController::class, 'edit'])->name('edit')->middleware('permission:update leave types');
-        Route::put('/{leaveType}', [LeaveTypeController::class, 'update'])->name('update')->middleware('permission:update leave types');
-        Route::delete('/{leaveType}', [LeaveTypeController::class, 'destroy'])->name('destroy')->middleware('permission:delete leave types');
+        Route::get('/{record}', [LeaveTypeController::class, 'show'])->name('show');
+        Route::get('/{record}/edit', [LeaveTypeController::class, 'edit'])->name('edit')->middleware('permission:update leave types');
+        Route::put('/{record}', [LeaveTypeController::class, 'update'])->name('update')->middleware('permission:update leave types');
+        Route::delete('/{record}', [LeaveTypeController::class, 'destroy'])->name('destroy')->middleware('permission:delete leave types');
     });
 
     // Holiday Routes

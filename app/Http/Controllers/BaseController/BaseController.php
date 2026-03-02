@@ -12,9 +12,20 @@ use Illuminate\View\View;
 abstract class BaseController extends Controller
 {
     protected string $routePrefix;
+
     protected string $viewPrefix;
+
     protected string $resourceName;
+
+    protected string $model;
+
     protected ?BaseDataTableController $dataTableController = null;
+
+    protected function findRecord(int|string $id): Model
+    {
+        return ($this->model)::findOrFail($id);
+    }
+
     /**
      * Override to customize flash messages per action.
      * Only specify what differs — merged with defaults.
@@ -33,7 +44,7 @@ abstract class BaseController extends Controller
         ];
 
         return array_merge($defaults, $this->messages())[$action]
-            ?? "Action completed successfully.";
+            ?? 'Action completed successfully.';
     }
 
     protected function successRedirect(string $action): RedirectResponse
@@ -53,13 +64,14 @@ abstract class BaseController extends Controller
         $this->authorizeAction('viewAny');
         $tableColumns = $this->dataTableController?->tableColumns() ?? [];
         // JS only needs data/name/orderable/searchable/className — not label or width
-        $dtColumns = collect($tableColumns)->map(fn($col) => [
-            'data'       => $col['data'],
-            'name'       => $col['name'],
-            'orderable'  => $col['orderable']  ?? true,
+        $dtColumns = collect($tableColumns)->map(fn ($col) => [
+            'data' => $col['data'],
+            'name' => $col['name'],
+            'orderable' => $col['orderable'] ?? true,
             'searchable' => $col['searchable'] ?? true,
-            'className'  => $col['className']  ?? '',
+            'className' => $col['className'] ?? '',
         ])->values()->all();
+
         return view("{$this->viewPrefix}.index", compact('tableColumns', 'dtColumns'));
     }
 
@@ -82,16 +94,17 @@ abstract class BaseController extends Controller
      * Default redirects to edit. Override when show renders a view.
      * Child return type can be narrowed to View since View is within View|RedirectResponse.
      */
-    public function show(Model $record): View|RedirectResponse
+    public function show(int|string $record): View|RedirectResponse
     {
         return to_route("{$this->routePrefix}.edit", $record);
     }
 
-    public function edit(Model $record): View
+    public function edit(int|string $record): View
     {
-        $this->authorizeAction('update', $record);
+        $model = $this->findRecord($record);
+        $this->authorizeAction('update', $model);
 
-        return view("{$this->viewPrefix}.edit", $this->editViewData($record));
+        return view("{$this->viewPrefix}.edit", $this->editViewData($model));
     }
 
     /**
@@ -106,13 +119,14 @@ abstract class BaseController extends Controller
      * Handles both ajax (JSON) and standard (redirect) delete requests.
      * Override beforeDestroy() for guards instead of overriding this method.
      */
-    public function destroy(Model $record): JsonResponse|RedirectResponse
+    public function destroy(int|string $record): JsonResponse|RedirectResponse
     {
-        $this->authorizeAction('delete', $record);
+        $model = $this->findRecord($record);
+        $this->authorizeAction('delete', $model);
 
-        $this->beforeDestroy($record);
-        $record->delete();
-        $this->afterDestroy($record);
+        $this->beforeDestroy($model);
+        $model->delete();
+        $this->afterDestroy($model);
 
         if (request()->ajax()) {
             return response()->json(['message' => $this->resolveMessage('deleted')]);

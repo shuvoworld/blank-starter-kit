@@ -11,7 +11,7 @@ class LeaveTypeDataTableController extends BaseDataTableController
     {
         $this->model = LeaveType::class;
         $this->routePrefix = 'leave-types';
-        $this->rawColumns = ['action'];
+        $this->rawColumns = ['code_badge', 'is_paid_badge', 'carry_forward_badge', 'status_badge'];
 
     }
 
@@ -23,18 +23,18 @@ class LeaveTypeDataTableController extends BaseDataTableController
     protected function dataTableColumns(): array
     {
         return [
-            'code_badge' => fn(LeaveType $leaveType) => '<span class="badge bg-info">'.$leaveType->code.'</span>',
+            'code_badge' => fn (LeaveType $leaveType) => '<span class="badge bg-info">'.$leaveType->code.'</span>',
 
-            'is_paid_badge' => fn(LeaveType $leaveType) => '<span class="badge '.($leaveType->is_paid ? 'bg-success' : 'bg-warning').'">'
+            'is_paid_badge' => fn (LeaveType $leaveType) => '<span class="badge '.($leaveType->is_paid ? 'bg-success' : 'bg-warning').'">'
                 .($leaveType->is_paid ? 'Paid' : 'Unpaid').'</span>',
 
-            'max_days_per_year' => fn(LeaveType $leaveType) => $leaveType->max_days_per_year ?? '—',
+            'max_days_per_year' => fn (LeaveType $leaveType) => $leaveType->max_days_per_year ?? '—',
 
-            'carry_forward_badge' => fn(LeaveType $leaveType) => $leaveType->carry_forward
+            'carry_forward_badge' => fn (LeaveType $leaveType) => $leaveType->carry_forward
                 ? '<span class="badge bg-success">Yes'.($leaveType->carry_forward_limit ? " (max {$leaveType->carry_forward_limit})" : '').'</span>'
                 : '<span class="badge bg-secondary">No</span>',
 
-            'status_badge' => fn(LeaveType $leaveType) => '<span class="badge '.($leaveType->is_active ? 'bg-success' : 'bg-secondary').'">'
+            'status_badge' => fn (LeaveType $leaveType) => '<span class="badge '.($leaveType->is_active ? 'bg-success' : 'bg-secondary').'">'
                 .($leaveType->is_active ? 'Active' : 'Inactive').'</span>',
         ];
     }
@@ -84,7 +84,7 @@ class LeaveTypeDataTableController extends BaseDataTableController
                 'label' => 'Name',
             ],
             [
-                'data' => 'code',
+                'data' => 'code_badge',
                 'name' => 'code',
                 'label' => 'Code',
                 'orderable' => true,
@@ -92,14 +92,20 @@ class LeaveTypeDataTableController extends BaseDataTableController
                 'className' => 'text-center',
             ],
             [
-                'data' => 'is_paid',
+                'data' => 'is_paid_badge',
                 'name' => 'is_paid',
-                'label' => 'Is Paid',
+                'label' => 'Paid',
+                'orderable' => false,
+                'searchable' => false,
+                'className' => 'text-center',
             ],
             [
-                'data' => 'is_active',
+                'data' => 'status_badge',
                 'name' => 'is_active',
-                'label' => 'Is Active',
+                'label' => 'Status',
+                'orderable' => false,
+                'searchable' => false,
+                'className' => 'text-center',
             ],
             [
                 'data' => 'action',

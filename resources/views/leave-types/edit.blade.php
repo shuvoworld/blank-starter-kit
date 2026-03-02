@@ -17,10 +17,10 @@
             <div class="card-header">
                 <h3 class="card-title">
                     <i class="bi bi-pencil me-2"></i>
-                    Edit Leave Type: {{ $leaveType->name }}
+                    Edit Leave Type: {{ $record->name }}
                 </h3>
             </div>
-            <form action="{{ route('leave-types.update', $leaveType) }}" method="POST">
+            <form action="{{ route('leave-types.update', $record) }}" method="POST">
                 @csrf
                 @method('PUT')
                 <div class="card-body">
@@ -28,7 +28,7 @@
                         <div class="col-md-6 mb-3">
                             <label for="name" class="form-label">Name <span class="text-danger">*</span></label>
                             <input type="text" class="form-control @error('name') is-invalid @enderror"
-                                   id="name" name="name" value="{{ old('name', $leaveType->name) }}"
+                                   id="name" name="name" value="{{ old('name', $record->name) }}"
                                    placeholder="e.g., Sick Leave" required autofocus>
                             @error('name')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -38,7 +38,7 @@
                         <div class="col-md-6 mb-3">
                             <label for="code" class="form-label">Code <span class="text-danger">*</span></label>
                             <input type="text" class="form-control @error('code') is-invalid @enderror"
-                                   id="code" name="code" value="{{ old('code', $leaveType->code) }}"
+                                   id="code" name="code" value="{{ old('code', $record->code) }}"
                                    placeholder="e.g., SL" required style="text-transform: uppercase;">
                             @error('code')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -51,7 +51,7 @@
                             <label for="description" class="form-label">Description</label>
                             <textarea class="form-control @error('description') is-invalid @enderror"
                                       id="description" name="description"
-                                      rows="3" placeholder="Leave type description">{{ old('description', $leaveType->description) }}</textarea>
+                                      rows="3" placeholder="Leave type description">{{ old('description', $record->description) }}</textarea>
                             @error('description')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -63,8 +63,8 @@
                             <label for="is_paid" class="form-label">Is Paid <span class="text-danger">*</span></label>
                             <select class="form-select @error('is_paid') is-invalid @enderror"
                                     id="is_paid" name="is_paid" required>
-                                <option value="1" {{ old('is_paid', $leaveType->is_paid) == 1 ? 'selected' : '' }}>Yes</option>
-                                <option value="0" {{ old('is_paid', $leaveType->is_paid) == 0 ? 'selected' : '' }}>No</option>
+                                <option value="1" {{ old('is_paid', $record->is_paid) == 1 ? 'selected' : '' }}>Yes</option>
+                                <option value="0" {{ old('is_paid', $record->is_paid) == 0 ? 'selected' : '' }}>No</option>
                             </select>
                             @error('is_paid')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -75,8 +75,8 @@
                             <label for="requires_approval" class="form-label">Requires Approval <span class="text-danger">*</span></label>
                             <select class="form-select @error('requires_approval') is-invalid @enderror"
                                     id="requires_approval" name="requires_approval" required>
-                                <option value="1" {{ old('requires_approval', $leaveType->requires_approval) == 1 ? 'selected' : '' }}>Yes</option>
-                                <option value="0" {{ old('requires_approval', $leaveType->requires_approval) == 0 ? 'selected' : '' }}>No</option>
+                                <option value="1" {{ old('requires_approval', $record->requires_approval) == 1 ? 'selected' : '' }}>Yes</option>
+                                <option value="0" {{ old('requires_approval', $record->requires_approval) == 0 ? 'selected' : '' }}>No</option>
                             </select>
                             @error('requires_approval')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -87,8 +87,8 @@
                             <label for="requires_document" class="form-label">Requires Document</label>
                             <select class="form-select @error('requires_document') is-invalid @enderror"
                                     id="requires_document" name="requires_document">
-                                <option value="0" {{ old('requires_document', $leaveType->requires_document) == 0 ? 'selected' : '' }}>No</option>
-                                <option value="1" {{ old('requires_document', $leaveType->requires_document) == 1 ? 'selected' : '' }}>Yes</option>
+                                <option value="0" {{ old('requires_document', $record->requires_document) == 0 ? 'selected' : '' }}>No</option>
+                                <option value="1" {{ old('requires_document', $record->requires_document) == 1 ? 'selected' : '' }}>Yes</option>
                             </select>
                             @error('requires_document')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -100,7 +100,7 @@
                         <div class="col-md-4 mb-3">
                             <label for="max_days_per_year" class="form-label">Max Days/Year</label>
                             <input type="number" class="form-control @error('max_days_per_year') is-invalid @enderror"
-                                   id="max_days_per_year" name="max_days_per_year" value="{{ old('max_days_per_year', $leaveType->max_days_per_year) }}"
+                                   id="max_days_per_year" name="max_days_per_year" value="{{ old('max_days_per_year', $record->max_days_per_year) }}"
                                    placeholder="e.g., 12" min="0">
                             @error('max_days_per_year')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -110,7 +110,7 @@
                         <div class="col-md-4 mb-3">
                             <label for="max_days_per_month" class="form-label">Max Days/Month</label>
                             <input type="number" class="form-control @error('max_days_per_month') is-invalid @enderror"
-                                   id="max_days_per_month" name="max_days_per_month" value="{{ old('max_days_per_month', $leaveType->max_days_per_month) }}"
+                                   id="max_days_per_month" name="max_days_per_month" value="{{ old('max_days_per_month', $record->max_days_per_month) }}"
                                    placeholder="e.g., 2" min="0">
                             @error('max_days_per_month')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -120,7 +120,7 @@
                         <div class="col-md-4 mb-3">
                             <label for="max_consecutive_days" class="form-label">Max Consecutive Days</label>
                             <input type="number" class="form-control @error('max_consecutive_days') is-invalid @enderror"
-                                   id="max_consecutive_days" name="max_consecutive_days" value="{{ old('max_consecutive_days', $leaveType->max_consecutive_days) }}"
+                                   id="max_consecutive_days" name="max_consecutive_days" value="{{ old('max_consecutive_days', $record->max_consecutive_days) }}"
                                    placeholder="e.g., 5" min="0">
                             @error('max_consecutive_days')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -133,8 +133,8 @@
                             <label for="carry_forward" class="form-label">Carry Forward</label>
                             <select class="form-select @error('carry_forward') is-invalid @enderror"
                                     id="carry_forward" name="carry_forward">
-                                <option value="0" {{ old('carry_forward', $leaveType->carry_forward) == 0 ? 'selected' : '' }}>No</option>
-                                <option value="1" {{ old('carry_forward', $leaveType->carry_forward) == 1 ? 'selected' : '' }}>Yes</option>
+                                <option value="0" {{ old('carry_forward', $record->carry_forward) == 0 ? 'selected' : '' }}>No</option>
+                                <option value="1" {{ old('carry_forward', $record->carry_forward) == 1 ? 'selected' : '' }}>Yes</option>
                             </select>
                             @error('carry_forward')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -144,7 +144,7 @@
                         <div class="col-md-4 mb-3">
                             <label for="carry_forward_limit" class="form-label">Carry Forward Limit</label>
                             <input type="number" class="form-control @error('carry_forward_limit') is-invalid @enderror"
-                                   id="carry_forward_limit" name="carry_forward_limit" value="{{ old('carry_forward_limit', $leaveType->carry_forward_limit) }}"
+                                   id="carry_forward_limit" name="carry_forward_limit" value="{{ old('carry_forward_limit', $record->carry_forward_limit) }}"
                                    placeholder="e.g., 5" min="0">
                             @error('carry_forward_limit')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -154,7 +154,7 @@
                         <div class="col-md-4 mb-3">
                             <label for="carry_forward_expiry_days" class="form-label">Expiry Days</label>
                             <input type="number" class="form-control @error('carry_forward_expiry_days') is-invalid @enderror"
-                                   id="carry_forward_expiry_days" name="carry_forward_expiry_days" value="{{ old('carry_forward_expiry_days', $leaveType->carry_forward_expiry_days) }}"
+                                   id="carry_forward_expiry_days" name="carry_forward_expiry_days" value="{{ old('carry_forward_expiry_days', $record->carry_forward_expiry_days) }}"
                                    placeholder="e.g., 90" min="0">
                             @error('carry_forward_expiry_days')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -167,7 +167,7 @@
                         <div class="col-md-4 mb-3">
                             <label for="min_days_before_request" class="form-label">Min Notice Days</label>
                             <input type="number" class="form-control @error('min_days_before_request') is-invalid @enderror"
-                                   id="min_days_before_request" name="min_days_before_request" value="{{ old('min_days_before_request', $leaveType->min_days_before_request) }}"
+                                   id="min_days_before_request" name="min_days_before_request" value="{{ old('min_days_before_request', $record->min_days_before_request) }}"
                                    placeholder="e.g., 3" min="0">
                             @error('min_days_before_request')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -179,8 +179,8 @@
                             <label for="is_gender_specific" class="form-label">Gender Specific</label>
                             <select class="form-select @error('is_gender_specific') is-invalid @enderror"
                                     id="is_gender_specific" name="is_gender_specific">
-                                <option value="0" {{ old('is_gender_specific', $leaveType->is_gender_specific) == 0 ? 'selected' : '' }}>No</option>
-                                <option value="1" {{ old('is_gender_specific', $leaveType->is_gender_specific) == 1 ? 'selected' : '' }}>Yes</option>
+                                <option value="0" {{ old('is_gender_specific', $record->is_gender_specific) == 0 ? 'selected' : '' }}>No</option>
+                                <option value="1" {{ old('is_gender_specific', $record->is_gender_specific) == 1 ? 'selected' : '' }}>Yes</option>
                             </select>
                             @error('is_gender_specific')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -192,9 +192,9 @@
                             <select class="form-select @error('applicable_gender') is-invalid @enderror"
                                     id="applicable_gender" name="applicable_gender">
                                 <option value="">Not Applicable</option>
-                                <option value="male" {{ old('applicable_gender', $leaveType->applicable_gender) == 'male' ? 'selected' : '' }}>Male</option>
-                                <option value="female" {{ old('applicable_gender', $leaveType->applicable_gender) == 'female' ? 'selected' : '' }}>Female</option>
-                                <option value="other" {{ old('applicable_gender', $leaveType->applicable_gender) == 'other' ? 'selected' : '' }}>Other</option>
+                                <option value="male" {{ old('applicable_gender', $record->applicable_gender) == 'male' ? 'selected' : '' }}>Male</option>
+                                <option value="female" {{ old('applicable_gender', $record->applicable_gender) == 'female' ? 'selected' : '' }}>Female</option>
+                                <option value="other" {{ old('applicable_gender', $record->applicable_gender) == 'other' ? 'selected' : '' }}>Other</option>
                             </select>
                             @error('applicable_gender')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -207,8 +207,8 @@
                             <label for="is_paid_pro_rata" class="form-label">Pro-rata Calculation</label>
                             <select class="form-select @error('is_paid_pro_rata') is-invalid @enderror"
                                     id="is_paid_pro_rata" name="is_paid_pro_rata">
-                                <option value="0" {{ old('is_paid_pro_rata', $leaveType->is_paid_pro_rata) == 0 ? 'selected' : '' }}>No</option>
-                                <option value="1" {{ old('is_paid_pro_rata', $leaveType->is_paid_pro_rata) == 1 ? 'selected' : '' }}>Yes</option>
+                                <option value="0" {{ old('is_paid_pro_rata', $record->is_paid_pro_rata) == 0 ? 'selected' : '' }}>No</option>
+                                <option value="1" {{ old('is_paid_pro_rata', $record->is_paid_pro_rata) == 1 ? 'selected' : '' }}>Yes</option>
                             </select>
                             @error('is_paid_pro_rata')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -219,7 +219,7 @@
                         <div class="col-md-3 mb-3">
                             <label for="sort_order" class="form-label">Sort Order</label>
                             <input type="number" class="form-control @error('sort_order') is-invalid @enderror"
-                                   id="sort_order" name="sort_order" value="{{ old('sort_order', $leaveType->sort_order) }}"
+                                   id="sort_order" name="sort_order" value="{{ old('sort_order', $record->sort_order) }}"
                                    placeholder="0" min="0">
                             @error('sort_order')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -230,8 +230,8 @@
                             <label for="is_active" class="form-label">Status <span class="text-danger">*</span></label>
                             <select class="form-select @error('is_active') is-invalid @enderror"
                                     id="is_active" name="is_active" required>
-                                <option value="1" {{ old('is_active', $leaveType->is_active) == 1 ? 'selected' : '' }}>Active</option>
-                                <option value="0" {{ old('is_active', $leaveType->is_active) == 0 ? 'selected' : '' }}>Inactive</option>
+                                <option value="1" {{ old('is_active', $record->is_active) == 1 ? 'selected' : '' }}>Active</option>
+                                <option value="0" {{ old('is_active', $record->is_active) == 0 ? 'selected' : '' }}>Inactive</option>
                             </select>
                             @error('is_active')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -263,15 +263,15 @@
                 <table class="table table-sm table-borderless mb-0">
                     <tr>
                         <td class="text-muted">ID:</td>
-                        <td>{{ $leaveType->id }}</td>
+                        <td>{{ $record->id }}</td>
                     </tr>
                     <tr>
                         <td class="text-muted">Created:</td>
-                        <td>{{ $leaveType->created_at->format('M d, Y H:i') }}</td>
+                        <td>{{ $record->created_at->format('M d, Y H:i') }}</td>
                     </tr>
                     <tr>
                         <td class="text-muted">Updated:</td>
-                        <td>{{ $leaveType->updated_at->format('M d, Y H:i') }}</td>
+                        <td>{{ $record->updated_at->format('M d, Y H:i') }}</td>
                     </tr>
                 </table>
             </div>
@@ -287,8 +287,8 @@
                 </div>
                 <div class="card-body">
                     <p class="text-muted small">Once deleted, this leave type record cannot be recovered.</p>
-                    <form action="{{ route('leave-types.destroy', $leaveType) }}" method="POST" class="d-inline"
-                          onsubmit="return confirm('Are you sure you want to delete {{ $leaveType->name }}?')">
+                    <form action="{{ route('leave-types.destroy', $record) }}" method="POST" class="d-inline"
+                          onsubmit="return confirm('Are you sure you want to delete {{ $record->name }}?')">
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="btn btn-danger btn-sm">
