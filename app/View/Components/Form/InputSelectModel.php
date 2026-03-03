@@ -9,41 +9,48 @@ use Illuminate\Support\Collection;
 class InputSelectModel extends BaseInput
 {
     public Collection $options;
-    public ?string    $prompt;
-    public bool       $multiple;
+
+    public ?string $prompt;
+
+    public bool $multiple;
+
+    public bool $select2;
+
+    public bool $allowClear;
 
     public function __construct(array $params = [])
     {
         parent::__construct(
-            name:       $params['name']       ?? '',
-            label:      $params['label']      ?? null,
-            type:       'select',
-            value:      $params['value']      ?? $params['val'] ?? null,
-            id:         $params['id']         ?? null,
-            divClass:   $params['div']        ?? $params['container_class'] ?? 'col-md-3',
-            inputClass: trim('form-select ' . ($params['class'] ?? '')),
+            name: $params['name'] ?? '',
+            label: $params['label'] ?? null,
+            type: 'select',
+            value: $params['value'] ?? $params['val'] ?? null,
+            id: $params['id'] ?? null,
+            divClass: $params['div'] ?? $params['container_class'] ?? 'col-md-3',
+            formClass: 'form-select',
+            inputClass: $params['class'] ?? '',
             labelClass: $params['label_class'] ?? null,
-            required:   $params['required']   ?? false,
-            disabled:   $params['disabled']   ?? false,
-            tooltip:    $params['tooltip']    ?? null,
-            extraAttrs: $params['params']     ?? [],
+            required: $params['required'] ?? false,
+            disabled: $params['disabled'] ?? false,
+            tooltip: $params['tooltip'] ?? null,
+            extraAttrs: $params['params'] ?? [],
         );
-
-        $this->inputClass = trim('form-select ' . ($params['class'] ?? ''));
-        $this->prompt     = $params['prompt']   ?? null;
-        $this->multiple   = $params['multiple'] ?? false;
-        $this->options    = $this->resolveOptions($params);
+        $this->prompt = $params['prompt'] ?? null;
+        $this->multiple = $params['multiple'] ?? false;
+        $this->select2 = $params['select2'] ?? false;
+        $this->allowClear = $params['allow_clear'] ?? false;
+        $this->options = $this->resolveOptions($params);
     }
 
     private function resolveOptions(array $params): Collection
     {
-        $modelClass  = $params['model']       ?? null;
-        $keyField    = $params['key_field']   ?? 'id';
-        $labelField  = $params['label_field'] ?? 'name';
-        $conditions  = $params['conditions']  ?? [];
-        $scopes      = $params['scopes']      ?? [];
-        $orderBy     = $params['order_by']    ?? [$labelField, 'asc'];
-        $queryFn     = $params['query']       ?? null;
+        $modelClass = $params['model'] ?? null;
+        $keyField = $params['key_field'] ?? 'id';
+        $labelField = $params['label_field'] ?? 'name';
+        $conditions = $params['conditions'] ?? [];
+        $scopes = $params['scopes'] ?? [];
+        $orderBy = $params['order_by'] ?? [$labelField, 'asc'];
+        $queryFn = $params['query'] ?? null;
 
         if (! $modelClass) {
             return collect();

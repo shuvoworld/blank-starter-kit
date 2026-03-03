@@ -24,11 +24,11 @@
     $input = new InputCheckbox($var ?? []);
 @endphp
 
-<div class="{{ $input->divClass }} mb-3 {{ $errors->has($input->name) ? 'has-error' : '' }}">
+<div class="{{ $input->divClass }} mb-3">
 
     @if($input->groupLabel)
         <label class="form-label d-block {{ $input->labelClass }}">
-            {!! $input->groupLabel !!}
+            {{ $input->groupLabel }}
             @if($input->required)<span class="text-danger">*</span>@endif
         </label>
     @endif
@@ -64,7 +64,7 @@
                    {!! $input->extraHtml() !!}>
             @if($input->label)
                 <label class="form-check-label {{ $input->labelClass }}" for="{{ $input->id }}">
-                    {!! $input->label !!}
+                    {{ $input->label }}
                 </label>
             @endif
         </div>

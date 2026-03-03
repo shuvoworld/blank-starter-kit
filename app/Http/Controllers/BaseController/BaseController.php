@@ -79,11 +79,14 @@ abstract class BaseController extends Controller
     {
         $this->authorizeAction('create');
 
-        return view("{$this->viewPrefix}.create", $this->createViewData());
+        return view("{$this->viewPrefix}.form", array_merge(
+            ['editing' => false, 'record' => null],
+            $this->createViewData()
+        ));
     }
 
     /**
-     * Override to pass extra data to the create view.
+     * Override to pass extra data to the form view on create.
      */
     protected function createViewData(): array
     {
@@ -91,8 +94,7 @@ abstract class BaseController extends Controller
     }
 
     /**
-     * Default redirects to edit. Override when show renders a view.
-     * Child return type can be narrowed to View since View is within View|RedirectResponse.
+     * Default redirects to edit. Override when show renders a dedicated view.
      */
     public function show(int|string $record): View|RedirectResponse
     {
@@ -104,15 +106,19 @@ abstract class BaseController extends Controller
         $model = $this->findRecord($record);
         $this->authorizeAction('update', $model);
 
-        return view("{$this->viewPrefix}.edit", $this->editViewData($model));
+        return view("{$this->viewPrefix}.form", array_merge(
+            ['editing' => true, 'record' => $model],
+            $this->editViewData($model)
+        ));
     }
 
     /**
-     * Override to pass extra data to the edit view.
+     * Override to pass extra data to the form view on edit.
+     * $record is always available in the view — no need to return it here.
      */
     protected function editViewData(Model $record): array
     {
-        return compact('record');
+        return [];
     }
 
     /**
