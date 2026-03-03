@@ -53,9 +53,8 @@ class UserController extends Controller
 
     public function create(): View
     {
-        $roles = Role::all();
-
-        return view('users.create', compact('roles'));
+        // $roles = Role::all();
+        return view('users.create', compact('routeName', 'moduleName'));
     }
 
     public function store(Request $request): RedirectResponse

@@ -31,13 +31,13 @@
            id="{{ $input->id }}"
            value="{{ $input->resolvedValue() }}">
 @else
-    <div class="{{ $input->divClass }} mb-3 {{ $errors->has($input->name) ? 'has-error' : '' }}">
+    <div class="{{ $input->divClass }} mb-3">
 
         {{-- Label --}}
         @if($input->label)
             <label for="{{ $input->id }}"
                    class="form-label {{ $input->labelClass }}">
-                {!! $input->label !!}
+                {{ $input->label }}
                 @if($input->required)
                     <span class="text-danger">*</span>
                 @endif

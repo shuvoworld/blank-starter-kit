@@ -11,7 +11,7 @@ window.$ = window.jQuery = jQuery;
 import * as bootstrap from 'bootstrap';
 window.bootstrap = bootstrap;
 
-// Import Select2 and attach to jQuery
+// Import Select2 — call the CJS factory wrapper with our jQuery instance
 import select2 from 'select2';
 select2(window, jQuery);
 
@@ -41,4 +41,15 @@ document.addEventListener('DOMContentLoaded', function () {
             },
         });
     }
+});
+
+// Initialize Select2 on elements with data-toggle="select2"
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('select[data-toggle="select2"]').forEach(function (el) {
+        jQuery(el).select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+            allowClear: el.dataset.allowClear === 'true',
+        });
+    });
 });

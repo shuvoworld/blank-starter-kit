@@ -34,10 +34,20 @@ class InputCheckbox extends BaseInput
 
     public function isChecked(mixed $optVal): bool
     {
-        $current = old($this->name) ?? $this->checked ?? $this->value;
+        // After a failed validation, use only old input — a missing key means
+        // the checkbox was unchecked (don't fall back to $this->checked/$value).
+        if ($this->hasOldInput()) {
+            $current = old($this->oldKey); // null if unchecked, array if multi
+        } else {
+            $current = $this->checked ?? $this->value;
+        }
 
         if (is_array($current)) {
             return in_array((string) $optVal, array_map('strval', $current));
+        }
+
+        if ($current === null || $current === false || $current === '') {
+            return false;
         }
 
         return (string) $optVal === (string) $current || $current === true || $current == 1;

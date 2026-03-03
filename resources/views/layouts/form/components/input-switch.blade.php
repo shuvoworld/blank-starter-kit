@@ -15,7 +15,7 @@
     $input = new InputSwitch($var ?? []);
 @endphp
 
-<div class="{{ $input->divClass }} mb-3 {{ $errors->has($input->name) ? 'has-error' : '' }}">
+<div class="{{ $input->divClass }} mb-3">
     <div class="form-check form-switch">
         {{-- Hidden field ensures unchecked = 0 --}}
         <input type="hidden" name="{{ $input->name }}" value="0">
@@ -35,7 +35,7 @@
 
         @if($input->label)
             <label class="form-check-label {{ $input->labelClass }}" for="{{ $input->id }}">
-                {!! $input->label !!}
+                {{ $input->label }}
                 @if($input->tooltip)
                     <i class="bi bi-question-circle text-muted ms-1"
                        data-bs-toggle="tooltip" title="{{ $input->tooltip }}"></i>
