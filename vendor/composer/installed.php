@@ -3,13 +3,19 @@
         'name' => 'laravel/laravel',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => 'd29527c8a4b6253f56a27280442fca5d94089908',
+        'reference' => 'dd550916ca144e6432715ceac5963d21fd9ba994',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
         'dev' => true,
     ),
     'versions' => array(
+        'barryvdh/laravel-debugbar' => array(
+            'dev_requirement' => true,
+            'replaced' => array(
+                0 => 'v4.0.10',
+            ),
+        ),
         'brianium/paratest' => array(
             'pretty_version' => 'v7.19.0',
             'version' => '7.19.0.0',
@@ -136,6 +142,15 @@
             'reference' => 'd2102955e48b9fd9ab24280a7ad12ed552752c4d',
             'type' => 'library',
             'install_path' => __DIR__ . '/../filp/whoops',
+            'aliases' => array(),
+            'dev_requirement' => true,
+        ),
+        'fruitcake/laravel-debugbar' => array(
+            'pretty_version' => 'v4.0.10',
+            'version' => '4.0.10.0',
+            'reference' => '96afd5efc93c2cb3140df356893381296259695b',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../fruitcake/laravel-debugbar',
             'aliases' => array(),
             'dev_requirement' => true,
         ),
@@ -463,7 +478,7 @@
         'laravel/laravel' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => 'd29527c8a4b6253f56a27280442fca5d94089908',
+            'reference' => 'dd550916ca144e6432715ceac5963d21fd9ba994',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
@@ -612,6 +627,12 @@
             'install_path' => __DIR__ . '/../maennchen/zipstream-php',
             'aliases' => array(),
             'dev_requirement' => false,
+        ),
+        'maximebf/debugbar' => array(
+            'dev_requirement' => true,
+            'replaced' => array(
+                0 => 'v3.4.1',
+            ),
         ),
         'milenmk/laravel-locations' => array(
             'pretty_version' => '1.4.0',
@@ -778,6 +799,24 @@
             'reference' => '4f7fd7836c6f332bb2933569e566a0d6c4cbed74',
             'type' => 'library',
             'install_path' => __DIR__ . '/../phar-io/version',
+            'aliases' => array(),
+            'dev_requirement' => true,
+        ),
+        'php-debugbar/php-debugbar' => array(
+            'pretty_version' => 'v3.4.1',
+            'version' => '3.4.1.0',
+            'reference' => 'ee9c718797a4c1fdf6c4d980cb3edcc1eeeddcc7',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../php-debugbar/php-debugbar',
+            'aliases' => array(),
+            'dev_requirement' => true,
+        ),
+        'php-debugbar/symfony-bridge' => array(
+            'pretty_version' => 'v1.1.0',
+            'version' => '1.1.0.0',
+            'reference' => 'e37d2debe5d316408b00d0ab2688d9c2cf59b5ad',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../php-debugbar/symfony-bridge',
             'aliases' => array(),
             'dev_requirement' => true,
         ),
