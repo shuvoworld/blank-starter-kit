@@ -8,12 +8,13 @@ The Leave & Attendance Management System is a comprehensive Laravel-based module
 
 - [Features](#features)
 - [Architecture](#architecture)
+- [Leave Types Module — Implementation](#leave-types-module--implementation)
 - [Database Schema](#database-schema)
 - [User Roles & Permissions](#user-roles--permissions)
 - [Leave Request Workflow](#leave-request-workflow)
 - [Installation](#installation)
 - [Usage Guide](#usage-guide)
-- [API Reference](#api-reference)
+- [Routes Reference](#routes-reference)
 - [Testing](#testing)
 
 ---
@@ -63,10 +64,6 @@ The Leave & Attendance Management System is a comprehensive Laravel-based module
 - Upcoming holidays (next 30 days)
 - Quick access to leave-related actions
 
-### 6. Employee-User Association
-- Link employee records to system user accounts
-- Role-based access control for user association
-
 ---
 
 ## Architecture
@@ -76,51 +73,191 @@ The Leave & Attendance Management System is a comprehensive Laravel-based module
 ```
 app/
 ├── Models/
-│   ├── LeaveType.php          # Leave type definition
-│   ├── Holiday.php            # Holiday calendar
-│   ├── LeaveRequest.php       # Leave request with states
-│   └── LeaveBalance.php       # Balance tracking
+│   ├── LeaveType.php                        # Leave type definition & rules
+│   ├── LeaveRequest.php                     # Leave request with state
+│   └── LeaveBalance.php                     # Per-user balance tracking
 ├── Http/
 │   ├── Controllers/
-│   │   ├── LeaveTypeController.php
-│   │   ├── HolidayController.php
-│   │   ├── LeaveRequestController.php
-│   │   └── LeaveBalanceController.php
+│   │   ├── BaseController/
+│   │   │   ├── BaseController.php           # Shared CRUD scaffold
+│   │   │   └── BaseDataTableController.php  # Shared DataTable scaffold
+│   │   ├── LeaveTypeController.php          # CRUD controller (extends BaseController)
+│   │   ├── LeaveTypeDataTableController.php # DataTable AJAX controller
+│   │   └── ...
 │   └── Requests/
-│       ├── StoreLeaveRequestRequest.php
-│       ├── ApproveLeaveRequestRequest.php
-│       └── RejectLeaveRequestRequest.php
-├── Services/
-│   ├── LeaveCalculationService.php    # Business logic for day calculations
-│   └── LeaveBalanceService.php        # Balance management
-└── ...
+│       ├── StoreLeaveTypeRequest.php
+│       ├── UpdateLeaveTypeRequest.php
+│       └── ...
 
 resources/views/
-├── leave-types/               # Leave type CRUD views
-├── holidays/                  # Holiday CRUD views
-├── leave-requests/            # Leave request & workflow views
-├── leave-balances/            # Leave summary views
-└── dashboards/
-    └── employee.blade.php     # Employee dashboard
+├── leave-types/
+│   ├── index.blade.php    # DataTable listing
+│   ├── form.blade.php     # Shared create / edit form
+│   └── show.blade.php     # Detail / read-only view
+└── ...
 
 database/
 ├── migrations/
-│   ├── *_create_leave_types_table.php
-│   ├── *_create_holidays_table.php
-│   ├── *_create_leave_requests_table.php
-│   └── *_create_leave_balances_table.php
+│   └── *_create_leave_types_table.php
 └── seeders/
-    ├── LeaveTypeSeeder.php
-    └── HolidaySeeder.php
+    └── LeaveTypeSeeder.php
 ```
 
 ### Design Patterns
 
-1. **Service Layer**: Business logic encapsulated in service classes
-2. **State Machine**: Leave request status transitions
-3. **Repository Pattern**: Eloquent models for data access
-4. **Factory Pattern**: Model factories for testing
-5. **Observer Pattern**: Activity logging for audit trails
+1. **BaseController scaffold** — All CRUD modules extend `BaseController`, which provides `index`, `create`, `edit`, `destroy`, and a default `show` redirect. Child controllers only implement `store`, `update`, and any view overrides needed.
+2. **Split DataTable controller** — Each module has a dedicated `*DataTableController` (extends `BaseDataTableController`) that handles the AJAX `/datatable` endpoint, keeping DataTable configuration out of the main controller.
+3. **Form Requests** — All validation lives in dedicated `Store*Request` and `Update*Request` classes.
+4. **Activity Logging** — The `HasActivityLog` trait is included on models to automatically record create/update/delete events.
+
+---
+
+## Leave Types Module — Implementation
+
+This section documents exactly how the Leave Types module is built.
+
+### Controllers
+
+#### `LeaveTypeController`
+
+Extends `BaseController`. The base class provides the majority of CRUD behaviour; this controller only adds what is specific to leave types.
+
+| Method | Provided by | Notes |
+|--------|-------------|-------|
+| `index()` | `BaseController` | Passes `tableColumns` / `dtColumns` to the index view |
+| `create()` | `BaseController` | Renders `leave-types.form` with `editing = false` |
+| `show()` | **Override** | Renders `leave-types.show` with `$leaveType` variable |
+| `edit()` | `BaseController` | Renders `leave-types.form` with `editing = true`, `record = $model` |
+| `store()` | **Override** | Validates via `StoreLeaveTypeRequest`, calls `LeaveType::create()`, redirects with flash |
+| `update()` | **Override** | Validates via `UpdateLeaveTypeRequest`, calls `$record->update()`, redirects with flash |
+| `destroy()` | `BaseController` | Supports both AJAX (JSON) and standard redirect; fires `beforeDestroy` / `afterDestroy` hooks |
+
+Constructor wires the base class properties:
+```php
+$this->model             = LeaveType::class;
+$this->routePrefix       = 'leave-types';
+$this->viewPrefix        = 'leave-types';
+$this->resourceName      = 'Leave type';
+$this->dataTableController = $dataTableController;
+```
+
+#### `LeaveTypeDataTableController`
+
+Extends `BaseDataTableController`. Handles the `GET /leave-types/datatable` AJAX-only endpoint consumed by the DataTable on the index page.
+
+**Custom columns rendered as HTML badges:**
+
+| Column key | Source field | Output |
+|---|---|---|
+| `code_badge` | `code` | `<span class="badge bg-info">` |
+| `is_paid_badge` | `is_paid` | Green "Paid" / Yellow "Unpaid" badge |
+| `carry_forward_badge` | `carry_forward` | Green "Yes (max N)" / Grey "No" badge |
+| `status_badge` | `is_active` | Green "Active" / Grey "Inactive" badge |
+
+**`indexQuery()`** returns `LeaveType::query()->orderBy('sort_order')`, so records always appear in the configured display order.
+
+**Action column** renders three buttons per row: View (info), Edit (primary), Delete (danger/AJAX).
+
+**`tableColumns()`** defines the DataTables column definitions sent to the frontend:
+`#`, `Name`, `Code`, `Paid`, `Status`, `Actions`.
+
+### Model — `LeaveType`
+
+Traits: `HasFactory`, `HasActivityLog`
+
+**Fillable fields (18 total):**
+
+| Field | Type | Default | Purpose |
+|-------|------|---------|---------|
+| `name` | string | — | Display name |
+| `code` | string | — | Unique short code (e.g. AL, SL) |
+| `description` | text nullable | — | Free text description |
+| `is_paid` | boolean | `true` | Whether leave is compensated |
+| `requires_approval` | boolean | `true` | Whether manager sign-off is needed |
+| `max_days_per_year` | int nullable | — | Annual cap |
+| `max_days_per_month` | int nullable | — | Monthly cap |
+| `carry_forward` | boolean | `false` | Allow unused days to roll over |
+| `carry_forward_limit` | int nullable | — | Max days that can roll over |
+| `carry_forward_expiry_days` | int nullable | — | Days before rolled-over leave expires |
+| `requires_document` | boolean | `false` | Mandatory supporting document |
+| `min_days_before_request` | int nullable | — | Minimum advance notice |
+| `max_consecutive_days` | int nullable | — | Consecutive day cap |
+| `is_gender_specific` | boolean | `false` | Restrict by gender |
+| `applicable_gender` | enum nullable | — | `male` / `female` / `other` |
+| `is_paid_pro_rata` | boolean | `false` | Pro-rata for mid-year joiners |
+| `is_active` | boolean | `true` | Soft enable/disable |
+| `sort_order` | int | `0` | DataTable display order |
+
+**Casts** (via `casts()` method): all boolean fields cast to `bool`.
+
+**Scopes:**
+- `scopeActive()` — filters `is_active = true`.
+
+**Relationships:**
+- `leaveRequests()` — `hasMany(LeaveRequest::class)`
+- `leaveBalances()` — `hasMany(LeaveBalance::class)`
+
+### Form Requests
+
+Both requests share the same field rules. The key difference is uniqueness:
+
+- `StoreLeaveTypeRequest` — `unique:leave_types,name` and `unique:leave_types,code` (global)
+- `UpdateLeaveTypeRequest` — ignores the current record's ID: `unique:leave_types,name,{$id}` and `unique:leave_types,code,{$id}`
+
+The route parameter is `{record}`, retrieved via `$this->route('record')` in the update request.
+
+Custom error messages are defined for `name.required`, `name.unique`, `code.required`, `code.unique`, and `applicable_gender.in`.
+
+### Views
+
+All views extend `layouts.form.app` and use the project's shared form component partials.
+
+#### `index.blade.php`
+- Renders an AdminLTE card with a DataTable powered by the `LeaveTypeDataTableController`.
+- A "Create" button is shown only to users with the `create leave types` permission (`@can`).
+- Passes `tableColumns` (PHP column definitions for `<thead>`) and `dtColumns` (JSON for DataTables JS config) from the controller.
+
+#### `form.blade.php` (shared create / edit)
+- Controlled by the `$editing` boolean passed from the controller.
+- Uses `@include('layouts.form.inputs.*')` partials for all fields.
+- Select fields that use Select2 pass `'select2' => true`; the rendered `<select>` gets `data-toggle="select2"` which the global JS initialiser picks up.
+- When `$editing` is true, renders a metadata card (ID, Created At, Updated At) and — with the `delete leave types` permission — a Danger Zone delete form.
+- Pushes an inline script `@push('scripts')` to enforce uppercase on the `code` input.
+
+#### `show.blade.php`
+- Read-only detail view of a single leave type.
+- Displays all 18 fields grouped into logical sections (Basic Info, Rules, Carry Forward, etc.).
+- Edit and Delete action buttons appear with the appropriate `@can` checks.
+
+### Seeder — `LeaveTypeSeeder`
+
+Seeds 6 default leave types using `LeaveType::firstOrCreate(['code' => ...], $data)` so re-running is safe:
+
+| Code | Name | Paid | Max/Year | Carry Forward | Gender |
+|------|------|------|----------|---------------|--------|
+| AL | Annual Leave | Yes | 20 | Yes (max 5, 90-day expiry) | Any |
+| SL | Sick Leave | Yes | 10 | No | Any |
+| CL | Casual Leave | Yes | 12 | No | Any |
+| ML | Maternity Leave | Yes | 90 | No | Female |
+| PL | Paternity Leave | Yes | 14 | No | Male |
+| UL | Unpaid Leave | No | Unlimited | No | Any |
+
+### Routes
+
+Defined in `routes/web.php` under the `leave-types` prefix and `permission:view any leave types` middleware group. The route parameter name is `{record}` (matched by the base controller's `findRecord()` helper).
+
+| Method | URI | Route name | Middleware |
+|--------|-----|------------|------------|
+| GET | `/leave-types/datatable` | `leave-types.datatable` | `view any leave types` |
+| GET | `/leave-types` | `leave-types.index` | `view any leave types` |
+| GET | `/leave-types/create` | `leave-types.create` | `create leave types` |
+| POST | `/leave-types` | `leave-types.store` | `create leave types` |
+| GET | `/leave-types/{record}` | `leave-types.show` | `view any leave types` |
+| GET | `/leave-types/{record}/edit` | `leave-types.edit` | `update leave types` |
+| PUT | `/leave-types/{record}` | `leave-types.update` | `update leave types` |
+| DELETE | `/leave-types/{record}` | `leave-types.destroy` | `delete leave types` |
+
+> **Note**: The datatable route must be declared before `/{record}` to prevent Laravel matching `datatable` as a record ID.
 
 ---
 
@@ -379,172 +516,68 @@ State Transitions:
 
 ---
 
-## API Reference
-
-### Leave Calculation Service
-
-#### `calculateActualDays(Carbon $startDate, Carbon $endDate, ?int $countryId, ?int $cityId): int`
-
-Calculates actual leave days excluding weekends and holidays.
-
-```php
-use App\Services\LeaveCalculationService;
-
-$service = new LeaveCalculationService();
-$days = $service->calculateActualDays(
-    Carbon::parse('2026-03-01'),
-    Carbon::parse('2026-03-07'),
-    $employee->country_id,
-    $employee->city_id
-);
-// Returns: 5 (excludes Saturday & Sunday)
-```
-
-#### `getHolidaysInRange(Carbon $startDate, Carbon $endDate, ?int $countryId, ?int $cityId): Collection`
-
-Returns all holidays within a date range for a specific location.
-
-```php
-$holidays = $service->getHolidaysInRange(
-    Carbon::parse('2026-12-01'),
-    Carbon::parse('2026-12-31'),
-    $countryId,
-    $cityId
-);
-```
-
-### Leave Balance Service
-
-#### `getOrCreateBalance(int $userId, int $leaveTypeId, int $year): LeaveBalance`
-
-Gets existing balance or creates new one with pro-rata calculation.
-
-```php
-use App\Services\LeaveBalanceService;
-
-$service = new LeaveBalanceService();
-$balance = $service->getOrCreateBalance($userId, $leaveTypeId, 2026);
-```
-
-#### `getLeaveSummary(int $userId, int $year): array`
-
-Returns complete leave summary for a user.
-
-```php
-$summary = $service->getLeaveSummary($userId, 2026);
-// Returns:
-// [
-//     'year' => 2026,
-//     'total_entitlement' => 36,
-//     'total_taken' => 5,
-//     'total_remaining' => 31,
-//     'total_pending' => 2,
-//     'usage_percentage' => 13.89,
-//     'by_type' => [...]
-// ]
-```
-
----
-
-## Routes
+## Routes Reference
 
 ### Leave Types
-| Method | URI | Name | Permission |
-|--------|-----|------|------------|
+| Method | URI | Route name | Permission guard |
+|--------|-----|------------|------------------|
+| GET | `/leave-types/datatable` | `leave-types.datatable` | view any leave types |
 | GET | `/leave-types` | `leave-types.index` | view any leave types |
 | GET | `/leave-types/create` | `leave-types.create` | create leave types |
 | POST | `/leave-types` | `leave-types.store` | create leave types |
-| GET | `/leave-types/{leaveType}` | `leave-types.show` | view any leave types |
-| GET | `/leave-types/{leaveType}/edit` | `leave-types.edit` | update leave types |
-| PUT | `/leave-types/{leaveType}` | `leave-types.update` | update leave types |
-| DELETE | `/leave-types/{leaveType}` | `leave-types.destroy` | delete leave types |
+| GET | `/leave-types/{record}` | `leave-types.show` | view any leave types |
+| GET | `/leave-types/{record}/edit` | `leave-types.edit` | update leave types |
+| PUT | `/leave-types/{record}` | `leave-types.update` | update leave types |
+| DELETE | `/leave-types/{record}` | `leave-types.destroy` | delete leave types |
 
 ### Holidays
-| Method | URI | Name | Permission |
-|--------|-----|------|------------|
+| Method | URI | Route name | Permission guard |
+|--------|-----|------------|------------------|
+| GET | `/holidays/datatable` | `holidays.datatable` | view any holidays |
 | GET | `/holidays` | `holidays.index` | view any holidays |
 | GET | `/holidays/create` | `holidays.create` | create holidays |
 | POST | `/holidays` | `holidays.store` | create holidays |
-| GET | `/holidays/{holiday}` | `holidays.show` | view any holidays |
-| GET | `/holidays/{holiday}/edit` | `holidays.edit` | update holidays |
-| PUT | `/holidays/{holiday}` | `holidays.update` | update holidays |
-| DELETE | `/holidays/{holiday}` | `holidays.destroy` | delete holidays |
+| GET | `/holidays/{record}` | `holidays.show` | view any holidays |
+| GET | `/holidays/{record}/edit` | `holidays.edit` | update holidays |
+| PUT | `/holidays/{record}` | `holidays.update` | update holidays |
+| DELETE | `/holidays/{record}` | `holidays.destroy` | delete holidays |
 
 ### Leave Requests
-| Method | URI | Name | Permission |
-|--------|-----|------|------------|
+| Method | URI | Route name | Permission guard |
+|--------|-----|------------|------------------|
 | GET | `/leave-requests` | `leave-requests.index` | view any leave requests |
-| POST | `/leave-requests/{leaveRequest}/approve` | `leave-requests.approve` | approve leave requests |
-| POST | `/leave-requests/{leaveRequest}/reject` | `leave-requests.reject` | reject leave requests |
+| POST | `/leave-requests/{record}/approve` | `leave-requests.approve` | approve leave requests |
+| POST | `/leave-requests/{record}/reject` | `leave-requests.reject` | reject leave requests |
 | GET | `/my-leave-requests` | `my-leave-requests.index` | view own leave requests |
 | GET | `/my-leave-requests/create` | `my-leave-requests.create` | create leave requests |
 | POST | `/my-leave-requests` | `my-leave-requests.store` | create leave requests |
-| GET | `/my-leave-requests/{leaveRequest}` | `my-leave-requests.show` | view own leave requests |
-| POST | `/my-leave-requests/{leaveRequest}/cancel` | `my-leave-requests.cancel` | cancel leave requests |
-
-### Leave Balances
-| Method | URI | Name | Permission |
-|--------|-----|------|------------|
-| GET | `/my-leave-summary` | `my-leave-summary` | view own leave balances |
-| GET | `/api/leave-balance` | `api.leave-balance` | view own leave balances |
+| GET | `/my-leave-requests/{record}` | `my-leave-requests.show` | view own leave requests |
+| POST | `/my-leave-requests/{record}/cancel` | `my-leave-requests.cancel` | cancel leave requests |
 
 ---
 
 ## Testing
 
-### Run All Tests
+### Run Tests
 ```bash
-php artisan test
+# All tests
+php artisan test --compact
+
+# Leave Type tests only
+php artisan test --compact --filter=LeaveType
 ```
-
-### Run Specific Test Suite
-```bash
-# Leave Type tests
-php artisan test --filter=LeaveTypeTest
-
-# Leave Request tests
-php artisan test --filter=LeaveRequestTest
-
-# Leave Calculation tests
-php artisan test --filter=LeaveCalculationTest
-```
-
-### Test Coverage
-
-The test suite covers:
-- Leave type CRUD operations
-- Holiday CRUD operations
-- Leave request workflow (submit, approve, reject, cancel)
-- Balance calculations and updates
-- Pro-rata calculations for mid-year joiners
-- Weekend and holiday exclusions
-- Permission checks
 
 ---
 
 ## Troubleshooting
 
-### Common Issues
+**DataTable not loading** — Ensure the `/datatable` route is declared before `/{record}` in `routes/web.php`, otherwise Laravel matches the string `"datatable"` as a record ID.
 
-**Issue**: Leave balance not updating after approval
-- **Solution**: Check that `LeaveBalanceService::approveRequest()` is being called in the approval process
+**Select2 not initialising on form selects** — Fields must have `data-toggle="select2"` on the `<select>` element (not `data-select2`). The global JS initialiser in `bootstrap.js` queries `select[data-toggle="select2"]`.
 
-**Issue**: Holidays not being excluded from leave calculation
-- **Solution**: Ensure `holiday_type` is set correctly and `is_active` is true for holiday records
-
-**Issue**: Pending requests showing incorrect balance
-- **Solution**: Run `LeaveBalanceService::updatePendingDays()` to recalculate
-
-**Issue**: Pro-rata calculation not working
-- **Solution**: Verify `is_paid_pro_rata` is enabled for the leave type and user has a valid join date
+**Validation ignoring current record on update** — `UpdateLeaveTypeRequest` reads the route parameter via `$this->route('record')`. If the route parameter name changes, update this line accordingly.
 
 ---
 
-## Support & Contributing
-
-For bug reports, feature requests, or contributions, please refer to the project's main documentation.
-
----
-
-**Version**: 1.0.0
-**Last Updated**: February 2026
+**Version**: 1.1.0
+**Last Updated**: March 2026
