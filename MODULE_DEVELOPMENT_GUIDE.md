@@ -1,7 +1,7 @@
 # Module Development Guide
 
 This document defines the standard architecture every module in this application must follow.
-All existing modules (Department, Designation, Product, Employee) implement this pattern and serve as reference.
+The **LeaveType** module is the current reference implementation of this pattern.
 
 ---
 
@@ -11,15 +11,16 @@ All existing modules (Department, Designation, Product, Employee) implement this
 2. [Request & Permission Flow](#2-request--permission-flow)
 3. [File Structure Per Module](#3-file-structure-per-module)
 4. [Layer Responsibilities](#4-layer-responsibilities)
-5. [Permission Naming Convention](#5-permission-naming-convention)
-6. [Creating a New Module — Checklist](#6-creating-a-new-module--checklist)
-7. [File Upload Modules](#7-file-upload-modules)
+5. [BaseController & BaseDataTableController](#5-basecontroller--basedatatablecontroller)
+6. [Permission Naming Convention](#6-permission-naming-convention)
+7. [Creating a New Module — Checklist](#7-creating-a-new-module--checklist)
+8. [File Upload Modules](#8-file-upload-modules)
 
 ---
 
 ## 1. Module Architecture Overview
 
-Every module is composed of six layers, each with a single clear responsibility:
+Every module is composed of these layers, each with a single clear responsibility:
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -43,24 +44,16 @@ Every module is composed of six layers, each with a single clear responsibility:
                          ▼
 ┌─────────────────────────────────────────────────────────┐
 │  CONTROLLER  (app/Http/Controllers/)                    │
-│  Calls $this->authorize() → delegates to Policy        │
-│  Calls Model methods, returns View or JsonResponse      │
+│  Extends BaseController — inherits index/create/edit/   │
+│  destroy. Overrides store/update/show as needed.        │
+│  Paired with a dedicated *DataTableController.          │
 └────────────────────────┬────────────────────────────────┘
                          │
                          ▼
 ┌─────────────────────────────────────────────────────────┐
-│  POLICY  (app/Policies/)                                │
-│  Fine gate — "Can THIS user act on THIS record?"        │
-│  Wraps Spatie permission checks + row-level logic       │
-│  Super Admin bypasses via before() hook                 │
-└────────────────────────┬────────────────────────────────┘
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────────┐
-│  MODEL + OBSERVER  (app/Models/ + app/Observers/)       │
-│  Model holds business rules, scopes, relationships      │
-│  Observer fires side effects on every lifecycle event   │
-│  HasActivityLog trait writes audit trail automatically  │
+│  MODEL  (app/Models/)                                   │
+│  Fillable, casts(), scopes, relationships               │
+│  HasActivityLog trait — audit trail is automatic        │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -72,73 +65,65 @@ Every module is composed of six layers, each with a single clear responsibility:
 
 | Step | Layer | What happens |
 |------|-------|--------------|
-| 1 | Route middleware | Checks `permission:view any {module}` — aborts 403 if user's role lacks it |
-| 2 | Controller `edit()` | Calls `$this->authorize('update', $record)` |
-| 3 | Policy `before()` | If user is Super Admin → returns `true`, skips everything else |
-| 4 | Policy `update()` | Checks `$user->can('update {module}')` via Spatie + any row-level logic |
-| 5 | Form Request | `authorize()` returns `true`; `rules()` validates the submitted data |
-| 6 | Controller `update()` | Calls `$this->authorize('update', $record)` again (POST re-check), then saves |
-| 7 | Model Observer `updating()` | Fires before the DB write |
-| 8 | Model Observer `updated()` | Fires after the DB write — cascade events run here |
-| 9 | HasActivityLog trait | Records the change to `activity_log` automatically |
-
-### Why the controller re-checks on submit
-
-The `edit()` and `update()` methods both call `$this->authorize('update', $record)`.
-This prevents a user from bypassing the form by sending a direct `PUT` request even if they somehow obtained the URL.
-Same pattern applies to `create()` / `store()`.
+| 1 | Route middleware | Checks `permission:update {module}` on the edit/update routes — aborts 403 if the user lacks it |
+| 2 | BaseController `edit()` | Calls `$this->authorizeAction('update', $record)` — override hook, no-op by default |
+| 3 | Form Request `authorize()` | Always returns `true` — route middleware already guards access |
+| 4 | Form Request `rules()` | Validates the submitted data |
+| 5 | Controller `update()` | Calls `$record->update($request->validated())`, then `successRedirect()` |
+| 6 | HasActivityLog trait | Automatically records the change to the activity log |
 
 ### Two types of authorization checks
 
 | Type | Where | Example |
 |------|-------|---------|
-| **Role-based** | Route middleware | "Managers can view any employee" |
-| **Row-level** | Policy method | "An employee can edit only their own profile" |
+| **Role-based** | Route middleware | `permission:update leave types` on the PUT route |
+| **Row-level** | `authorizeAction()` override | Override in child controller to add record-level checks |
 
-Row-level logic lives exclusively in the Policy — never in the controller or middleware.
-See `EmployeePolicy::view()` and `EmployeePolicy::update()` for a working example.
+Route middleware is the primary authorization mechanism. The `authorizeAction()` hook in `BaseController` is provided for row-level logic (e.g. "own records only") but is a no-op by default.
 
 ---
 
 ## 3. File Structure Per Module
 
-Using `BlogPost` as an example name:
+Using `LeaveType` as the reference example:
 
 ```
 app/
   Models/
-    BlogPost.php                      — Fillable, casts, scopes, relationships, booted()
-  Policies/
-    BlogPostPolicy.php                — before(), viewAny(), view(), create(), update(), delete()
-  Observers/
-    BlogPostObserver.php              — created(), updated(), deleting(), deleted()
+    LeaveType.php                        — Fillable, casts(), scopes, relationships
+                                           Uses: HasFactory, HasActivityLog
   Http/
     Controllers/
-      BlogPostController.php          — CRUD methods, authorize() calls, DataTables AJAX
+      LeaveTypeController.php            — Extends BaseController
+                                           Overrides: show(), store(), update()
+                                           Inherits: index(), create(), edit(), destroy()
+      LeaveTypeDataTableController.php   — Extends BaseDataTableController
+                                           Defines: dataTableColumns(), tableColumns(),
+                                           indexQuery(), actionColumn()
     Requests/
-      StoreBlogPostRequest.php        — rules() + messages() for create
-      UpdateBlogPostRequest.php       — rules() + messages() for update (ignore-self unique)
+      StoreLeaveTypeRequest.php          — rules() + messages() for create
+      UpdateLeaveTypeRequest.php         — same rules, unique-ignore-self via {record}
 
 database/
   migrations/
-    TIMESTAMP_create_blog_posts_table.php
-  factories/
-    BlogPostFactory.php
+    TIMESTAMP_create_leave_types_table.php
   seeders/
-    BlogPostSeeder.php
+    LeaveTypeSeeder.php                  — firstOrCreate() for idempotent seeding
 
-resources/views/blog-posts/
-  index.blade.php                     — DataTable + delete modal + JS
-  create.blade.php                    — Create form
-  edit.blade.php                      — Pre-filled form + danger zone
-  show.blade.php                      — Read-only detail view
+resources/views/leave-types/
+  index.blade.php                        — DataTable listing, Create button
+  form.blade.php                         — Shared create / edit form ($editing boolean)
+  show.blade.php                         — Read-only detail view
 
 tests/Feature/
-  BlogPostTest.php                    — CRUD tests + permission denial tests
+  LeaveTypeTest.php                      — CRUD tests + permission denial tests
 
 routes/
-  web.php                             — Permission-protected route group added here
+  web.php                                — Permission-protected route group
 ```
+
+> **No Policy, no Observer, no Factory** unless the module has row-level ownership rules,
+> cascade side-effects, or complex seeding needs.
 
 ---
 
@@ -146,110 +131,185 @@ routes/
 
 ### Model (`app/Models/`)
 
-- Defines `$fillable`, `casts()`, relationships, query scopes
-- Registers the Observer in `booted()` — this is the only place
-- Uses `HasActivityLog` trait for automatic audit logging
-- Uses `HasFactory` trait for test factories
+- Defines `$fillable`, `casts()` method, relationships, and query scopes
+- Uses `HasActivityLog` trait — all create/update/delete events are logged automatically; no Observer needed for auditing
+- Uses `HasFactory` trait when a factory is required
 - Does **not** contain authorization or HTTP logic
-
-### Policy (`app/Policies/`)
-
-- One Policy per Model, auto-discovered by Laravel via naming convention
-- `before(User $user, string $ability): ?bool` — grants Super Admin full bypass
-- One method per action: `viewAny`, `view`, `create`, `update`, `delete`
-- Each method calls `$user->can('{permission name}')` via Spatie
-- Row-level conditions (e.g., "own record only") go in `view()` and `update()`
-- Returns `bool` only — no side effects, no DB writes
-
-### Observer (`app/Observers/`)
-
-- Registered in the Model's `booted()` method, not in a service provider
-- Six lifecycle hooks: `creating`, `created`, `updating`, `updated`, `deleting`, `deleted`
-- `deleting()` is the correct place for **cascade cleanup** — the record still exists
-- `created()` / `updated()` are for **side effects** — notifications, sync, cache busting
-- Loops through related records individually (not mass updates) so `HasActivityLog` captures each change
-- Does **not** contain HTTP logic or redirect/response code
 
 ### Controller (`app/Http/Controllers/`)
 
-- Calls `$this->authorize('{ability}', ModelClass::class)` for collection actions (`viewAny`, `create`)
-- Calls `$this->authorize('{ability}', $record)` for record actions (`view`, `update`, `delete`)
-- Both the form-display method and the form-submit method call `authorize()`
-- Returns `View` for page renders, `JsonResponse` for AJAX/DataTables, `RedirectResponse` after writes
-- Contains no business logic — delegates to Model, Service, or Observer
+Extends `BaseController`. Only override what is specific to the module:
+
+| Scenario | Override |
+|----------|----------|
+| `show()` needs a dedicated view (not just a redirect to edit) | Override `show()` |
+| `store()` / `update()` have specific logic (create, update, redirect) | Override both |
+| The create form needs extra view data (dropdown options, etc.) | Override `createViewData()` |
+| The edit form needs extra view data | Override `editViewData()` |
+| A record must be guarded before deletion | Override `beforeDestroy()` |
+| Post-delete cleanup is needed | Override `afterDestroy()` |
+
+Returns `View` for page renders, `JsonResponse` for AJAX responses, `RedirectResponse` after writes.
+
+### DataTable Controller (`app/Http/Controllers/`)
+
+Extends `BaseDataTableController`. Handles the AJAX-only `/{module}/datatable` endpoint.
+
+| Method | Purpose |
+|--------|---------|
+| `indexQuery()` | Base Eloquent query (ordering, eager loads, scopes) |
+| `dataTableColumns()` | Map of `column_key => fn($record) => string` for computed/HTML columns |
+| `tableColumns()` | Column definitions array sent to the frontend (header labels, widths, orderable flags) |
+| `actionColumn()` | Override to add a View button or other custom actions alongside Edit / Delete |
+
+Always declare `$rawColumns` with any column keys that output HTML.
 
 ### Form Request (`app/Http/Requests/`)
 
-- `authorize()` always returns `true` — authorization is handled by the Policy, not the Request
-- `rules()` contains all validation rules as arrays of strings
-- `UpdateRequest` uses `unique:table,column,{$id}` to exclude the record being edited
-- `messages()` provides human-readable error messages per field
+- `authorize()` always returns `true` — route middleware handles access
+- `rules()` contains all validation as arrays of rule strings
+- `UpdateRequest` reads `$this->route('record')` to exclude the current record from unique checks
+- `messages()` provides human-readable errors per field
+
+### Views (`resources/views/{module}/`)
+
+| File | Purpose |
+|------|---------|
+| `index.blade.php` | Renders the DataTable. Passes `tableColumns` (PHP, for `<thead>`) and `dtColumns` (JSON, for JS config) |
+| `form.blade.php` | Shared for create and edit. Uses `$editing` boolean and `$record` (null on create) |
+| `show.blade.php` | Read-only detail. Edit/Delete buttons gated with `@can` |
+
+Use `@include('layouts.form.inputs.*')` partials for all form fields.
+For Select2-enhanced selects, pass `'select2' => true` — the partial renders `data-toggle="select2"` and the global JS initialiser picks it up.
+
+### Seeder (`database/seeders/`)
+
+Use `Model::firstOrCreate(['code' => $row['code']], $row)` so re-running the seeder is safe.
 
 ### Routes (`routes/web.php`)
-
-Standard permission-protected group pattern:
 
 ```php
 Route::prefix('{route-prefix}')
     ->name('{route-prefix}.')
     ->middleware('permission:view any {permission name}')
     ->group(function () {
-        Route::get('/', [Controller::class, 'index'])->name('index');
-        Route::get('/create', [Controller::class, 'create'])->name('create')->middleware('permission:create {permission name}');
-        Route::post('/', [Controller::class, 'store'])->name('store')->middleware('permission:create {permission name}');
-        Route::get('/{model}', [Controller::class, 'show'])->name('show');
-        Route::get('/{model}/edit', [Controller::class, 'edit'])->name('edit')->middleware('permission:update {permission name}');
-        Route::put('/{model}', [Controller::class, 'update'])->name('update')->middleware('permission:update {permission name}');
-        Route::delete('/{model}', [Controller::class, 'destroy'])->name('destroy')->middleware('permission:delete {permission name}');
+        // DataTable AJAX — must be BEFORE /{record} to avoid being matched as an ID
+        Route::get('/datatable', [ModuleDataTableController::class, 'datatable'])->name('datatable');
+
+        Route::get('/', [ModuleController::class, 'index'])->name('index');
+        Route::get('/create', [ModuleController::class, 'create'])->name('create')
+            ->middleware('permission:create {permission name}');
+        Route::post('/', [ModuleController::class, 'store'])->name('store')
+            ->middleware('permission:create {permission name}');
+        Route::get('/{record}', [ModuleController::class, 'show'])->name('show');
+        Route::get('/{record}/edit', [ModuleController::class, 'edit'])->name('edit')
+            ->middleware('permission:update {permission name}');
+        Route::put('/{record}', [ModuleController::class, 'update'])->name('update')
+            ->middleware('permission:update {permission name}');
+        Route::delete('/{record}', [ModuleController::class, 'destroy'])->name('destroy')
+            ->middleware('permission:delete {permission name}');
     });
+```
+
+> The route parameter is always `{record}`. `BaseController::findRecord()` resolves it via `Model::findOrFail($id)`.
+> The `/datatable` route **must** come before `/{record}` or Laravel will match the string `"datatable"` as a record ID.
+
+---
+
+## 5. BaseController & BaseDataTableController
+
+### `BaseController` — provided CRUD methods
+
+| Method | Behaviour | Override? |
+|--------|-----------|-----------|
+| `index()` | Passes `tableColumns` + `dtColumns` to `{viewPrefix}.index` | Rarely |
+| `create()` | Renders `{viewPrefix}.form` with `editing=false, record=null` + `createViewData()` | No — override `createViewData()` |
+| `edit()` | Fetches record, renders `{viewPrefix}.form` with `editing=true` + `editViewData()` | No — override `editViewData()` |
+| `show()` | Default: redirects to edit. Override to render a dedicated detail view. | Yes, when a show view exists |
+| `destroy()` | Fetches record, fires `beforeDestroy()`, deletes, fires `afterDestroy()`. AJAX-aware (returns JSON or redirect) | No — override hooks |
+| `successRedirect()` | Redirects to `{routePrefix}.index` with a flash `status` message | No |
+| `authorizeAction()` | No-op hook. Override to add `$this->authorize()` / `abort_if()` checks | Yes, when row-level checks are needed |
+
+### `BaseDataTableController` — provided methods
+
+| Method | Behaviour | Override? |
+|--------|-----------|-----------|
+| `datatable()` | Validates AJAX, runs `indexQuery()`, adds custom columns, action column, filters, raw columns — returns JSON | No |
+| `indexQuery()` | Default: `Model::query()->with($withRelations)` | Yes — add ordering, scopes, eager loads |
+| `dataTableColumns()` | Default: empty. Return `['col_key' => fn($r) => string]` map | Yes — for badge/HTML columns |
+| `tableColumns()` | Default: `#`, `name`, `is_active`, `action`. Override to define module-specific columns | Yes |
+| `actionColumn()` | Default: Edit + Delete buttons. Override to add View or other buttons | Yes |
+| `applyFilters()` | No-op hook. Override to add search/date range/status filters | Yes, when column filters exist |
+| `authorizeDataTable()` | No-op hook. Override to gate the AJAX endpoint | Rarely |
+
+### Constructor wiring
+
+Every child controller must set these properties in `__construct()`:
+
+```php
+// In ModuleController:
+public function __construct(ModuleDataTableController $dataTableController)
+{
+    $this->model              = Module::class;
+    $this->routePrefix        = 'modules';
+    $this->viewPrefix         = 'modules';
+    $this->resourceName       = 'Module';
+    $this->dataTableController = $dataTableController;
+}
+
+// In ModuleDataTableController:
+public function __construct()
+{
+    $this->model       = Module::class;
+    $this->routePrefix = 'modules';
+    $this->rawColumns  = ['status_badge', 'other_html_column'];
+}
 ```
 
 ---
 
-## 5. Permission Naming Convention
+## 6. Permission Naming Convention
 
 | Action | Permission string | Middleware alias |
 |--------|-------------------|-----------------|
-| List | `view any {module}` | `permission:view any {module}` |
+| List / view any | `view any {module}` | `permission:view any {module}` |
 | Create | `create {module}` | `permission:create {module}` |
 | Update | `update {module}` | `permission:update {module}` |
 | Delete | `delete {module}` | `permission:delete {module}` |
 
 The `{module}` segment is the **lowercase, space-separated plural** of the model name:
 
-| Model | Module string | Route prefix |
-|-------|---------------|--------------|
+| Model | Permission string | Route prefix |
+|-------|-------------------|--------------|
 | `Department` | `departments` | `departments` |
 | `LeaveType` | `leave types` | `leave-types` |
 | `BlogPost` | `blog posts` | `blog-posts` |
 
-Note: the permission string uses spaces (`blog posts`), the route prefix uses hyphens (`blog-posts`).
+Permission strings use **spaces** (`leave types`); route prefixes use **hyphens** (`leave-types`).
 
 Permission records must exist in the database. Add new permissions to `database/seeders/RbacSeeder.php`.
 
 ---
 
-## 6. Creating a New Module — Checklist
+## 7. Creating a New Module — Checklist
 
 Follow this order to avoid dependency issues:
 
 - [ ] **Migration** — define columns, run `php artisan migrate`
-- [ ] **Model** — fillable, casts, scopes, `booted()` registering the Observer
-- [ ] **Observer** — all six lifecycle hooks with cascade logic
-- [ ] **Policy** — `before()` + five action methods using Spatie `can()`
-- [ ] **Factory** — realistic fake data for tests and seeders
-- [ ] **Seeder** — uses Factory, add to `DatabaseSeeder` if needed
-- [ ] **StoreRequest** — validation rules + messages
-- [ ] **UpdateRequest** — same rules with unique-ignore-self
-- [ ] **Controller** — CRUD methods, `authorize()` per method, DataTables for `index()`
-- [ ] **Views** — `index`, `create`, `edit`, `show` following existing module layout
-- [ ] **Routes** — permission-protected group added to `routes/web.php`
+- [ ] **Model** — `$fillable`, `casts()`, scopes, relationships; add `HasActivityLog` and `HasFactory` traits
+- [ ] **Seeder** — use `firstOrCreate()` for idempotent seeding; add to `DatabaseSeeder` if needed
+- [ ] **StoreRequest** — `rules()` + `messages()`
+- [ ] **UpdateRequest** — same rules with `unique:table,col,$this->route('record')` ignore-self
+- [ ] **DataTable Controller** — extend `BaseDataTableController`; implement `indexQuery()`, `dataTableColumns()`, `tableColumns()`, and `actionColumn()` if a View button is needed
+- [ ] **Controller** — extend `BaseController`; wire constructor properties; override only `show()`, `store()`, `update()`, and any data/hook methods needed
+- [ ] **Views** — `index.blade.php`, `form.blade.php` (shared, with `$editing` flag), `show.blade.php`
+- [ ] **Routes** — add permission-protected group to `routes/web.php`; `/datatable` before `/{record}`
 - [ ] **Permissions** — add four permission records to `RbacSeeder`
-- [ ] **Test** — feature test covering CRUD success paths and 403 denial cases
+- [ ] **Test** — feature test covering create, update, delete success paths and 403 denial cases
 
 ---
 
-## 7. File Upload Modules
+## 8. File Upload Modules
 
 If a module handles file uploads, additionally:
 
