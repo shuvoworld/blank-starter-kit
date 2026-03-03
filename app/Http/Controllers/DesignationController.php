@@ -15,6 +15,9 @@ class DesignationController extends Controller
 {
     public function index(Request $request): View|JsonResponse
     {
+        // Verify the current user can view the designation list before loading any data.
+        $this->authorize('viewAny', Designation::class);
+
         if ($request->ajax()) {
             $query = Designation::query();
 
@@ -57,11 +60,17 @@ class DesignationController extends Controller
 
     public function create(): View
     {
+        // Verify the current user can create designations before showing the form.
+        $this->authorize('create', Designation::class);
+
         return view('designations.create');
     }
 
     public function store(StoreDesignationRequest $request): RedirectResponse
     {
+        // Re-check on form submit to prevent direct POST requests bypassing the form.
+        $this->authorize('create', Designation::class);
+
         Designation::create($request->validated());
 
         return to_route('designations.index')->with('status', 'Designation created successfully.');
@@ -69,16 +78,25 @@ class DesignationController extends Controller
 
     public function show(Designation $designation): View
     {
+        // Verify the current user can view this specific designation record.
+        $this->authorize('view', $designation);
+
         return view('designations.show', compact('designation'));
     }
 
     public function edit(Designation $designation): View
     {
+        // Verify the current user can edit this specific designation record.
+        $this->authorize('update', $designation);
+
         return view('designations.edit', compact('designation'));
     }
 
     public function update(UpdateDesignationRequest $request, Designation $designation): RedirectResponse
     {
+        // Re-check on form submit to prevent direct PUT requests bypassing the form.
+        $this->authorize('update', $designation);
+
         $designation->update($request->validated());
 
         return to_route('designations.index')->with('status', 'Designation updated successfully.');
@@ -86,6 +104,9 @@ class DesignationController extends Controller
 
     public function destroy(Designation $designation): JsonResponse
     {
+        // Verify the current user can delete this specific designation record.
+        $this->authorize('delete', $designation);
+
         $designation->delete();
 
         return response()->json(['message' => 'Designation deleted successfully.']);

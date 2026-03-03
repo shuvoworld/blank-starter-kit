@@ -15,6 +15,9 @@ class DepartmentController extends Controller
 {
     public function index(Request $request): View|JsonResponse
     {
+        // Verify the current user can view the department list before loading any data.
+        $this->authorize('viewAny', Department::class);
+
         if ($request->ajax()) {
             $query = Department::query()->orderBy('sort_order');
 
@@ -55,11 +58,18 @@ class DepartmentController extends Controller
 
     public function create(): View
     {
+        // Verify the current user can create departments before showing the form.
+        $this->authorize('create', Department::class);
+
         return view('departments.create');
     }
 
     public function store(StoreDepartmentRequest $request): RedirectResponse
     {
+        // Re-check on form submit — a user should not be able to bypass
+        // the form by posting directly to this endpoint without permission.
+        $this->authorize('create', Department::class);
+
         Department::create($request->validated());
 
         return to_route('departments.index')->with('status', 'Department created successfully.');
@@ -67,16 +77,25 @@ class DepartmentController extends Controller
 
     public function show(Department $department): View
     {
+        // Verify the current user can view this specific department record.
+        $this->authorize('view', $department);
+
         return view('departments.show', compact('department'));
     }
 
     public function edit(Department $department): View
     {
+        // Verify the current user can edit this specific department record.
+        $this->authorize('update', $department);
+
         return view('departments.edit', compact('department'));
     }
 
     public function update(UpdateDepartmentRequest $request, Department $department): RedirectResponse
     {
+        // Re-check on form submit — same reason as store() above.
+        $this->authorize('update', $department);
+
         $department->update($request->validated());
 
         return to_route('departments.index')->with('status', 'Department updated successfully.');
@@ -84,6 +103,9 @@ class DepartmentController extends Controller
 
     public function destroy(Department $department): JsonResponse
     {
+        // Verify the current user can delete this specific department record.
+        $this->authorize('delete', $department);
+
         $department->delete();
 
         return response()->json(['message' => 'Department deleted successfully.']);

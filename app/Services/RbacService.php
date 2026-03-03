@@ -72,7 +72,7 @@ class RbacService
     /**
      * Check if user is superuser.
      */
-    public function isSuperAdmin(User $user): bool
+    public function isSuperuser(User $user): bool
     {
         return $user->hasRole('Superuser');
     }
@@ -123,7 +123,7 @@ class RbacService
      */
     public function initializeDefaultRbac(): void
     {
-        $this->roleService->getOrCreateSuperAdmin();
+        $this->roleService->getOrCreateSuperuser();
     }
 
     /**
@@ -175,8 +175,8 @@ class RbacService
     /**
      * Sync all permissions to Super Admin role.
      */
-    public function syncSuperAdminAllPermissions(): void
+    public function syncSuperuserAllPermissions(): void
     {
-        $this->roleService->syncSuperAdminPermissions();
+        $this->roleService->syncSuperuserPermissions();
     }
 }

@@ -32,7 +32,7 @@ class EmployeeProductPermissionsSeeder extends Seeder
             ->whereIn('name', collect($modules)->flatMap(fn ($m) => ["view any {$m}", "view {$m}", "create {$m}", "update {$m}"])->toArray())
             ->get();
 
-        $superAdmin = Role::where('name', 'Super Admin')->first();
+        $superAdmin = Role::where('name', 'Superuser')->first();
         if ($superAdmin) {
             $superAdmin->givePermissionTo($allPermissions);
         }

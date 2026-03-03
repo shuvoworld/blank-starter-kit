@@ -40,16 +40,16 @@ class Role extends SpatieRole
     /**
      * Scope a query to only include roles without a specific role.
      */
-    public function scopeWithoutSuperAdmin($query)
+    public function scopeWithoutSuperuser($query)
     {
-        return $query->where('name', '!=', 'Super Admin');
+        return $query->where('name', '!=', 'Superuser');
     }
 
     /**
-     * Check if role is super admin.
+     * Check if role is superuser.
      */
-    public function isSuperAdmin(): bool
+    public function isSuperuser(): bool
     {
-        return $this->name === 'Super Admin';
+        return $this->name === 'Superuser';
     }
 }

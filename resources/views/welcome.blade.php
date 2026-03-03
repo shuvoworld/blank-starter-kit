@@ -1,12 +1,4 @@
-<?php
-use App\Models\LandingPageSection;
 
-// Get all landing page sections grouped by section
-$sections = LandingPageSection::getGroupedBySection();
-
-// Helper function to get section value
-$getValue = fn (string $key, mixed $default = '') => LandingPageSection::getValue($key, $default);
-?>
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>

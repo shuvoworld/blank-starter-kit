@@ -1,17 +1,17 @@
-@extends('layouts.app')
+@extends('layouts.form.app')
 
 @section('header')
-<h1 class="m-0">Add Employee</h1>
+    <h1 class="m-0">Add Employee</h1>
 @endsection
 
 @section('breadcrumb')
-<li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
-        <li class="breadcrumb-item"><a href="{{ route('employees.index') }}">Employees</a></li>
-        <li class="breadcrumb-item active" aria-current="page">Create</li>
+    <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
+    <li class="breadcrumb-item"><a href="{{ route('employees.index') }}">Employees</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Create</li>
 @endsection
 
 @section('content')
-<div class="row">
+    <div class="row">
         <div class="col-lg-8">
             <div class="card card-primary card-outline">
                 <div class="card-header">
@@ -20,28 +20,18 @@
                         New Employee
                     </h3>
                 </div>
-                <form action="{{ route('employees.store') }}" method="POST" enctype="multipart/form-data">
+                <form action="{{ route('employees.store') }}" method="POST">
                     @csrf
                     <div class="card-body">
                         <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="profile_picture" class="form-label">Profile Picture</label>
-                                <input type="file" class="form-control @error('profile_picture') is-invalid @enderror"
-                                       id="profile_picture" name="profile_picture"
-                                       accept="image/jpeg,image/png,image/gif,image/webp">
-                                @error('profile_picture')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                                <div class="form-text">Allowed: JPG, PNG, GIF, WebP (Max: 5MB)</div>
-                            </div>
-
+                            @include('layouts.form.inputs.text', ['var' => ['name'=> 'name','label'=> 'Name','placeholder' => 'Enter Name','div'=> 'col-md-6 col-sm-6']])
                             <div class="col-md-6 mb-3">
                                 <label for="name" class="form-label">Name <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control @error('name') is-invalid @enderror"
                                        id="name" name="name" value="{{ old('name') }}"
                                        placeholder="Full name" required autofocus>
                                 @error('name')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                                <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
 
@@ -51,31 +41,8 @@
                                        id="email" name="email" value="{{ old('email') }}"
                                        placeholder="email@example.com" required>
                                 @error('email')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                                <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
-                            </div>
-
-                            <div class="col-md-6 mb-3">
-                                <label for="user_id" class="form-label">Associate User</label>
-                                @if(Auth::user()->hasRole(['Superuser', 'Admin']))
-                                    <select class="form-select @error('user_id') is-invalid @enderror"
-                                            id="user_id" name="user_id">
-                                        <option value="">Select user...</option>
-                                        @foreach($users as $user)
-                                            <option value="{{ $user->id }}" {{ old('user_id') == $user->id ? 'selected' : '' }}>
-                                                {{ $user->name }} ({{ $user->email }})
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                    @error('user_id')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                    <div class="form-text">Link this employee to a system user account</div>
-                                @else
-                                    <input type="text" class="form-control"
-                                           id="user_id" value="Not available" readonly>
-                                    <div class="form-text">Only administrators can associate users</div>
-                                @endif
                             </div>
                         </div>
 
@@ -86,7 +53,7 @@
                                        id="phone" name="phone" value="{{ old('phone') }}"
                                        placeholder="+1 (555) 000-0000">
                                 @error('phone')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                                <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
 
@@ -95,96 +62,40 @@
                                 <input type="date" class="form-control @error('hire_date') is-invalid @enderror"
                                        id="hire_date" name="hire_date" value="{{ old('hire_date') }}" required>
                                 @error('hire_date')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                                <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
                         </div>
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="department_id" class="form-label">Department</label>
-                                <select class="form-select @error('department_id') is-invalid @enderror"
-                                        id="department_id" name="department_id">
+                                <label for="department" class="form-label">Department <span class="text-danger">*</span></label>
+                                <select class="form-select @error('department') is-invalid @enderror"
+                                        id="department" name="department" required>
                                     <option value="">Select department...</option>
-                                    @foreach($departments as $dept)
-                                        <option value="{{ $dept->id }}" {{ old('department_id') == $dept->id ? 'selected' : '' }}>
-                                            {{ $dept->name }}
+                                    @foreach(['Engineering', 'Marketing', 'Sales', 'HR', 'Finance', 'IT', 'Operations'] as $dept)
+                                        <option value="{{ $dept }}" {{ old('department') === $dept ? 'selected' : '' }}>
+                                            {{ $dept }}
                                         </option>
                                     @endforeach
                                 </select>
-                                @error('department_id')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                                <div class="form-text">
-                                    <a href="{{ route('departments.index') }}" target="_blank" class="text-info">
-                                        <i class="bi bi-plus-circle"></i> Add New Department
-                                    </a>
-                                </div>
-                            </div>
-
-                            <div class="col-md-6 mb-3">
-                                <label for="designation_id" class="form-label">Designation</label>
-                                <select class="form-select @error('designation_id') is-invalid @enderror"
-                                        id="designation_id" name="designation_id">
-                                    <option value="">Select designation...</option>
-                                    @foreach($designations as $designation)
-                                        <option value="{{ $designation->id }}" {{ old('designation_id') == $designation->id ? 'selected' : '' }}>
-                                            {{ $designation->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @error('designation_id')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                                <div class="form-text">
-                                    <a href="{{ route('designations.index') }}" target="_blank" class="text-info">
-                                        <i class="bi bi-plus-circle"></i> Add New Designation
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="country_id" class="form-label">Country</label>
-                                <select class="form-select @error('country_id') is-invalid @enderror"
-                                        id="country_id" name="country_id" data-location="country">
-                                    <option value="">Select country...</option>
-                                    @foreach($countries as $country)
-                                        <option value="{{ $country->id }}" {{ old('country_id') == $country->id ? 'selected' : '' }}>
-                                            {{ $country->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @error('country_id')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @error('department')
+                                <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
 
                             <div class="col-md-6 mb-3">
-                                <label for="city_id" class="form-label">State/Province</label>
-                                <select class="form-select @error('city_id') is-invalid @enderror"
-                                        id="city_id" name="city_id" data-location="city" disabled>
-                                    <option value="">Select state...</option>
-                                </select>
-                                @error('city_id')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                                <label for="position" class="form-label">Position <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control @error('position') is-invalid @enderror"
+                                       id="position" name="position" value="{{ old('position') }}"
+                                       placeholder="e.g. Senior Developer" required>
+                                @error('position')
+                                <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
                         </div>
 
                         <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="area_id" class="form-label">Area/City</label>
-                                <select class="form-select @error('area_id') is-invalid @enderror"
-                                        id="area_id" name="area_id" data-location="area" disabled>
-                                    <option value="">Select area...</option>
-                                </select>
-                                @error('area_id')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-
                             <div class="col-md-6 mb-3">
                                 <label for="salary" class="form-label">Salary <span class="text-danger">*</span></label>
                                 <div class="input-group">
@@ -193,7 +104,7 @@
                                            id="salary" name="salary" value="{{ old('salary') }}"
                                            placeholder="0.00" min="0" step="0.01" required>
                                     @error('salary')
-                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
                             </div>
@@ -206,48 +117,8 @@
                                     <option value="inactive" {{ old('status') === 'inactive' ? 'selected' : '' }}>Inactive</option>
                                 </select>
                                 @error('status')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                                <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
-                            </div>
-                        </div>
-
-                        {{-- Documents Section --}}
-                        <hr class="my-4">
-                        <h5 class="mb-3"><i class="bi bi-file-earmark-pdf me-2"></i>Documents</h5>
-
-                        <div class="row">
-                            <div class="col-md-12 mb-3">
-                                <label for="resume" class="form-label">Resume/CV</label>
-                                <input type="file" class="form-control @error('resume') is-invalid @enderror"
-                                       id="resume" name="resume" accept=".pdf,application/pdf">
-                                @error('resume')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                                <div class="form-text">Upload employee resume in PDF format (Max: 5MB)</div>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-12 mb-3">
-                                <label for="certificates" class="form-label">Certificates</label>
-                                <input type="file" class="form-control @error('certificates') is-invalid @enderror"
-                                       id="certificates" name="certificates[]" accept=".pdf,application/pdf" multiple>
-                                @error('certificates')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                                <div class="form-text">Upload employee certificates (PDF only, Max: 5 files, 5MB each)</div>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-12 mb-3">
-                                <label for="documents" class="form-label">Other Documents</label>
-                                <input type="file" class="form-control @error('documents') is-invalid @enderror"
-                                       id="documents" name="documents[]" accept=".pdf,application/pdf" multiple>
-                                @error('documents')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                                <div class="form-text">Upload other employee documents (PDF only, Max: 10 files, 5MB each)</div>
                             </div>
                         </div>
                     </div>
@@ -288,66 +159,4 @@
             </div>
         </div>
     </div>
-
-    @push('scripts')
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const countrySelect = document.getElementById('country_id');
-            const citySelect = document.getElementById('city_id');
-            const areaSelect = document.getElementById('area_id');
-            const citiesByCountryUrl = "{{ route('employees.cities.by-country') }}";
-            const areasByCityUrl = "{{ route('employees.areas.by-city') }}";
-
-            // Load cities when country changes
-            countrySelect.addEventListener('change', function() {
-                const countryId = this.value;
-
-                // Reset and disable city and area selects
-                citySelect.innerHTML = '<option value="">Select state...</option>';
-                citySelect.disabled = !countryId;
-                areaSelect.innerHTML = '<option value="">Select area...</option>';
-                areaSelect.disabled = true;
-
-                if (countryId) {
-                    fetch(`${citiesByCountryUrl}?country_id=${countryId}`)
-                        .then(response => response.json())
-                        .then(data => {
-                            citySelect.innerHTML = '<option value="">Select state...</option>';
-                            data.forEach(city => {
-                                const option = document.createElement('option');
-                                option.value = city.id;
-                                option.textContent = city.name;
-                                citySelect.appendChild(option);
-                            });
-                        })
-                        .catch(error => console.error('Error loading cities:', error));
-                }
-            });
-
-            // Load areas when city changes
-            citySelect.addEventListener('change', function() {
-                const cityId = this.value;
-
-                // Reset and disable area select
-                areaSelect.innerHTML = '<option value="">Select area...</option>';
-                areaSelect.disabled = !cityId;
-
-                if (cityId) {
-                    fetch(`${areasByCityUrl}?city_id=${cityId}`)
-                        .then(response => response.json())
-                        .then(data => {
-                            areaSelect.innerHTML = '<option value="">Select area...</option>';
-                            data.forEach(area => {
-                                const option = document.createElement('option');
-                                option.value = area.id;
-                                option.textContent = area.name;
-                                areaSelect.appendChild(option);
-                            });
-                        })
-                        .catch(error => console.error('Error loading areas:', error));
-                }
-            });
-        });
-    </script>
-    @endpush
 @endsection

@@ -7,6 +7,7 @@ use App\Http\Requests\UpdateEmployeeRequest;
 use App\Models\Department;
 use App\Models\Designation;
 use App\Models\Employee;
+use App\Policies\EmployeePolicy;
 use App\Services\LeaveBalanceService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -25,6 +26,9 @@ class EmployeeController extends Controller
 
     public function index(Request $request): View|JsonResponse
     {
+        // Verify the current user can view the employee list before loading any data.
+        $this->authorize('viewAny', Employee::class);
+
         if ($request->ajax()) {
             $query = Employee::query()->with('user', 'departmentRelation', 'designation', 'country', 'city', 'area');
 
@@ -120,6 +124,9 @@ class EmployeeController extends Controller
 
     public function create(): View
     {
+        // Verify the current user can create employees before showing the form.
+        $this->authorize('create', Employee::class);
+
         $departments = Department::active()
             ->orderBy('sort_order')
             ->orderBy('name')
@@ -141,6 +148,9 @@ class EmployeeController extends Controller
 
     public function store(StoreEmployeeRequest $request): RedirectResponse
     {
+        // Re-check on form submit to prevent direct POST requests bypassing the form.
+        $this->authorize('create', Employee::class);
+
         $employee = Employee::create($request->validated());
 
         // Handle profile picture upload
@@ -176,6 +186,10 @@ class EmployeeController extends Controller
 
     public function show(Employee $employee): View
     {
+        // Verify the current user can view this specific employee record.
+        // EmployeePolicy::view() also allows an employee to view their own profile.
+        $this->authorize('view', $employee);
+
         $employee->load('user', 'country', 'city', 'area');
 
         // Get leave summary if employee has a user
@@ -190,6 +204,10 @@ class EmployeeController extends Controller
 
     public function edit(Employee $employee): View
     {
+        // Verify the current user can edit this specific employee record.
+        // EmployeePolicy::update() also allows an employee to edit their own profile.
+        $this->authorize('update', $employee);
+
         $employee->load('user', 'country', 'city', 'area');
 
         $departments = Department::active()
@@ -221,6 +239,9 @@ class EmployeeController extends Controller
 
     public function update(UpdateEmployeeRequest $request, Employee $employee): RedirectResponse
     {
+        // Re-check on form submit to prevent direct PUT requests bypassing the form.
+        $this->authorize('update', $employee);
+
         $employee->update($request->validated());
 
         // Handle profile picture upload
@@ -262,6 +283,9 @@ class EmployeeController extends Controller
 
     public function destroy(Employee $employee): JsonResponse
     {
+        // Verify the current user can delete this specific employee record.
+        $this->authorize('delete', $employee);
+
         $employee->delete();
 
         return response()->json(['message' => 'Employee deleted successfully.']);

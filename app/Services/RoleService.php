@@ -23,9 +23,9 @@ class RoleService
      *
      * @return Collection<int, Role>
      */
-    public function getWithoutSuperAdmin(): Collection
+    public function getWithoutSuperuser(): Collection
     {
-        return Role::withoutSuperAdmin()->get();
+        return Role::withoutSuperuser()->get();
     }
 
     /**
@@ -73,8 +73,8 @@ class RoleService
      */
     public function delete(Role $role): bool
     {
-        if ($role->isSuperAdmin()) {
-            throw new \Exception('Cannot delete Super Admin role.');
+        if ($role->isSuperuser()) {
+            throw new \Exception('Cannot delete Superuser role.');
         }
 
         if ($role->users()->count() > 0) {
@@ -151,7 +151,7 @@ class RoleService
     /**
      * Create or get the Superuser role.
      */
-    public function getOrCreateSuperAdmin(): Role
+    public function getOrCreateSuperuser(): Role
     {
         return Role::firstOrCreate(
             ['name' => 'Superuser'],
@@ -165,9 +165,9 @@ class RoleService
     /**
      * Give all permissions to Super Admin role.
      */
-    public function syncSuperAdminPermissions(): void
+    public function syncSuperuserPermissions(): void
     {
-        $superAdmin = $this->getOrCreateSuperAdmin();
+        $superAdmin = $this->getOrCreateSuperuser();
         $allPermissions = Permission::all()->pluck('id');
         $superAdmin->syncPermissions($allPermissions);
     }
@@ -177,7 +177,7 @@ class RoleService
      */
     public function canModify(Role $role): bool
     {
-        return ! $role->isSuperAdmin();
+        return ! $role->isSuperuser();
     }
 
     /**

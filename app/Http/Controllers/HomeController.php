@@ -3,15 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Holiday;
+use App\Models\LandingPageSection;
 use App\Services\LeaveBalanceService;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class HomeController extends Controller
 {
-    public function __construct(
-        private LeaveBalanceService $balanceService
-    ) {}
+    public function __construct(private LeaveBalanceService $balanceService) {}
 
     /**
      * Display the user's dashboard based on their role.
@@ -34,12 +33,16 @@ class HomeController extends Controller
         $dashboardView = 'dashboards.employee'; // default fallback
         $userRole = 'employee';
         foreach ($roleDashboardMap as $role => $view) {
+
             if (in_array($role, $roles)) {
                 $dashboardView = "dashboards.{$view}";
                 $userRole = $role;
                 break;
             }
         }
+        // dump($roleDashboardMap);
+        // dump($roles);
+        // dd("test");
 
         // Prepare common data for all dashboards
         $stats = $this->getStats($user);
@@ -209,5 +212,19 @@ class HomeController extends Controller
             ->latest()
             ->limit(10)
             ->get();
+    }
+
+    public function publicPage()
+    {
+        // Get all landing page sections grouped by section
+        $sections = LandingPageSection::getGroupedBySection();
+
+        // Helper function to get section value
+        $getValue = fn (string $key, mixed $default = '') => LandingPageSection::getValue($key, $default);
+
+        return view('public.welcome', [
+            'sections' => $sections,
+            'getValue' => $getValue,
+        ]);
     }
 }
