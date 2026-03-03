@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Observers\LeaveTypeObserver;
 use App\Traits\HasActivityLog;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -58,5 +59,17 @@ class LeaveType extends Model
     public function leaveBalances()
     {
         return $this->hasMany(LeaveBalance::class);
+    }
+
+    /**
+     * Register model event listeners.
+     *
+     * booted() is called once when the model class is first loaded.
+     * Attaching the observer here means every LeaveType create/update/delete
+     * will automatically trigger the matching method in LeaveTypeObserver.
+     */
+    protected static function booted(): void
+    {
+        static::observe(LeaveTypeObserver::class);
     }
 }
