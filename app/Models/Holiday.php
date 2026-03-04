@@ -3,13 +3,15 @@
 namespace App\Models;
 
 use App\Traits\HasActivityLog;
+use App\Traits\HasAuditFields;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Holiday extends Model
 {
-    use HasActivityLog, HasFactory;
+    use HasActivityLog, HasAuditFields, HasFactory, SoftDeletes;
 
     protected $fillable = [
         'name',
@@ -21,7 +23,22 @@ class Holiday extends Model
         'notes',
         'is_active',
         'sort_order',
+        'created_by',
+        'updated_by',
+        'deleted_by',
     ];
+
+    /**
+     * Register model event listeners.
+     *
+     * booted() is called once when the model class is first loaded.
+     * Attaching the observer here means every Holiday create/update/delete
+     * will automatically trigger the matching method in HolidayObserver.
+     */
+    protected static function booted(): void
+    {
+        static::observe(\App\Observers\HolidayObserver::class);
+    }
 
     public function casts(): array
     {

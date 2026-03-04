@@ -4,10 +4,12 @@ namespace App\Models;
 
 use App\Observers\EmployeeObserver;
 use App\Traits\HasActivityLog;
+use App\Traits\HasAuditFields;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Milenmk\LaravelLocations\Models\Area;
 use Milenmk\LaravelLocations\Models\City;
 use Milenmk\LaravelLocations\Models\Country;
@@ -17,7 +19,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class Employee extends Model implements HasMedia
 {
-    use HasActivityLog, HasFactory, InteractsWithMedia;
+    use HasActivityLog, HasAuditFields, HasFactory, InteractsWithMedia, SoftDeletes;
 
     protected $fillable = [
         'user_id',
@@ -34,6 +36,9 @@ class Employee extends Model implements HasMedia
         'country_id',
         'city_id',
         'area_id',
+        'created_by',
+        'updated_by',
+        'deleted_by',
     ];
 
     public function casts(): array

@@ -28,7 +28,12 @@
       "mcp__laravel-boost__get-config",
       "Bash(composer show:*)",
       "Bash(cd:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(rm:*)",
+      "Bash(done)",
+      "mcp__laravel-boost__read-log-entries",
+      "Bash(php:*)",
+      "Bash(xargs grep:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

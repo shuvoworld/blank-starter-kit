@@ -2,171 +2,69 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\BaseController\BaseController;
 use App\Http\Requests\ApproveLeaveRequestRequest;
 use App\Http\Requests\RejectLeaveRequestRequest;
 use App\Http\Requests\StoreLeaveRequestRequest;
-use App\Models\LeaveRequest;
 use App\Models\LeaveType;
 use App\Services\LeaveBalanceService;
 use App\Services\LeaveCalculationService;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
-use Yajra\DataTables\Facades\DataTables;
 
-class LeaveRequestController extends Controller
+class LeaveRequestController extends BaseController
 {
     public function __construct(
+        LeaveRequestDataTableController $dataTableController,
         private LeaveBalanceService $balanceService,
         private LeaveCalculationService $calculationService
-    ) {}
+    ) {
+        $this->model = \App\Models\LeaveRequest::class;
+        $this->routePrefix = 'leave-requests';
+        $this->viewPrefix = 'leave-requests';
+        $this->resourceName = 'Leave Request';
+        $this->dataTableController = $dataTableController;
+    }
 
-    public function index(Request $request): View|JsonResponse
+    public function index(Request $request): View
     {
-        if ($request->ajax()) {
-            $query = LeaveRequest::with(['user', 'leaveType', 'approvedBy', 'rejectedBy'])
-                ->orderBy('created_at', 'desc');
+        $this->authorizeAction('viewAny');
 
-            // Filter by status if provided
-            if ($request->has('status') && $request->status !== 'all') {
-                $query->where('status', $request->status);
-            }
+        $tableColumns = $this->dataTableController?->tableColumns() ?? [];
+        $dtColumns = collect($tableColumns)->map(fn ($col) => [
+            'data' => $col['data'],
+            'name' => $col['name'],
+            'orderable' => $col['orderable'] ?? true,
+            'searchable' => $col['searchable'] ?? true,
+            'className' => $col['className'] ?? '',
+        ])->values()->all();
 
-            // Filter by year if provided
-            if ($request->has('year') && $request->year) {
-                $query->where('year', $request->year);
-            }
-
-            return DataTables::of($query)
-                ->addIndexColumn()
-                ->addColumn('employee_name', function (LeaveRequest $leaveRequest) {
-                    return $leaveRequest->user->name;
-                })
-                ->addColumn('leave_type', function (LeaveRequest $leaveRequest) {
-                    return '<span class="badge bg-info">'.$leaveRequest->leaveType->code.'</span> '.$leaveRequest->leaveType->name;
-                })
-                ->addColumn('date_range', function (LeaveRequest $leaveRequest) {
-                    return $leaveRequest->start_date->format('M d, Y').' - '.$leaveRequest->end_date->format('M d, Y');
-                })
-                ->addColumn('total_days', function (LeaveRequest $leaveRequest) {
-                    return $leaveRequest->total_days.' day'.($leaveRequest->total_days > 1 ? 's' : '');
-                })
-                ->addColumn('status_badge', function (LeaveRequest $leaveRequest) {
-                    return $leaveRequest->status_badge;
-                })
-                ->addColumn('action', function (LeaveRequest $leaveRequest) {
-                    $showUrl = route('leave-requests.show', $leaveRequest);
-
-                    $actions = '
-                        <div class="btn-group btn-group-sm">
-                            <a href="'.$showUrl.'" class="btn btn-info" title="View">
-                                <i class="bi bi-eye"></i>
-                            </a>';
-
-                    // Approve button for pending requests
-                    if ($leaveRequest->isPending() && auth()->user()->can('approve leave requests')) {
-                        $actions .= '
-                            <button type="button" class="btn btn-success btn-approve"
-                                data-url="'.route('leave-requests.approve', $leaveRequest).'"
-                                data-name="'.e($leaveRequest->user->name).'" title="Approve">
-                                <i class="bi bi-check-lg"></i>
-                            </button>';
-                    }
-
-                    // Reject button for pending requests
-                    if ($leaveRequest->isPending() && auth()->user()->can('reject leave requests')) {
-                        $actions .= '
-                            <button type="button" class="btn btn-danger btn-reject"
-                                data-url="'.route('leave-requests.reject', $leaveRequest).'"
-                                data-name="'.e($leaveRequest->user->name).'" title="Reject">
-                                <i class="bi bi-x-lg"></i>
-                            </button>';
-                    }
-
-                    // Cancel button for own pending requests
-                    if ($leaveRequest->canBeCancelled() && $leaveRequest->user_id === auth()->id()) {
-                        $actions .= '
-                            <button type="button" class="btn btn-warning btn-cancel"
-                                data-url="'.route('leave-requests.cancel', $leaveRequest).'"
-                                data-name="'.e($leaveRequest->leaveType->name).'" title="Cancel">
-                                <i class="bi bi-arrow-counterclockwise"></i>
-                            </button>';
-                    }
-
-                    $actions .= '</div>';
-
-                    return $actions;
-                })
-                ->rawColumns(['leave_type', 'status_badge', 'action'])
-                ->make(true);
-        }
-
-        $years = LeaveRequest::select('year')
+        $years = \App\Models\LeaveRequest::select('year')
             ->distinct()
             ->orderBy('year', 'desc')
             ->pluck('year');
 
-        return view('leave-requests.index', compact('years'));
+        return view('leave-requests.index', compact('tableColumns', 'dtColumns', 'years'));
     }
 
-    public function myRequests(Request $request): View|JsonResponse
+    protected function createViewData(): array
+    {
+        return [
+            'leaveTypes' => LeaveType::active()->orderBy('sort_order')->get(),
+        ];
+    }
+
+    /**
+     * Display the user's own leave requests.
+     */
+    public function myRequests(Request $request): View
     {
         if ($request->ajax()) {
-            $query = auth()->user()->leaveRequests()
-                ->with(['leaveType', 'approvedBy', 'rejectedBy'])
-                ->orderBy('created_at', 'desc');
-
-            // Filter by status if provided
-            if ($request->has('status') && $request->status !== 'all') {
-                $query->where('status', $request->status);
-            }
-
-            // Filter by year if provided
-            if ($request->has('year') && $request->year) {
-                $query->where('year', $request->year);
-            }
-
-            return DataTables::of($query)
-                ->addIndexColumn()
-                ->addColumn('leave_type', function (LeaveRequest $leaveRequest) {
-                    return '<span class="badge bg-info">'.$leaveRequest->leaveType->code.'</span> '.$leaveRequest->leaveType->name;
-                })
-                ->addColumn('date_range', function (LeaveRequest $leaveRequest) {
-                    return $leaveRequest->start_date->format('M d, Y').' - '.$leaveRequest->end_date->format('M d, Y');
-                })
-                ->addColumn('total_days', function (LeaveRequest $leaveRequest) {
-                    return $leaveRequest->total_days.' day'.($leaveRequest->total_days > 1 ? 's' : '');
-                })
-                ->addColumn('status_badge', function (LeaveRequest $leaveRequest) {
-                    return $leaveRequest->status_badge;
-                })
-                ->addColumn('action', function (LeaveRequest $leaveRequest) {
-                    $showUrl = route('my-leave-requests.show', $leaveRequest);
-
-                    $actions = '
-                        <div class="btn-group btn-group-sm">
-                            <a href="'.$showUrl.'" class="btn btn-info" title="View">
-                                <i class="bi bi-eye"></i>
-                            </a>';
-
-                    // Cancel button for own pending requests
-                    if ($leaveRequest->canBeCancelled()) {
-                        $actions .= '
-                            <button type="button" class="btn btn-warning btn-cancel"
-                                data-url="'.route('my-leave-requests.cancel', $leaveRequest).'"
-                                data-name="'.e($leaveRequest->leaveType->name).'" title="Cancel">
-                                <i class="bi bi-arrow-counterclockwise"></i>
-                            </button>';
-                    }
-
-                    $actions .= '</div>';
-
-                    return $actions;
-                })
-                ->rawColumns(['leave_type', 'status_badge', 'action'])
-                ->make(true);
+            return $this->dataTableController->datatable();
         }
 
         $availableYears = auth()->user()->leaveRequests()
@@ -178,19 +76,45 @@ class LeaveRequestController extends Controller
         return view('leave-requests.my-requests', compact('availableYears'));
     }
 
-    public function create(): View
+    /**
+     * Show a specific leave request (admin view).
+     */
+    public function show(int|string $record): View
     {
-        $leaveTypes = LeaveType::active()->orderBy('sort_order')->get();
+        $leaveRequest = $this->findRecord($record);
+        $this->authorize('view', $leaveRequest);
+        $leaveRequest->load(['user', 'leaveType', 'approvedBy', 'rejectedBy']);
 
-        return view('leave-requests.create', compact('leaveTypes'));
+        return view('leave-requests.show', compact('leaveRequest'));
     }
 
+    /**
+     * Show user's own leave request details.
+     */
+    public function showMy(int|string $record): View
+    {
+        $leaveRequest = $this->findRecord($record);
+
+        if ($leaveRequest->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        $leaveRequest->load(['leaveType', 'approvedBy', 'rejectedBy']);
+
+        return view('leave-requests.show-my', compact('leaveRequest'));
+    }
+
+    /**
+     * Store a new leave request.
+     */
     public function store(StoreLeaveRequestRequest $request): RedirectResponse
     {
+        $this->authorize('create', \App\Models\LeaveRequest::class);
+
         $leaveType = LeaveType::findOrFail($request->leave_type_id);
 
-        $startDate = \Carbon\Carbon::parse($request->start_date);
-        $endDate = \Carbon\Carbon::parse($request->end_date);
+        $startDate = Carbon::parse($request->start_date);
+        $endDate = Carbon::parse($request->end_date);
 
         // Get user's location for holiday calculation
         $user = auth()->user();
@@ -222,7 +146,7 @@ class LeaveRequestController extends Controller
 
         DB::beginTransaction();
         try {
-            $leaveRequest = LeaveRequest::create([
+            $leaveRequest = \App\Models\LeaveRequest::create([
                 'user_id' => $user->id,
                 'leave_type_id' => $leaveType->id,
                 'start_date' => $startDate,
@@ -249,26 +173,14 @@ class LeaveRequestController extends Controller
         }
     }
 
-    public function show(LeaveRequest $leaveRequest): View
+    /**
+     * Approve a leave request.
+     */
+    public function approve(ApproveLeaveRequestRequest $request, int|string $record): JsonResponse
     {
-        $leaveRequest->load(['user', 'leaveType', 'approvedBy', 'rejectedBy']);
+        $leaveRequest = $this->findRecord($record);
+        $this->authorize('approve', $leaveRequest);
 
-        return view('leave-requests.show', compact('leaveRequest'));
-    }
-
-    public function showMy(LeaveRequest $leaveRequest): View
-    {
-        if ($leaveRequest->user_id !== auth()->id()) {
-            abort(403);
-        }
-
-        $leaveRequest->load(['leaveType', 'approvedBy', 'rejectedBy']);
-
-        return view('leave-requests.show-my', compact('leaveRequest'));
-    }
-
-    public function approve(ApproveLeaveRequestRequest $request, LeaveRequest $leaveRequest): JsonResponse
-    {
         if (! $leaveRequest->isPending()) {
             return response()->json(['error' => 'Only pending requests can be approved.'], 422);
         }
@@ -304,8 +216,14 @@ class LeaveRequestController extends Controller
         }
     }
 
-    public function reject(RejectLeaveRequestRequest $request, LeaveRequest $leaveRequest): JsonResponse
+    /**
+     * Reject a leave request.
+     */
+    public function reject(RejectLeaveRequestRequest $request, int|string $record): JsonResponse
     {
+        $leaveRequest = $this->findRecord($record);
+        $this->authorize('reject', $leaveRequest);
+
         if (! $leaveRequest->isPending()) {
             return response()->json(['error' => 'Only pending requests can be rejected.'], 422);
         }
@@ -338,11 +256,13 @@ class LeaveRequestController extends Controller
         }
     }
 
-    public function cancel(Request $request, LeaveRequest $leaveRequest): JsonResponse
+    /**
+     * Cancel a leave request.
+     */
+    public function cancel(Request $request, int|string $record): JsonResponse
     {
-        if ($leaveRequest->user_id !== auth()->id() && ! auth()->user()->can('cancel leave requests')) {
-            return response()->json(['error' => 'Unauthorized.'], 403);
-        }
+        $leaveRequest = $this->findRecord($record);
+        $this->authorize('cancel', $leaveRequest);
 
         if (! $leaveRequest->canBeCancelled()) {
             return response()->json(['error' => 'This request cannot be cancelled.'], 422);

@@ -4,13 +4,15 @@ namespace App\Models;
 
 use App\Observers\LeaveTypeObserver;
 use App\Traits\HasActivityLog;
+use App\Traits\HasAuditFields;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class LeaveType extends Model
 {
-    use HasActivityLog, HasFactory;
+    use HasActivityLog, HasAuditFields, HasFactory, SoftDeletes;
 
     protected $fillable = [
         'name',
@@ -24,6 +26,7 @@ class LeaveType extends Model
         'carry_forward_limit',
         'carry_forward_expiry_days',
         'requires_document',
+        'supporting_document',
         'min_days_before_request',
         'max_consecutive_days',
         'is_gender_specific',
@@ -31,6 +34,9 @@ class LeaveType extends Model
         'is_paid_pro_rata',
         'is_active',
         'sort_order',
+        'created_by',
+        'updated_by',
+        'deleted_by',
     ];
 
     public function casts(): array

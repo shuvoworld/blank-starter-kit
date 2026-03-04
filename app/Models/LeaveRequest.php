@@ -3,13 +3,15 @@
 namespace App\Models;
 
 use App\Traits\HasActivityLog;
+use App\Traits\HasAuditFields;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class LeaveRequest extends Model
 {
-    use HasActivityLog, HasFactory;
+    use HasActivityLog, HasAuditFields, HasFactory, SoftDeletes;
 
     protected $fillable = [
         'user_id',
@@ -26,7 +28,22 @@ class LeaveRequest extends Model
         'rejected_at',
         'cancelled_at',
         'year',
+        'created_by',
+        'updated_by',
+        'deleted_by',
     ];
+
+    /**
+     * Register model event listeners.
+     *
+     * booted() is called once when the model class is first loaded.
+     * Attaching the observer here means every LeaveRequest create/update/delete
+     * will automatically trigger the matching method in LeaveRequestObserver.
+     */
+    protected static function booted(): void
+    {
+        static::observe(\App\Observers\LeaveRequestObserver::class);
+    }
 
     public function casts(): array
     {

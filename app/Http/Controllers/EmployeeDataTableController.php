@@ -12,8 +12,8 @@ class EmployeeDataTableController extends BaseDataTableController
     {
         $this->model = Employee::class;
         $this->routePrefix = 'employees';
-        $this->withRelations = ['user', 'departmentRelation', 'designation', 'country', 'city', 'area'];
-        $this->rawColumns = ['profile_picture', 'user_badge', 'status_badge'];
+        $this->withRelations = ['user', 'departmentRelation', 'designation', 'country', 'city', 'area', 'updatedBy'];
+        $this->rawColumns = ['profile_picture', 'user_badge', 'status_badge', 'updated_at', 'updated_by'];
     }
 
     protected function indexQuery(): Builder
@@ -54,6 +54,10 @@ class EmployeeDataTableController extends BaseDataTableController
             ])) ?: '—',
 
             'status_badge' => fn (Employee $employee) => '<span class="badge '.($employee->status === 'active' ? 'bg-success' : 'bg-secondary').'">'.ucfirst($employee->status).'</span>',
+
+            'updated_at' => fn (Employee $employee) => $employee->updated_at->format('M d, Y H:i'),
+
+            'updated_by' => fn (Employee $employee) => $employee->updatedBy?->name ?? '—',
         ];
     }
 
@@ -95,12 +99,10 @@ class EmployeeDataTableController extends BaseDataTableController
     {
         return [
             [
-                'data' => 'DT_RowIndex',
-                'name' => 'DT_RowIndex',
-                'label' => '#',
-                'width' => '50',
-                'orderable' => false,
-                'searchable' => false,
+                'data' => 'id',
+                'name' => 'id',
+                'label' => 'ID',
+                'width' => '70',
                 'className' => 'text-center',
             ],
             [
@@ -118,11 +120,6 @@ class EmployeeDataTableController extends BaseDataTableController
                 'label' => 'Name',
             ],
             [
-                'data' => 'email',
-                'name' => 'email',
-                'label' => 'Email',
-            ],
-            [
                 'data' => 'user_badge',
                 'name' => 'user_badge',
                 'label' => 'System User',
@@ -135,17 +132,25 @@ class EmployeeDataTableController extends BaseDataTableController
                 'label' => 'Department',
             ],
             [
-                'data' => 'designation_name',
-                'name' => 'designation_name',
-                'label' => 'Designation',
-            ],
-            [
                 'data' => 'status_badge',
                 'name' => 'status',
                 'label' => 'Status',
                 'orderable' => false,
                 'searchable' => false,
                 'className' => 'text-center',
+            ],
+            [
+                'data' => 'updated_at',
+                'name' => 'updated_at',
+                'label' => 'Updated At',
+                'className' => 'text-nowrap',
+            ],
+            [
+                'data' => 'updated_by',
+                'name' => 'updated_by',
+                'label' => 'Updated By',
+                'orderable' => false,
+                'searchable' => false,
             ],
             [
                 'data' => 'action',

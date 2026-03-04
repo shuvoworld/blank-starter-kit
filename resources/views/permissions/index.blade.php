@@ -1,16 +1,16 @@
 @extends('layouts.form.app')
 
 @section('header')
-<h1 class="m-0">Permissions</h1>
+    <h1 class="m-0">Permissions</h1>
 @endsection
 
 @section('breadcrumb')
-<li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
-        <li class="breadcrumb-item active" aria-current="page">Permissions</li>
+    <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Permissions</li>
 @endsection
 
 @section('content')
-<div class="card">
+    <div class="card">
         <div class="card-header">
             <div class="d-flex justify-content-between align-items-center">
                 <h3 class="card-title">
@@ -28,44 +28,35 @@
             <div class="table-responsive">
                 <table id="permissions-table" class="table table-bordered table-hover table-striped w-100">
                     <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Module</th>
-                        <th>Description</th>
-                        <th>Roles</th>
-                        <th width="120">Actions</th>
-                    </tr>
+                        <tr>
+                            @foreach($tableColumns as $column)
+                                <th @isset($column['width']) width="{{ $column['width'] }}" @endisset>
+                                    {{ $column['label'] }}
+                                </th>
+                            @endforeach
+                        </tr>
                     </thead>
                 </table>
             </div>
         </div>
     </div>
+
     @push('scripts')
         <script>
+            var dtColumns = @json($dtColumns);
+
             function initPermissionsDataTable() {
-                if (typeof $ !== 'undefined') {
+                if (typeof $ !== 'undefined' && typeof bootstrap !== 'undefined') {
                     $(document).ready(function () {
                         $('#permissions-table').DataTable({
                             processing: true,
                             serverSide: true,
                             responsive: true,
                             ajax: {
-                                url: '{{ route('permissions.index') }}',
+                                url: '{{ route('permissions.datatable') }}',
                                 type: 'GET'
                             },
-                            columns: [
-                                {data: 'name', name: 'name'},
-                                {data: 'module', name: 'module'},
-                                {data: 'description', name: 'description'},
-                                {data: 'roles_count', name: 'roles_count'},
-                                {
-                                    data: 'action',
-                                    name: 'action',
-                                    orderable: false,
-                                    searchable: false,
-                                    className: 'text-center'
-                                }
-                            ],
+                            columns: dtColumns,
                             order: [[0, 'asc']],
                             pageLength: 25,
                             lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],

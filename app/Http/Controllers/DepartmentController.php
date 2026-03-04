@@ -2,112 +2,58 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\BaseController\BaseController;
 use App\Http\Requests\StoreDepartmentRequest;
 use App\Http\Requests\UpdateDepartmentRequest;
 use App\Models\Department;
-use Illuminate\Http\JsonResponse;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\View\View;
-use Yajra\DataTables\Facades\DataTables;
 
-class DepartmentController extends Controller
+class DepartmentController extends BaseController
 {
-    public function index(Request $request): View|JsonResponse
+    public function __construct(DepartmentDataTableController $dataTableController)
     {
-        // Verify the current user can view the department list before loading any data.
-        $this->authorize('viewAny', Department::class);
+        $this->model = Department::class;
+        $this->routePrefix = 'departments';
+        $this->viewPrefix = 'departments';
+        $this->resourceName = 'Department';
+        $this->dataTableController = $dataTableController;
+    }
 
-        if ($request->ajax()) {
-            $query = Department::query()->orderBy('sort_order');
-
-            return DataTables::of($query)
-                ->addIndexColumn()
-                ->addColumn('status_badge', function (Department $department) {
-                    $class = $department->is_active ? 'bg-success' : 'bg-secondary';
-
-                    return '<span class="badge '.$class.'">'.($department->is_active ? 'Active' : 'Inactive').'</span>';
-                })
-                ->addColumn('action', function (Department $department) {
-                    $showUrl = route('departments.show', $department);
-                    $editUrl = route('departments.edit', $department);
-                    $deleteUrl = route('departments.destroy', $department);
-
-                    return '
-                        <div class="btn-group btn-group-sm">
-                            <a href="'.$showUrl.'" class="btn btn-info" title="View">
-                                <i class="bi bi-eye"></i>
-                            </a>
-                            <a href="'.$editUrl.'" class="btn btn-primary" title="Edit">
-                                <i class="bi bi-pencil"></i>
-                            </a>
-                            <button type="button" class="btn btn-danger btn-delete"
-                                data-url="'.$deleteUrl.'"
-                                data-name="'.e($department->name).'" title="Delete">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </div>
-                    ';
-                })
-                ->rawColumns(['status_badge', 'action'])
-                ->make(true);
+    protected function authorizeAction(string $ability, ?Model $record = null): void
+    {
+        if ($record) {
+            $this->authorize($ability, $record);
+        } else {
+            $this->authorize($ability, Department::class);
         }
-
-        return view('departments.index');
     }
 
-    public function create(): View
+    public function show(int|string $record): View
     {
-        // Verify the current user can create departments before showing the form.
-        $this->authorize('create', Department::class);
-
-        return view('departments.create');
-    }
-
-    public function store(StoreDepartmentRequest $request): RedirectResponse
-    {
-        // Re-check on form submit — a user should not be able to bypass
-        // the form by posting directly to this endpoint without permission.
-        $this->authorize('create', Department::class);
-
-        Department::create($request->validated());
-
-        return to_route('departments.index')->with('status', 'Department created successfully.');
-    }
-
-    public function show(Department $department): View
-    {
-        // Verify the current user can view this specific department record.
+        $department = $this->findRecord($record);
         $this->authorize('view', $department);
 
         return view('departments.show', compact('department'));
     }
 
-    public function edit(Department $department): View
+    public function store(StoreDepartmentRequest $request): RedirectResponse
     {
-        // Verify the current user can edit this specific department record.
-        $this->authorize('update', $department);
+        $this->authorize('create', Department::class);
 
-        return view('departments.edit', compact('department'));
+        Department::create($request->validated());
+
+        return $this->successRedirect('created');
     }
 
-    public function update(UpdateDepartmentRequest $request, Department $department): RedirectResponse
+    public function update(UpdateDepartmentRequest $request, int|string $record): RedirectResponse
     {
-        // Re-check on form submit — same reason as store() above.
+        $department = $this->findRecord($record);
         $this->authorize('update', $department);
 
         $department->update($request->validated());
 
-        return to_route('departments.index')->with('status', 'Department updated successfully.');
-    }
-
-    public function destroy(Department $department): JsonResponse
-    {
-        // Verify the current user can delete this specific department record.
-        $this->authorize('delete', $department);
-
-        $department->delete();
-
-        return response()->json(['message' => 'Department deleted successfully.']);
+        return $this->successRedirect('updated');
     }
 }

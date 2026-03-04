@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateDesignationRequest extends FormRequest
 {
@@ -17,7 +18,7 @@ class UpdateDesignationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255', 'unique:designations,name,'.$this->designation],
+            'name' => ['required', 'string', 'max:255', Rule::unique('designations', 'name')->ignore($this->route('record'))],
             'description' => ['nullable', 'string'],
             'is_active' => ['nullable', 'boolean'],
             'sort_order' => ['nullable', 'integer'],
