@@ -18,7 +18,7 @@ class RbacService
      */
     public function userHasPermission(User $user, string $permission): bool
     {
-        return $user->hasPermissionTo($permission);
+        return $user->can($permission);
     }
 
     /**
@@ -28,7 +28,7 @@ class RbacService
      */
     public function userHasAnyPermission(User $user, array $permissions): bool
     {
-        return $user->hasAnyPermission($permissions);
+        return $user->canAny($permissions);
     }
 
     /**
@@ -38,7 +38,7 @@ class RbacService
      */
     public function userHasAllPermissions(User $user, array $permissions): bool
     {
-        return $user->hasAllPermissions($permissions);
+        return collect($permissions)->every(fn (string $permission) => $user->can($permission));
     }
 
     /**

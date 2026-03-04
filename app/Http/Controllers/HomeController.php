@@ -40,9 +40,6 @@ class HomeController extends Controller
                 break;
             }
         }
-        // dump($roleDashboardMap);
-        // dump($roles);
-        // dd("test");
 
         // Prepare common data for all dashboards
         $stats = $this->getStats($user);

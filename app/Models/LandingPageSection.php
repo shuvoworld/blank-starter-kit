@@ -3,13 +3,15 @@
 namespace App\Models;
 
 use App\Traits\HasActivityLog;
+use App\Traits\HasAuditFields;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class LandingPageSection extends Model
 {
-    use HasActivityLog, HasFactory;
+    use HasActivityLog, HasAuditFields, HasFactory, SoftDeletes;
 
     protected $fillable = [
         'key',
@@ -20,7 +22,22 @@ class LandingPageSection extends Model
         'options',
         'sort_order',
         'is_active',
+        'created_by',
+        'updated_by',
+        'deleted_by',
     ];
+
+    /**
+     * Register model event listeners.
+     *
+     * booted() is called once when the model class is first loaded.
+     * Attaching the observer here means every LandingPageSection create/update/delete
+     * will automatically trigger the matching method in LandingPageSectionObserver.
+     */
+    protected static function booted(): void
+    {
+        static::observe(\App\Observers\LandingPageSectionObserver::class);
+    }
 
     public function casts(): array
     {
@@ -61,7 +78,7 @@ class LandingPageSection extends Model
     {
         $section = static::where('key', $key)->active()->first();
 
-        if (!$section) {
+        if (! $section) {
             return $default;
         }
 

@@ -4,13 +4,15 @@ namespace App\Models;
 
 use App\Observers\ProductObserver;
 use App\Traits\HasActivityLog;
+use App\Traits\HasAuditFields;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Product extends Model
 {
-    use HasActivityLog, HasFactory;
+    use HasActivityLog, HasAuditFields, HasFactory, SoftDeletes;
 
     protected $fillable = [
         'name',
@@ -20,6 +22,9 @@ class Product extends Model
         'stock',
         'category',
         'status',
+        'created_by',
+        'updated_by',
+        'deleted_by',
     ];
 
     public function casts(): array

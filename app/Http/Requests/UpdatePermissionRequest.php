@@ -22,7 +22,7 @@ class UpdatePermissionRequest extends FormRequest
      */
     public function rules(): array
     {
-        $permissionId = $this->route('permission')?->id;
+        $record = $this->route('record');
 
         return [
             'name' => [
@@ -30,10 +30,10 @@ class UpdatePermissionRequest extends FormRequest
                 'required',
                 'string',
                 'max:255',
-                function (string $attribute, mixed $value, Closure $fail) use ($permissionId) {
+                function (string $attribute, mixed $value, Closure $fail) use ($record) {
                     $exists = \DB::table('permissions')
                         ->where('name', $value)
-                        ->where('id', '!=', $permissionId)
+                        ->where('id', '!=', $record)
                         ->exists();
 
                     if ($exists) {

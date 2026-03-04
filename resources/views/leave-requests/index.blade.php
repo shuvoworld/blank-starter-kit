@@ -42,13 +42,11 @@
             <table id="leave-requests-table" class="table table-bordered table-hover table-striped w-100">
                 <thead>
                     <tr>
-                        <th width="50">#</th>
-                        <th>Employee</th>
-                        <th>Leave Type</th>
-                        <th>Date Range</th>
-                        <th>Duration</th>
-                        <th>Status</th>
-                        <th width="180">Actions</th>
+                        @foreach($tableColumns as $column)
+                            <th @isset($column['width']) width="{{ $column['width'] }}" @endisset>
+                                {{ $column['label'] }}
+                            </th>
+                        @endforeach
                     </tr>
                 </thead>
             </table>
@@ -150,6 +148,7 @@
 
 @push('scripts')
 <script>
+    var dtColumns = @json($dtColumns);
     let table;
     let approveUrl = '';
     let rejectUrl = '';
@@ -157,28 +156,20 @@
 
     function initLeaveRequestsDataTable() {
         if (typeof $ !== 'undefined' && typeof bootstrap !== 'undefined') {
-            $(document).ready(function() {
+            $(document).ready(function () {
                 table = $('#leave-requests-table').DataTable({
                     processing: true,
                     serverSide: true,
                     responsive: true,
                     ajax: {
-                        url: '{{ route('leave-requests.index') }}',
+                        url: '{{ route('leave-requests.datatable') }}',
                         type: 'GET',
-                        data: function(d) {
+                        data: function (d) {
                             d.year = $('#year-filter').val() || '';
                             d.status = $('#status-filter').val() || 'all';
                         }
                     },
-                    columns: [
-                        {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false, className: 'text-center'},
-                        {data: 'employee_name', name: 'user.name'},
-                        {data: 'leave_type', name: 'leaveType.name', orderable: false, searchable: false},
-                        {data: 'date_range', name: 'start_date', orderable: true},
-                        {data: 'total_days', name: 'total_days', className: 'text-center'},
-                        {data: 'status_badge', name: 'status', orderable: true, searchable: false, className: 'text-center'},
-                        {data: 'action', name: 'action', orderable: false, searchable: false, className: 'text-center'}
-                    ],
+                    columns: dtColumns,
                     order: [[5, 'desc']],
                     pageLength: 25,
                     lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
@@ -205,28 +196,28 @@
                 var rejectModal = new bootstrap.Modal(document.getElementById('rejectModal'));
                 var cancelModal = new bootstrap.Modal(document.getElementById('cancelModal'));
 
-                $(document).on('click', '.btn-approve', function(e) {
+                $(document).on('click', '.btn-approve', function (e) {
                     e.preventDefault();
                     approveUrl = $(this).data('url');
                     $('#approveEmployeeName').text($(this).data('name'));
                     approveModal.show();
                 });
 
-                $(document).on('click', '.btn-reject', function(e) {
+                $(document).on('click', '.btn-reject', function (e) {
                     e.preventDefault();
                     rejectUrl = $(this).data('url');
                     $('#rejectEmployeeName').text($(this).data('name'));
                     rejectModal.show();
                 });
 
-                $(document).on('click', '.btn-cancel', function(e) {
+                $(document).on('click', '.btn-cancel', function (e) {
                     e.preventDefault();
                     cancelUrl = $(this).data('url');
                     $('#cancelLeaveName').text($(this).data('name'));
                     cancelModal.show();
                 });
 
-                $('#confirmApprove').on('click', function() {
+                $('#confirmApprove').on('click', function () {
                     var btn = $(this);
                     var originalHtml = btn.html();
                     btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Approving...');
@@ -243,13 +234,13 @@
                         data: JSON.stringify({
                             approval_note: approvalNote
                         }),
-                        success: function(response) {
+                        success: function (response) {
                             approveModal.hide();
                             $('#approval_note').val('');
                             table.ajax.reload(null, false);
                             showToast('success', 'Leave request approved successfully. New balance: ' + response.new_balance + ' days.');
                         },
-                        error: function(xhr) {
+                        error: function (xhr) {
                             console.error('Approval error:', xhr);
                             console.error('Response:', xhr.responseText);
                             var message = 'An error occurred while approving the request.';
@@ -268,13 +259,13 @@
                             showToast('danger', message);
                             btn.prop('disabled', false).html(originalHtml);
                         },
-                        complete: function() {
+                        complete: function () {
                             btn.prop('disabled', false).html(originalHtml);
                         }
                     });
                 });
 
-                $('#rejectForm').on('submit', function(e) {
+                $('#rejectForm').on('submit', function (e) {
                     e.preventDefault();
 
                     var btn = $(this).find('button[type="submit"]');
@@ -286,13 +277,13 @@
                         type: 'POST',
                         headers: {'X-CSRF-TOKEN': '{{ csrf_token() }}'},
                         data: $(this).serialize(),
-                        success: function(response) {
+                        success: function (response) {
                             rejectModal.hide();
                             $('#rejectForm')[0].reset();
                             table.ajax.reload(null, false);
                             showToast('success', 'Leave request rejected successfully.');
                         },
-                        error: function(xhr) {
+                        error: function (xhr) {
                             var errors = xhr.responseJSON?.errors || {};
                             if (errors.rejection_reason) {
                                 $('#rejection_reason').addClass('is-invalid');
@@ -304,13 +295,13 @@
                                 showToast('danger', message);
                             }
                         },
-                        complete: function() {
+                        complete: function () {
                             btn.prop('disabled', false).html(originalHtml);
                         }
                     });
                 });
 
-                $('#confirmCancel').on('click', function() {
+                $('#confirmCancel').on('click', function () {
                     var btn = $(this);
                     var originalHtml = btn.html();
                     btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Cancelling...');
@@ -319,28 +310,28 @@
                         url: cancelUrl,
                         type: 'POST',
                         headers: {'X-CSRF-TOKEN': '{{ csrf_token() }}'},
-                        success: function(response) {
+                        success: function (response) {
                             cancelModal.hide();
                             table.ajax.reload(null, false);
                             showToast('success', 'Leave request cancelled successfully.');
                         },
-                        error: function(xhr) {
+                        error: function (xhr) {
                             cancelModal.hide();
                             var message = xhr.responseJSON?.error || 'An error occurred.';
                             showToast('danger', message);
                         },
-                        complete: function() {
+                        complete: function () {
                             btn.prop('disabled', false).html(originalHtml);
                         }
                     });
                 });
 
                 // Filter handlers
-                $('#year-filter, #status-filter').on('change', function() {
+                $('#year-filter, #status-filter').on('change', function () {
                     table.ajax.reload();
                 });
 
-                $('#reset-filters').on('click', function() {
+                $('#reset-filters').on('click', function () {
                     $('#year-filter').val('');
                     $('#status-filter').val('all');
                     table.ajax.reload();
@@ -364,7 +355,7 @@
                     toastContainer.append(toast);
                     var bsToast = new bootstrap.Toast(toast[0], {delay: 5000});
                     bsToast.show();
-                    toast.on('hidden.bs.toast', function() { $(this).remove(); });
+                    toast.on('hidden.bs.toast', function () {$(this).remove();});
                 }
             });
         } else {

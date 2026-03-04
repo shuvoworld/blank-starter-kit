@@ -11,13 +11,13 @@ class LeaveTypeDataTableController extends BaseDataTableController
     {
         $this->model = LeaveType::class;
         $this->routePrefix = 'leave-types';
-        $this->rawColumns = ['code_badge', 'is_paid_badge', 'carry_forward_badge', 'status_badge'];
+        $this->rawColumns = ['code_badge', 'is_paid_badge', 'carry_forward_badge', 'status_badge', 'updated_at', 'updated_by'];
 
     }
 
     protected function indexQuery(): \Illuminate\Database\Eloquent\Builder
     {
-        return LeaveType::query()->orderBy('sort_order');
+        return LeaveType::query()->with('updatedBy')->orderBy('sort_order');
     }
 
     protected function dataTableColumns(): array
@@ -36,6 +36,10 @@ class LeaveTypeDataTableController extends BaseDataTableController
 
             'status_badge' => fn (LeaveType $leaveType) => '<span class="badge '.($leaveType->is_active ? 'bg-success' : 'bg-secondary').'">'
                 .($leaveType->is_active ? 'Active' : 'Inactive').'</span>',
+
+            'updated_at' => fn (LeaveType $leaveType) => $leaveType->updated_at->format('M d, Y H:i'),
+
+            'updated_by' => fn (LeaveType $leaveType) => $leaveType->updatedBy?->name ?? '—',
         ];
     }
 
@@ -69,12 +73,10 @@ class LeaveTypeDataTableController extends BaseDataTableController
     {
         return [
             [
-                'data' => 'DT_RowIndex',
-                'name' => 'DT_RowIndex',
-                'label' => '#',
-                'width' => '50',
-                'orderable' => false,
-                'searchable' => false,
+                'data' => 'id',
+                'name' => 'id',
+                'label' => 'ID',
+                'width' => '70',
                 'className' => 'text-center',
             ],
 
@@ -106,6 +108,19 @@ class LeaveTypeDataTableController extends BaseDataTableController
                 'orderable' => false,
                 'searchable' => false,
                 'className' => 'text-center',
+            ],
+            [
+                'data' => 'updated_at',
+                'name' => 'updated_at',
+                'label' => 'Updated At',
+                'className' => 'text-nowrap',
+            ],
+            [
+                'data' => 'updated_by',
+                'name' => 'updated_by',
+                'label' => 'Updated By',
+                'orderable' => false,
+                'searchable' => false,
             ],
             [
                 'data' => 'action',

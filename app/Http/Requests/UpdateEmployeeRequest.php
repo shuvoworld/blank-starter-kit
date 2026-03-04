@@ -16,7 +16,7 @@ class UpdateEmployeeRequest extends FormRequest
      */
     public function rules(): array
     {
-        $employeeId = $this->route('employee')?->id;
+        $employeeId = $this->route('record');
 
         return [
             'user_id' => ['nullable', 'exists:users,id'],

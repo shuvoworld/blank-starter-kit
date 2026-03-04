@@ -4,19 +4,24 @@ namespace App\Models;
 
 use App\Observers\DesignationObserver;
 use App\Traits\HasActivityLog;
+use App\Traits\HasAuditFields;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Designation extends Model
 {
-    use HasActivityLog, HasFactory;
+    use HasActivityLog, HasAuditFields, HasFactory, SoftDeletes;
 
     protected $fillable = [
         'name',
         'description',
         'is_active',
         'sort_order',
+        'created_by',
+        'updated_by',
+        'deleted_by',
     ];
 
     public function casts(): array

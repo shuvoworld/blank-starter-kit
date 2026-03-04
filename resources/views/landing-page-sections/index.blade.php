@@ -52,15 +52,11 @@
             <table id="landing-page-sections-table" class="table table-bordered table-hover table-striped w-100">
                 <thead>
                     <tr>
-                        <th width="50">#</th>
-                        <th>Section</th>
-                        <th>Label</th>
-                        <th>Key</th>
-                        <th>Type</th>
-                        <th>Value</th>
-                        <th>Status</th>
-                        <th>Order</th>
-                        <th width="100">Actions</th>
+                        @foreach($tableColumns as $column)
+                            <th @isset($column['width']) width="{{ $column['width'] }}" @endisset>
+                                {{ $column['label'] }}
+                            </th>
+                        @endforeach
                     </tr>
                 </thead>
             </table>
@@ -121,9 +117,11 @@
 
 @push('scripts')
 <script>
+    var dtColumns = @json($dtColumns);
+
     function initLandingPageSectionsDataTable() {
         if (typeof $ !== 'undefined' && typeof bootstrap !== 'undefined') {
-            $(document).ready(function() {
+            $(document).ready(function () {
                 var currentSection = 'all';
 
                 var table = $('#landing-page-sections-table').DataTable({
@@ -131,24 +129,14 @@
                     serverSide: true,
                     responsive: true,
                     ajax: {
-                        url: '{{ route('landing-page-sections.index') }}',
+                        url: '{{ route('landing-page-sections.datatable') }}',
                         type: 'GET',
-                        data: function(d) {
+                        data: function (d) {
                             d.section_filter = currentSection;
                         }
                     },
-                    columns: [
-                        {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false, className: 'text-center'},
-                        {data: 'section_badge', name: 'section', orderable: false, searchable: false, className: 'text-center'},
-                        {data: 'label', name: 'label'},
-                        {data: 'key', name: 'key'},
-                        {data: 'type_badge', name: 'type', orderable: false, searchable: false, className: 'text-center'},
-                        {data: 'preview', name: 'value', orderable: false, searchable: false},
-                        {data: 'status_badge', name: 'is_active', orderable: false, searchable: false, className: 'text-center'},
-                        {data: 'sort_order', name: 'sort_order', className: 'text-center'},
-                        {data: 'action', name: 'action', orderable: false, searchable: false, className: 'text-center'}
-                    ],
-                    order: [[7, 'asc']],
+                    columns: dtColumns,
+                    order: [[6, 'asc']],
                     pageLength: 25,
                     lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
                     language: {
@@ -171,17 +159,17 @@
                 });
 
                 // Section filter tabs
-                $('#sectionTabs button[data-bs-toggle="pill"]').on('shown.bs.tab', function(e) {
+                $('#sectionTabs button[data-bs-toggle="pill"]').on('shown.bs.tab', function (e) {
                     currentSection = $(e.target).attr('id').replace('-tab', '');
                     table.ajax.reload();
                 });
 
                 // Quick edit modal
-                $(document).on('click', '.btn-edit-section', function(e) {
+                $(document).on('click', '.btn-edit-section', function (e) {
                     e.preventDefault();
                     var editUrl = $(this).data('url');
 
-                    $.get(editUrl, function(data) {
+                    $.get(editUrl, function (data) {
                         $('#edit-key').val(data.key);
                         $('#edit-section').val(data.section);
                         $('#edit-type').val(data.type);
@@ -197,7 +185,7 @@
                 });
 
                 // Form submission
-                $('#quickEditForm').on('submit', function(e) {
+                $('#quickEditForm').on('submit', function (e) {
                     e.preventDefault();
                     var form = $(this);
                     var url = form.attr('action');
@@ -211,16 +199,16 @@
                         type: 'PUT',
                         data: form.serialize(),
                         headers: {'X-CSRF-TOKEN': '{{ csrf_token() }}'},
-                        success: function() {
+                        success: function () {
                             $('#quickEditModal').modal('hide');
                             table.ajax.reload(null, false);
                             showToast('success', 'Section updated successfully.');
                         },
-                        error: function(xhr) {
+                        error: function (xhr) {
                             var message = xhr.responseJSON?.message || 'An error occurred.';
                             showToast('danger', message);
                         },
-                        complete: function() {
+                        complete: function () {
                             btn.prop('disabled', false).html(originalHtml);
                         }
                     });
@@ -244,7 +232,7 @@
                     toastContainer.append(toast);
                     var bsToast = new bootstrap.Toast(toast[0], {delay: 5000});
                     bsToast.show();
-                    toast.on('hidden.bs.toast', function() { $(this).remove(); });
+                    toast.on('hidden.bs.toast', function () {$(this).remove();});
                 }
             });
         } else {

@@ -2,83 +2,50 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\BaseController\BaseController;
 use App\Http\Requests\AssignPermissionsToRoleRequest;
 use App\Http\Requests\StoreRoleRequest;
 use App\Http\Requests\UpdateRoleRequest;
 use App\Models\Permission;
 use App\Models\Role;
-use Illuminate\Http\JsonResponse;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\View\View;
-use Yajra\DataTables\Facades\DataTables;
 
-class RoleController extends Controller
+class RoleController extends BaseController
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index(Request $request): View|JsonResponse
+    public function __construct(RoleDataTableController $dataTableController)
     {
-        if ($request->ajax()) {
-            return DataTables::of(Role::query()->with('permissions')->withCount('users'))
-                ->editColumn('name', function ($role) {
-                    return '<span class="badge bg-primary fs-6">'.$role->name.'</span>';
-                })
-                ->editColumn('description', function ($role) {
-                    return $role->description ?? '-';
-                })
-                ->addColumn('permissions', function ($role) {
-                    $permissions = $role->permissions->take(5);
-                    $badges = $permissions->map(function ($permission) {
-                        return '<span class="badge bg-info">'.$permission->name.'</span>';
-                    })->implode(' ');
-
-                    if ($role->permissions->count() > 5) {
-                        $badges .= ' <span class="badge bg-secondary">+'.($role->permissions->count() - 5).' more</span>';
-                    }
-
-                    return $badges ?: '-';
-                })
-                ->addColumn('users_count', function ($role) {
-                    return $role->users_count;
-                })
-                ->addColumn('action', function ($role) {
-                    $viewUrl = route('roles.show', $role);
-                    $editUrl = route('roles.edit', $role);
-                    $canUpdate = auth()->user()?->can('update roles');
-
-                    $actions = '<div class="btn-group btn-group-sm">';
-                    $actions .= '<a href="'.$viewUrl.'" class="btn btn-info" title="View"><i class="bi bi-eye"></i></a>';
-
-                    if ($canUpdate && ! $role->isSuperuser()) {
-                        $actions .= '<a href="'.$editUrl.'" class="btn btn-primary" title="Edit"><i class="bi bi-pencil"></i></a>';
-                    }
-
-                    $actions .= '</div>';
-
-                    return $actions;
-                })
-                ->rawColumns(['name', 'permissions', 'action'])
-                ->make(true);
-        }
-
-        return view('roles.index');
+        $this->model = Role::class;
+        $this->routePrefix = 'roles';
+        $this->viewPrefix = 'roles';
+        $this->resourceName = 'Role';
+        $this->dataTableController = $dataTableController;
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create(): View
+    protected function createViewData(): array
     {
-        $permissions = Permission::all()->groupBy('module');
-
-        return view('roles.create', compact('permissions'));
+        return ['permissions' => Permission::all()->groupBy('module')];
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
+    protected function editViewData(Model $record): array
+    {
+        $record->load('permissions');
+
+        return [
+            'permissions' => Permission::all()->groupBy('module'),
+            'rolePermissions' => $record->permissions->pluck('id')->toArray(),
+        ];
+    }
+
+    public function show(int|string $record): View
+    {
+        $role = $this->findRecord($record);
+        $role->load('permissions', 'users');
+
+        return view('roles.show', compact('role'));
+    }
+
     public function store(StoreRoleRequest $request): RedirectResponse
     {
         $role = Role::create([
@@ -88,40 +55,18 @@ class RoleController extends Controller
         ]);
 
         if ($request->filled('permissions')) {
-            $role->syncPermissions($request->input('permissions'));
+            $role->syncPermissions(
+                Permission::whereIn('id', $request->input('permissions'))->get()
+            );
         }
 
-        return to_route('roles.index')
-            ->with('status', 'Role created successfully.');
+        return $this->successRedirect('created');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Role $role): View
+    public function update(UpdateRoleRequest $request, int|string $record): RedirectResponse
     {
-        $role->load('permissions', 'users');
+        $role = $this->findRecord($record);
 
-        return view('roles.show', compact('role'));
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Role $role): View
-    {
-        $role->load('permissions');
-        $permissions = Permission::all()->groupBy('module');
-        $rolePermissions = $role->permissions->pluck('id')->toArray();
-
-        return view('roles.edit', compact('role', 'permissions', 'rolePermissions'));
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(UpdateRoleRequest $request, Role $role): RedirectResponse
-    {
         $role->update([
             'name' => $request->input('name', $role->name),
             'guard_name' => $request->input('guard_name', $role->guard_name),
@@ -129,40 +74,29 @@ class RoleController extends Controller
         ]);
 
         if ($request->has('permissions')) {
-            $role->syncPermissions($request->input('permissions'));
+            $role->syncPermissions(
+                Permission::whereIn('id', $request->input('permissions', []))->get()
+            );
         }
 
-        return to_route('roles.index')
-            ->with('status', 'Role updated successfully.');
+        return $this->successRedirect('updated');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Role $role): RedirectResponse
+    protected function beforeDestroy(Model $record): void
     {
-        // Prevent deletion of Superuser role
-        if ($role->isSuperuser()) {
-            return back()->with('error', 'Cannot delete Superuser role.');
-        }
-
-        // Check if role has users
-        if ($role->users()->count() > 0) {
-            return back()->with('error', 'Cannot delete role with assigned users.');
-        }
-
-        $role->delete();
-
-        return to_route('roles.index')
-            ->with('status', 'Role deleted successfully.');
+        abort_if($record->isSuperuser(), 403, 'Cannot delete Superuser role.');
+        abort_if($record->users()->count() > 0, 422, 'Cannot delete role with assigned users.');
     }
 
     /**
      * Assign permissions to a role.
      */
-    public function assignPermissions(AssignPermissionsToRoleRequest $request, Role $role): RedirectResponse
+    public function assignPermissions(AssignPermissionsToRoleRequest $request, int|string $record): RedirectResponse
     {
-        $role->syncPermissions($request->input('permissions'));
+        $role = $this->findRecord($record);
+        $role->syncPermissions(
+            Permission::whereIn('id', $request->input('permissions', []))->get()
+        );
 
         return back()->with('status', 'Permissions assigned successfully.');
     }
@@ -170,8 +104,9 @@ class RoleController extends Controller
     /**
      * Remove a permission from a role.
      */
-    public function removePermission(Role $role, Permission $permission): RedirectResponse
+    public function removePermission(int|string $record, Permission $permission): RedirectResponse
     {
+        $role = $this->findRecord($record);
         $role->revokePermissionTo($permission);
 
         return back()->with('status', 'Permission removed successfully.');

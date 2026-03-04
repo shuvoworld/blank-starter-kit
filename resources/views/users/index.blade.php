@@ -1,39 +1,41 @@
 @extends('layouts.form.app')
 
 @section('header')
-<h1 class="m-0">Users</h1>
+    <h1 class="m-0">Users</h1>
 @endsection
 
 @section('breadcrumb')
-<li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
-        <li class="breadcrumb-item active" aria-current="page">Users</li>
+    <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Users</li>
 @endsection
 
 @section('content')
-<div class="card">
+    <div class="card">
         <div class="card-header">
             <div class="d-flex justify-content-between align-items-center">
                 <h3 class="card-title">
                     <i class="bi bi-people me-2"></i>
                     All Users
                 </h3>
-                <a href="{{ route('users.create') }}" class="btn btn-primary">
-                    <i class="bi bi-plus-lg me-1"></i> Create User
-                </a>
+                @can('create users')
+                    <a href="{{ route('users.create') }}" class="btn btn-primary">
+                        <i class="bi bi-plus-lg me-1"></i> Create User
+                    </a>
+                @endcan
             </div>
         </div>
         <div class="card-body">
             <div class="table-responsive">
                 <table id="users-table" class="table table-bordered table-hover table-striped w-100">
                     <thead>
-                        <tr>
-                            <th width="50">#</th>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>Roles</th>
-                            <th>Created At</th>
-                            <th width="150">Actions</th>
-                        </tr>
+                    <tr>
+                        @foreach($tableColumns as $column)
+                            <th @isset($column['width']) width="{{ $column['width'] }}" @endisset
+                                @isset($column['className']) class="{{ $column['className'] }}" @endisset>
+                                {{ $column['label'] }}
+                            </th>
+                        @endforeach
+                    </tr>
                     </thead>
                 </table>
             </div>
@@ -52,7 +54,7 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <p>Are you sure you want to delete <strong id="deleteUserName"></strong>?</p>
+                    <p>Are you sure you want to delete <strong id="deleteItemName"></strong>?</p>
                     <p class="text-muted small mb-0">This action cannot be undone.</p>
                 </div>
                 <div class="modal-footer">
@@ -68,124 +70,105 @@
     </div>
 
     @push('scripts')
-    <script>
-        // Wait for jQuery and Bootstrap to be loaded
-        function initUsersDataTable() {
-            if (typeof $ !== 'undefined' && typeof bootstrap !== 'undefined') {
-                $(document).ready(function() {
-                    var usersTable = $('#users-table').DataTable({
-                processing: true,
-                serverSide: true,
-                responsive: true,
-                ajax: {
-                    url: '{{ route('users.index') }}',
-                    type: 'GET'
-                },
-                columns: [
-                    {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false, className: 'text-center'},
-                    {data: 'name', name: 'name'},
-                    {data: 'email', name: 'email'},
-                    {data: 'roles', name: 'roles', orderable: false, searchable: false},
-                    {data: 'created_at_formatted', name: 'created_at', className: 'text-nowrap'},
-                    {data: 'action', name: 'action', orderable: false, searchable: false, className: 'text-center'}
-                ],
-                order: [[1, 'asc']],
-                pageLength: 10,
-                lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
-                language: {
-                    processing: '<div class="d-flex justify-content-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>',
-                    search: '_INPUT_',
-                    searchPlaceholder: 'Search users...',
-                    lengthMenu: 'Show _MENU_',
-                    info: 'Showing _START_ to _END_ of _TOTAL_ users',
-                    infoEmpty: 'No users found',
-                    infoFiltered: '(filtered from _MAX_ total)',
-                    paginate: {
-                        first: '<i class="bi bi-chevron-double-left"></i>',
-                        previous: '<i class="bi bi-chevron-left"></i>',
-                        next: '<i class="bi bi-chevron-right"></i>',
-                        last: '<i class="bi bi-chevron-double-right"></i>'
-                    },
-                    emptyTable: '<div class="text-center py-4"><i class="bi bi-people fs-1 text-muted"></i><p class="text-muted mt-2">No users found</p></div>'
-                },
-                dom: "<'pk-dt-top'lf><'pk-dt-table'rt><'pk-dt-foot'ip>",
-            });
+        <script>
+            var dtColumns = @json($dtColumns);
 
-            // Delete functionality
-            var deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
-            var deleteUrl = '';
+            function initUsersDataTable() {
+                if (typeof $ !== 'undefined' && typeof bootstrap !== 'undefined') {
+                    $(document).ready(function () {
+                        var table = $('#users-table').DataTable({
+                            processing: true,
+                            serverSide: true,
+                            responsive: true,
+                            ajax: {
+                                url: '{{ route('users.datatable') }}',
+                                type: 'GET'
+                            },
+                            columns: dtColumns,
+                            order: [[1, 'asc']],
+                            pageLength: 10,
+                            lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
+                            language: {
+                                processing: '<div class="d-flex justify-content-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>',
+                                search: '_INPUT_',
+                                searchPlaceholder: 'Search users...',
+                                lengthMenu: 'Show _MENU_',
+                                info: 'Showing _START_ to _END_ of _TOTAL_ users',
+                                infoEmpty: 'No users found',
+                                infoFiltered: '(filtered from _MAX_ total)',
+                                paginate: {
+                                    first: '<i class="bi bi-chevron-double-left"></i>',
+                                    previous: '<i class="bi bi-chevron-left"></i>',
+                                    next: '<i class="bi bi-chevron-right"></i>',
+                                    last: '<i class="bi bi-chevron-double-right"></i>'
+                                },
+                                emptyTable: '<div class="text-center py-4"><i class="bi bi-people fs-1 text-muted"></i><p class="text-muted mt-2">No users found</p></div>'
+                            },
+                            dom: "<'pk-dt-top'lf><'pk-dt-table'rt><'pk-dt-foot'ip>",
+                        });
 
-            $(document).on('click', '.btn-delete', function(e) {
-                e.preventDefault();
-                deleteUrl = $(this).data('url');
-                $('#deleteUserName').text($(this).data('name'));
-                deleteModal.show();
-            });
+                        var deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+                        var deleteUrl = '';
 
-            $('#confirmDelete').on('click', function() {
-                var btn = $(this);
-                var originalHtml = btn.html();
-                btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Deleting...');
+                        $(document).on('click', '.btn-delete', function (e) {
+                            e.preventDefault();
+                            deleteUrl = $(this).data('url');
+                            $('#deleteItemName').text($(this).data('name'));
+                            deleteModal.show();
+                        });
 
-                $.ajax({
-                    url: deleteUrl,
-                    type: 'DELETE',
-                    headers: {'X-CSRF-TOKEN': '{{ csrf_token() }}'},
-                    success: function(response) {
-                        deleteModal.hide();
-                        usersTable.ajax.reload(null, false);
-                        showToast('success', 'User deleted successfully.');
-                    },
-                    error: function(xhr) {
-                        deleteModal.hide();
-                        var message = xhr.responseJSON?.error || 'An error occurred.';
-                        showToast('danger', message);
-                    },
-                    complete: function() {
-                        btn.prop('disabled', false).html(originalHtml);
-                    }
-                });
-            });
+                        $('#confirmDelete').on('click', function () {
+                            var btn = $(this);
+                            var originalHtml = btn.html();
+                            btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Deleting...');
 
-            // Toast notification
-            function showToast(type, message) {
-                var alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
-                var icon = type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill';
+                            $.ajax({
+                                url: deleteUrl,
+                                type: 'DELETE',
+                                headers: {'X-CSRF-TOKEN': '{{ csrf_token() }}'},
+                                success: function () {
+                                    deleteModal.hide();
+                                    table.ajax.reload(null, false);
+                                    showToast('success', 'User deleted successfully.');
+                                },
+                                error: function (xhr) {
+                                    deleteModal.hide();
+                                    var message = xhr.responseJSON?.error || 'An error occurred.';
+                                    showToast('danger', message);
+                                },
+                                complete: function () {
+                                    btn.prop('disabled', false).html(originalHtml);
+                                }
+                            });
+                        });
 
-                var toastContainer = $('#toast-container');
-                if (toastContainer.length === 0) {
-                    toastContainer = $('<div id="toast-container" class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1055"></div>');
-                    $('body').append(toastContainer);
+                        function showToast(type, message) {
+                            var alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+                            var icon = type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill';
+                            var toastContainer = $('#toast-container');
+                            if (toastContainer.length === 0) {
+                                toastContainer = $('<div id="toast-container" class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1055"></div>');
+                                $('body').append(toastContainer);
+                            }
+                            var toast = $(
+                                '<div class="toast align-items-center ' + alertClass + ' border-0" role="alert">' +
+                                '<div class="d-flex">' +
+                                '<div class="toast-body"><i class="bi ' + icon + ' me-2"></i>' + message + '</div>' +
+                                '<button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>' +
+                                '</div></div>'
+                            );
+                            toastContainer.append(toast);
+                            var bsToast = new bootstrap.Toast(toast[0], {delay: 5000});
+                            bsToast.show();
+                            toast.on('hidden.bs.toast', function () {$(this).remove();});
+                        }
+                    });
+                } else {
+                    setTimeout(initUsersDataTable, 100);
                 }
-
-                var toast = $(
-                    '<div class="toast align-items-center ' + alertClass + ' border-0" role="alert">' +
-                    '<div class="d-flex">' +
-                    '<div class="toast-body">' +
-                    '<i class="bi ' + icon + ' me-2"></i>' + message +
-                    '</div>' +
-                    '<button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>' +
-                    '</div>' +
-                    '</div>'
-                );
-
-                toastContainer.append(toast);
-                var bsToast = new bootstrap.Toast(toast[0], { delay: 5000 });
-                bsToast.show();
-
-                toast.on('hidden.bs.toast', function() {
-                    $(this).remove();
-                });
             }
-                });
-            } else {
-                // jQuery or Bootstrap not loaded yet, retry after delay
-                setTimeout(initUsersDataTable, 100);
-            }
-        }
 
-        // Start the initialization
-        initUsersDataTable();
-    </script>
+            initUsersDataTable();
+        </script>
     @endpush
 @endsection

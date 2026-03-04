@@ -8,6 +8,7 @@ use App\Http\Requests\UpdateLeaveTypeRequest;
 use App\Models\LeaveType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class LeaveTypeController extends BaseController
@@ -48,7 +49,13 @@ class LeaveTypeController extends BaseController
     {
         $this->authorize('create', LeaveType::class);
 
-        LeaveType::create($request->validated());
+        $data = $request->validated();
+
+        if ($request->hasFile('supporting_document')) {
+            $data['supporting_document'] = $request->file('supporting_document')->store('leave-types/documents', 'public');
+        }
+
+        LeaveType::create($data);
 
         return $this->successRedirect('created');
     }
@@ -58,7 +65,18 @@ class LeaveTypeController extends BaseController
         $leaveType = $this->findRecord($record);
         $this->authorize('update', $leaveType);
 
-        $leaveType->update($request->validated());
+        $data = $request->validated();
+
+        if ($request->hasFile('supporting_document')) {
+            if ($leaveType->supporting_document) {
+                Storage::disk('public')->delete($leaveType->supporting_document);
+            }
+            $data['supporting_document'] = $request->file('supporting_document')->store('leave-types/documents', 'public');
+        } else {
+            unset($data['supporting_document']);
+        }
+
+        $leaveType->update($data);
 
         return $this->successRedirect('updated');
     }

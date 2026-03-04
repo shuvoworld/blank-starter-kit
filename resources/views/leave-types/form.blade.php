@@ -1,3 +1,4 @@
+@use('Illuminate\Support\Facades\Storage')
 @extends('layouts.form.app')
 
 @section('header')
@@ -21,7 +22,7 @@
                     </h3>
                 </div>
                 <form action="{{ $editing ? route('leave-types.update', $record) : route('leave-types.store') }}"
-                      method="POST">
+                      method="POST" enctype="multipart/form-data">
                     @csrf
                     @if($editing) @method('PUT') @endif
 
@@ -87,6 +88,17 @@
                                 'options' => [0 => 'No', 1 => 'Yes'],
                                 'div'     => 'col-md-4',
                                 'select2' => true,
+                            ]])
+                        </div>
+
+                        <div class="row">
+                            @include('layouts.form.inputs.file', ['var' => [
+                                'name'    => 'supporting_document',
+                                'label'   => 'Supporting Document',
+                                'accept'  => '.pdf,.doc,.docx,.jpg,.jpeg,.png',
+                                'div'     => 'col-md-12',
+                                'tooltip' => 'Upload a sample/template document (PDF, Word, or image). Max 5MB.',
+                                'preview' => $record?->supporting_document ? Storage::disk('public')->url($record->supporting_document) : null,
                             ]])
                         </div>
 

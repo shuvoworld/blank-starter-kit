@@ -2,9 +2,10 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Traits\HasActivityLog;
+use App\Traits\HasAuditFields;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Activitylog\LogOptions;
@@ -13,7 +14,7 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasActivityLog, HasFactory, HasRoles, Notifiable;
+    use HasActivityLog, HasAuditFields, HasFactory, HasRoles, Notifiable, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -24,6 +25,9 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'created_by',
+        'updated_by',
+        'deleted_by',
     ];
 
     /**
@@ -82,5 +86,10 @@ class User extends Authenticatable
     public function employee()
     {
         return $this->hasOne(\App\Models\Employee::class);
+    }
+
+    protected static function booted(): void
+    {
+        static::observe(\App\Observers\UserObserver::class);
     }
 }
