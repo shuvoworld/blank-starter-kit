@@ -62,7 +62,7 @@
 
                     <li class="nav-item">
                         <a href="{{ route('employees.index') }}" class="nav-link {{ request()->routeIs('employees.*') ? 'active' : '' }}">
-                            <i class="nav-icon bi bi-person-work"></i>
+                            <i class="nav-icon bi bi-people"></i>
                             <p>Employees</p>
                         </a>
                     </li>
@@ -139,7 +139,7 @@
 
                     <li class="nav-item">
                         <a href="{{ route('employees.index') }}" class="nav-link {{ request()->routeIs('employees.*') ? 'active' : '' }}">
-                            <i class="nav-icon bi bi-person-work"></i>
+                            <i class="nav-icon bi bi-people"></i>
                             <p>Employees</p>
                         </a>
                     </li>

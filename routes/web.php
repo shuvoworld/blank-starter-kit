@@ -4,6 +4,7 @@ use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\DesignationController;
 use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\EmployeeDataTableController;
 use App\Http\Controllers\HolidayController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LandingPageSectionController;
@@ -71,15 +72,16 @@ Route::middleware('auth')->group(function () {
 
     // Employee Routes
     Route::prefix('employees')->name('employees.')->middleware('permission:view any employees')->group(function () {
+        Route::get('employees/datatable', [EmployeeDataTableController::class, 'datatable'])->name('datatable');
         Route::get('/', [EmployeeController::class, 'index'])->name('index');
         Route::get('/create', [EmployeeController::class, 'create'])->name('create')->middleware('permission:create employees');
         Route::post('/', [EmployeeController::class, 'store'])->name('store')->middleware('permission:create employees');
-        Route::get('/{employee}', [EmployeeController::class, 'show'])->name('show');
-        Route::get('/{employee}/edit', [EmployeeController::class, 'edit'])->name('edit')->middleware('permission:update employees');
-        Route::put('/{employee}', [EmployeeController::class, 'update'])->name('update')->middleware('permission:update employees');
-        Route::delete('/{employee}', [EmployeeController::class, 'destroy'])->name('destroy')->middleware('permission:delete employees');
         Route::get('/cities/by-country', [EmployeeController::class, 'citiesByCountry'])->name('cities.by-country');
         Route::get('/areas/by-city', [EmployeeController::class, 'areasByCity'])->name('areas.by-city');
+        Route::get('/{record}', [EmployeeController::class, 'show'])->name('show');
+        Route::get('/{record}/edit', [EmployeeController::class, 'edit'])->name('edit')->middleware('permission:update employees');
+        Route::put('/{record}', [EmployeeController::class, 'update'])->name('update')->middleware('permission:update employees');
+        Route::delete('/{record}', [EmployeeController::class, 'destroy'])->name('destroy')->middleware('permission:delete employees');
     });
 
     // Department Routes
