@@ -23,7 +23,9 @@
                 <form action="{{ $editing ? route('leave-types.update', $record) : route('leave-types.store') }}"
                       method="POST">
                     @csrf
-                    @if($editing) @method('PUT') @endif
+                    @if($editing)
+                        @method('PUT')
+                    @endif
 
                     <div class="card-body">
                         <div class="row">
@@ -242,22 +244,7 @@
                             Leave Type Metadata
                         </h3>
                     </div>
-                    <div class="card-body">
-                        <table class="table table-sm table-borderless mb-0">
-                            <tr>
-                                <td class="text-muted">ID:</td>
-                                <td>{{ $record->id }}</td>
-                            </tr>
-                            <tr>
-                                <td class="text-muted">Created:</td>
-                                <td>{{ $record->created_at->format('M d, Y H:i') }}</td>
-                            </tr>
-                            <tr>
-                                <td class="text-muted">Updated:</td>
-                                <td>{{ $record->updated_at->format('M d, Y H:i') }}</td>
-                            </tr>
-                        </table>
-                    </div>
+                    @include('leave-types.includes.record-info', ['leaveType' => $record])
                 </div>
 
                 @can('delete leave types')
