@@ -88,6 +88,20 @@ class LeaveBalance extends Model
     }
 
     /**
+     * Recalculate and save pending days from pending leave requests.
+     */
+    public function updatePendingDays(): void
+    {
+        $pendingDays = \App\Models\LeaveRequest::where('user_id', $this->user_id)
+            ->where('leave_type_id', $this->leave_type_id)
+            ->where('year', $this->year)
+            ->pending()
+            ->sum('total_days');
+
+        $this->setPendingDays($pendingDays);
+    }
+
+    /**
      * Check if user has sufficient balance for requested days.
      */
     public function hasSufficientBalance(int $requestedDays): bool

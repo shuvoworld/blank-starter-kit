@@ -61,10 +61,10 @@ class LeaveRequestController extends BaseController
     /**
      * Display the user's own leave requests.
      */
-    public function myRequests(Request $request): View
+    public function myRequests(Request $request): View|\Illuminate\Http\JsonResponse
     {
         if ($request->ajax()) {
-            return $this->dataTableController->datatable();
+            return $this->dataTableController->datatable($request);
         }
 
         $availableYears = auth()->user()->leaveRequests()
