@@ -30,6 +30,7 @@ class UpdateLeaveTypeRequest extends FormRequest
             'carry_forward_limit' => ['nullable', 'integer', 'min:0'],
             'carry_forward_expiry_days' => ['nullable', 'integer', 'min:0'],
             'requires_document' => ['nullable', 'boolean'],
+            'supporting_document' => ['nullable', 'file', 'mimes:pdf,doc,docx,jpg,jpeg,png', 'max:5120'],
             'min_days_before_request' => ['nullable', 'integer', 'min:0'],
             'max_consecutive_days' => ['nullable', 'integer', 'min:0'],
             'is_gender_specific' => ['nullable', 'boolean'],

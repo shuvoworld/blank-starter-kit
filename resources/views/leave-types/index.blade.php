@@ -6,7 +6,7 @@
 
 @section('breadcrumb')
     <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
-    <li class="breadcrumb-item active" aria-current="page">Leave Types</li>
+    <li class="breadcrumb-item active" aria-current="page">Leave Types</li>leave request datatable error:
 @endsection
 
 @section('content')

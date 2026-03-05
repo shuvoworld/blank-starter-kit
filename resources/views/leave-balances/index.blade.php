@@ -41,14 +41,11 @@
             <table id="leave-balances-table" class="table table-bordered table-hover table-striped w-100">
                 <thead>
                     <tr>
-                        <th width="50">#</th>
-                        <th>Employee</th>
-                        <th>Leave Type</th>
-                        <th>Entitlement</th>
-                        <th>Usage</th>
-                        <th>Pending</th>
-                        <th>Remaining</th>
-                        <th width="120">Actions</th>
+                        @foreach($tableColumns as $column)
+                            <th @isset($column['width']) width="{{ $column['width'] }}" @endisset>
+                                {{ $column['label'] }}
+                            </th>
+                        @endforeach
                     </tr>
                 </thead>
             </table>
@@ -58,31 +55,24 @@
 
 @push('scripts')
 <script>
+    var dtColumns = @json($dtColumns);
+
     function initLeaveBalancesDataTable() {
         if (typeof $ !== 'undefined' && typeof bootstrap !== 'undefined') {
-            $(document).ready(function() {
+            $(document).ready(function () {
                 var table = $('#leave-balances-table').DataTable({
                     processing: true,
                     serverSide: true,
                     responsive: true,
                     ajax: {
-                        url: '{{ route('leave-balances.index') }}',
+                        url: '{{ route('leave-balances.datatable') }}',
                         type: 'GET',
-                        data: function(d) {
+                        data: function (d) {
                             d.year = $('#year-filter').val() || '';
                             d.leave_type_id = $('#leave-type-filter').val() || '';
                         }
                     },
-                    columns: [
-                        {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false, className: 'text-center'},
-                        {data: 'employee_name', name: 'user.name'},
-                        {data: 'leave_type', name: 'leaveType.name', orderable: false, searchable: false},
-                        {data: 'entitlement', name: 'total_entitlement', orderable: true, searchable: false, className: 'text-center'},
-                        {data: 'usage', name: 'taken_days', orderable: true, searchable: false},
-                        {data: 'pending', name: 'pending_days', orderable: false, searchable: false, className: 'text-center'},
-                        {data: 'remaining', name: 'remaining_days', orderable: true, searchable: false, className: 'text-center'},
-                        {data: 'action', name: 'action', orderable: false, searchable: false, className: 'text-center'}
-                    ],
+                    columns: dtColumns,
                     order: [[0, 'asc']],
                     pageLength: 25,
                     lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
@@ -106,11 +96,11 @@
                 });
 
                 // Filter handlers
-                $('#year-filter, #leave-type-filter').on('change', function() {
+                $('#year-filter, #leave-type-filter').on('change', function () {
                     table.ajax.reload();
                 });
 
-                $('#reset-filters').on('click', function() {
+                $('#reset-filters').on('click', function () {
                     $('#year-filter').val('{{ now()->year }}');
                     $('#leave-type-filter').val('');
                     table.ajax.reload();

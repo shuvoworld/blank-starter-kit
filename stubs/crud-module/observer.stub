@@ -1,0 +1,25 @@
+<?php
+
+namespace App\Observers;
+
+use App\Models\{ModuleName};
+
+class {ModuleName}Observer
+{
+    public function creating({ModuleName} ${moduleName}): void
+    {
+        ${moduleName}->created_by = auth()->id();
+        ${moduleName}->updated_by = auth()->id();
+    }
+
+    public function updating({ModuleName} ${moduleName}): void
+    {
+        ${moduleName}->updated_by = auth()->id();
+    }
+
+    public function deleting({ModuleName} ${moduleName}): void
+    {
+        ${moduleName}->deleted_by = auth()->id();
+        ${moduleName}->saveQuietly();
+    }
+}

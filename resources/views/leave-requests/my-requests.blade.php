@@ -99,7 +99,7 @@
 
     function initMyLeaveRequestsDataTable() {
         if (typeof $ !== 'undefined' && typeof bootstrap !== 'undefined') {
-            $(document).ready(function() {
+            $(document).ready(function () {
                 table = $('#my-leave-requests-table').DataTable({
                     processing: true,
                     serverSide: true,
@@ -107,7 +107,7 @@
                     ajax: {
                         url: '{{ route('my-leave-requests.index') }}',
                         type: 'GET',
-                        data: function(d) {
+                        data: function (d) {
                             d.year = $('#year-filter').val() || '';
                             d.status = $('#status-filter').val() || 'all';
                         }
@@ -145,14 +145,14 @@
 
                 var cancelModal = new bootstrap.Modal(document.getElementById('cancelModal'));
 
-                $(document).on('click', '.btn-cancel', function(e) {
+                $(document).on('click', '.btn-cancel', function (e) {
                     e.preventDefault();
                     cancelUrl = $(this).data('url');
                     $('#cancelLeaveName').text($(this).data('name'));
                     cancelModal.show();
                 });
 
-                $('#confirmCancel').on('click', function() {
+                $('#confirmCancel').on('click', function () {
                     var btn = $(this);
                     var originalHtml = btn.html();
                     btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Cancelling...');
@@ -161,28 +161,28 @@
                         url: cancelUrl,
                         type: 'POST',
                         headers: {'X-CSRF-TOKEN': '{{ csrf_token() }}'},
-                        success: function(response) {
+                        success: function (response) {
                             cancelModal.hide();
                             table.ajax.reload(null, false);
                             showToast('success', 'Leave request cancelled successfully.');
                         },
-                        error: function(xhr) {
+                        error: function (xhr) {
                             cancelModal.hide();
                             var message = xhr.responseJSON?.error || 'An error occurred.';
                             showToast('danger', message);
                         },
-                        complete: function() {
+                        complete: function () {
                             btn.prop('disabled', false).html(originalHtml);
                         }
                     });
                 });
 
                 // Filter handlers
-                $('#year-filter, #status-filter').on('change', function() {
+                $('#year-filter, #status-filter').on('change', function () {
                     table.ajax.reload();
                 });
 
-                $('#reset-filters').on('click', function() {
+                $('#reset-filters').on('click', function () {
                     $('#year-filter').val('');
                     $('#status-filter').val('all');
                     table.ajax.reload();
@@ -206,7 +206,7 @@
                     toastContainer.append(toast);
                     var bsToast = new bootstrap.Toast(toast[0], {delay: 5000});
                     bsToast.show();
-                    toast.on('hidden.bs.toast', function() { $(this).remove(); });
+                    toast.on('hidden.bs.toast', function () {$(this).remove();});
                 }
             });
         } else {

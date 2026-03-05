@@ -22,7 +22,7 @@ class UpdateRoleRequest extends FormRequest
      */
     public function rules(): array
     {
-        $roleId = $this->route('role')?->id;
+        $record = $this->route('record');
 
         return [
             'name' => [
@@ -30,10 +30,10 @@ class UpdateRoleRequest extends FormRequest
                 'required',
                 'string',
                 'max:255',
-                function (string $attribute, mixed $value, Closure $fail) use ($roleId) {
+                function (string $attribute, mixed $value, Closure $fail) use ($record) {
                     $exists = \DB::table('roles')
                         ->where('name', $value)
-                        ->where('id', '!=', $roleId)
+                        ->where('id', '!=', $record)
                         ->exists();
 
                     if ($exists) {

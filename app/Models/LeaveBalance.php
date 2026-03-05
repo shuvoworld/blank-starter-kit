@@ -3,13 +3,15 @@
 namespace App\Models;
 
 use App\Traits\HasActivityLog;
+use App\Traits\HasAuditFields;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class LeaveBalance extends Model
 {
-    use HasActivityLog, HasFactory;
+    use HasActivityLog, HasAuditFields, HasFactory, SoftDeletes;
 
     protected $fillable = [
         'user_id',
@@ -19,7 +21,22 @@ class LeaveBalance extends Model
         'taken_days',
         'remaining_days',
         'pending_days',
+        'created_by',
+        'updated_by',
+        'deleted_by',
     ];
+
+    /**
+     * Register model event listeners.
+     *
+     * booted() is called once when the model class is first loaded.
+     * Attaching the observer here means every LeaveBalance create/update/delete
+     * will automatically trigger the matching method in LeaveBalanceObserver.
+     */
+    protected static function booted(): void
+    {
+        static::observe(\App\Observers\LeaveBalanceObserver::class);
+    }
 
     public function casts(): array
     {
@@ -68,6 +85,20 @@ class LeaveBalance extends Model
     {
         $this->pending_days = $days;
         $this->save();
+    }
+
+    /**
+     * Recalculate and save pending days from pending leave requests.
+     */
+    public function updatePendingDays(): void
+    {
+        $pendingDays = \App\Models\LeaveRequest::where('user_id', $this->user_id)
+            ->where('leave_type_id', $this->leave_type_id)
+            ->where('year', $this->year)
+            ->pending()
+            ->sum('total_days');
+
+        $this->setPendingDays($pendingDays);
     }
 
     /**

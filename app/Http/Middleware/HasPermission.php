@@ -19,7 +19,7 @@ class HasPermission
             abort(403, 'Unauthenticated.');
         }
 
-        if (! auth()->user()->hasPermissionTo($permission)) {
+        if (! auth()->user()->can($permission)) {
             abort(403, 'You do not have permission to access this resource.');
         }
 

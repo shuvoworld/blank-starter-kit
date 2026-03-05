@@ -2,92 +2,39 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\BaseController\BaseController;
 use App\Models\LeaveBalance;
 use App\Models\LeaveType;
 use App\Services\LeaveBalanceService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
-use Yajra\DataTables\Facades\DataTables;
 
-class LeaveBalanceController extends Controller
+class LeaveBalanceController extends BaseController
 {
     public function __construct(
+        LeaveBalanceDataTableController $dataTableController,
         private LeaveBalanceService $balanceService
-    ) {}
+    ) {
+        $this->model = LeaveBalance::class;
+        $this->routePrefix = 'leave-balances';
+        $this->viewPrefix = 'leave-balances';
+        $this->resourceName = 'Leave Balance';
+        $this->dataTableController = $dataTableController;
+    }
 
-    public function index(Request $request): View|JsonResponse
+    public function index(Request $request): View
     {
-        if ($request->ajax()) {
-            $query = LeaveBalance::with(['user', 'leaveType'])
-                ->orderBy('year', 'desc')
-                ->orderBy('user_id')
-                ->orderBy('leave_type_id');
+        $this->authorizeAction('viewAny');
 
-            // Filter by year if provided
-            if ($request->has('year') && $request->year) {
-                $query->where('year', $request->year);
-            }
-
-            // Filter by leave type if provided
-            if ($request->has('leave_type_id') && $request->leave_type_id) {
-                $query->where('leave_type_id', $request->leave_type_id);
-            }
-
-            return DataTables::of($query)
-                ->addIndexColumn()
-                ->addColumn('employee_name', function (LeaveBalance $balance) {
-                    return $balance->user->name;
-                })
-                ->addColumn('leave_type', function (LeaveBalance $balance) {
-                    return '<span class="badge bg-info">'.$balance->leaveType->code.'</span> '.$balance->leaveType->name;
-                })
-                ->addColumn('entitlement', function (LeaveBalance $balance) {
-                    return $balance->total_entitlement.' day'.($balance->total_entitlement > 1 ? 's' : '');
-                })
-                ->addColumn('usage', function (LeaveBalance $balance) {
-                    $percentage = $balance->usage_percentage;
-                    $color = $percentage >= 80 ? 'bg-danger' : ($percentage >= 50 ? 'bg-warning' : 'bg-success');
-
-                    return '
-                        <div class="progress" style="height: 20px;">
-                            <div class="progress-bar '.$color.'" role="progressbar"
-                                style="width: '.$percentage.'%"
-                                aria-valuenow="'.$percentage.'" aria-valuemin="0" aria-valuemax="100">
-                                '.$balance->taken_days.' / '.$balance->total_entitlement.'
-                            </div>
-                        </div>
-                        <small class="text-muted">'.$percentage.'% used</small>
-                    ';
-                })
-                ->addColumn('pending', function (LeaveBalance $balance) {
-                    if ($balance->pending_days > 0) {
-                        return '<span class="badge bg-warning">'.$balance->pending_days.' pending</span>';
-                    }
-
-                    return '<span class="text-muted">—</span>';
-                })
-                ->addColumn('remaining', function (LeaveBalance $balance) {
-                    $remaining = $balance->remaining_days;
-                    $class = $remaining <= 2 ? 'text-danger' : ($remaining <= 5 ? 'text-warning' : 'text-success');
-
-                    return '<strong class="'.$class.'">'.$remaining.'</strong> day'.($remaining != 1 ? 's' : '');
-                })
-                ->addColumn('action', function (LeaveBalance $balance) {
-                    $summaryUrl = route('leave-balances.summary', [
-                        'user_id' => $balance->user_id,
-                        'year' => $balance->year,
-                    ]);
-
-                    return '
-                        <a href="'.$summaryUrl.'" class="btn btn-sm btn-info" title="View Summary">
-                            <i class="bi bi-file-text"></i> Summary
-                        </a>
-                    ';
-                })
-                ->rawColumns(['leave_type', 'usage', 'pending', 'remaining', 'action'])
-                ->make(true);
-        }
+        $tableColumns = $this->dataTableController?->tableColumns() ?? [];
+        $dtColumns = collect($tableColumns)->map(fn ($col) => [
+            'data' => $col['data'],
+            'name' => $col['name'],
+            'orderable' => $col['orderable'] ?? true,
+            'searchable' => $col['searchable'] ?? true,
+            'className' => $col['className'] ?? '',
+        ])->values()->all();
 
         $years = LeaveBalance::select('year')
             ->distinct()
@@ -96,9 +43,23 @@ class LeaveBalanceController extends Controller
 
         $leaveTypes = LeaveType::active()->orderBy('sort_order')->get();
 
-        return view('leave-balances.index', compact('years', 'leaveTypes'));
+        return view('leave-balances.index', compact('tableColumns', 'dtColumns', 'years', 'leaveTypes'));
     }
 
+    protected function createViewData(): array
+    {
+        return [
+            'years' => LeaveBalance::select('year')
+                ->distinct()
+                ->orderBy('year', 'desc')
+                ->pluck('year'),
+            'leaveTypes' => LeaveType::active()->orderBy('sort_order')->get(),
+        ];
+    }
+
+    /**
+     * Display the user's own leave balance summary.
+     */
     public function mySummary(Request $request): View
     {
         $user = auth()->user();
@@ -140,6 +101,9 @@ class LeaveBalanceController extends Controller
         ));
     }
 
+    /**
+     * Display a user's leave balance summary (for admins).
+     */
     public function userSummary(Request $request): View
     {
         $userId = $request->get('user_id');
@@ -179,6 +143,9 @@ class LeaveBalanceController extends Controller
         ));
     }
 
+    /**
+     * Get balance data via API (for AJAX requests).
+     */
     public function getBalance(Request $request): JsonResponse
     {
         $request->validate([

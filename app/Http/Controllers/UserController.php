@@ -2,105 +2,93 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\AssignRolesToUserRequest;
+use App\Http\Controllers\BaseController\BaseController;
 use App\Models\Role;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\View\View;
-use Yajra\DataTables\Facades\DataTables;
 
-class UserController extends Controller
+class UserController extends BaseController
 {
-    public function index(Request $request)
+    public function __construct(UserDataTableController $dataTableController)
     {
-        if ($request->ajax()) {
-            return DataTables::of(User::query()->with('roles'))
-                ->addIndexColumn()
-                ->addColumn('created_at_formatted', function ($user) {
-                    return $user->created_at->format('M d, Y');
-                })
-                ->addColumn('roles', function ($user) {
-                    return $user->roles->pluck('name')->map(function ($name) {
-                        return '<span class="badge bg-primary">'.e($name).'</span>';
-                    })->implode(' ');
-                })
-                ->addColumn('action', function ($user) {
-                    $editUrl = route('users.edit', $user);
-                    $deleteUrl = route('users.destroy', $user);
-
-                    return '
-                        <div class="btn-group btn-group-sm">
-                            <a href="'.$editUrl.'" class="btn btn-primary" title="Edit">
-                                <i class="bi bi-pencil"></i>
-                            </a>
-                            <button type="button" class="btn btn-danger btn-delete"
-                                data-url="'.$deleteUrl.'"
-                                data-name="'.e($user->name).'" title="Delete">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </div>
-                    ';
-                })
-                ->rawColumns(['roles', 'action'])
-                ->make(true);
-        }
-
-        return view('users.index');
+        $this->model = User::class;
+        $this->routePrefix = 'users';
+        $this->viewPrefix = 'users';
+        $this->resourceName = 'User';
+        $this->dataTableController = $dataTableController;
     }
 
-    public function create(): View
+    protected function authorizeAction(string $ability, ?Model $record = null): void
     {
-        // $roles = Role::all();
-        return view('users.create', compact('routeName', 'moduleName'));
+        if ($record) {
+            $this->authorize($ability, $record);
+        } else {
+            $this->authorize($ability, User::class);
+        }
+    }
+
+    protected function createViewData(): array
+    {
+        return [
+            'roles' => Role::orderBy('name')->get(),
+        ];
+    }
+
+    protected function editViewData(Model $record): array
+    {
+        $record->load('roles');
+
+        return [
+            'roles' => Role::orderBy('name')->get(),
+        ];
+    }
+
+    public function show(int|string $record): View
+    {
+        $user = $this->findRecord($record);
+        $this->authorize('view', $user);
+        $user->load(['roles', 'employee', 'leaveBalances', 'leaveRequests']);
+
+        return view('users.show', compact('user'));
     }
 
     public function store(Request $request): RedirectResponse
     {
+        $this->authorize('create', User::class);
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'confirmed', Password::defaults()],
-            'roles' => ['nullable', 'array'],
-            'roles.*' => ['exists:roles,id'],
+            'role_id' => ['required', 'exists:roles,id'],
         ]);
 
         $validated['password'] = Hash::make($validated['password']);
 
         $user = User::create($validated);
 
-        if ($request->filled('roles')) {
-            $roles = Role::whereIn('id', $request->input('roles'))->get();
-            $user->syncRoles($roles);
+        if ($request->filled('role_id')) {
+            $user->syncRoles([Role::findById($request->input('role_id'))]);
         }
 
-        return to_route('users.index')->with('status', 'User created successfully.');
+        return $this->successRedirect('created');
     }
 
-    public function show(User $user): RedirectResponse
+    public function update(Request $request, int|string $record): RedirectResponse
     {
-        return to_route('users.edit', $user);
-    }
+        $user = $this->findRecord($record);
+        $this->authorize('update', $user);
 
-    public function edit(User $user): View
-    {
-        $user->load('roles');
-        $roles = Role::all();
-        $userRoles = $user->roles->pluck('id')->toArray();
-
-        return view('users.edit', compact('user', 'roles', 'userRoles'));
-    }
-
-    public function update(Request $request, User $user): RedirectResponse
-    {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,'.$user->id],
             'password' => ['nullable', 'confirmed', Password::defaults()],
-            'roles' => ['nullable', 'array'],
-            'roles.*' => ['exists:roles,id'],
+            'role_id' => ['required', 'exists:roles,id'],
         ]);
 
         $user->name = $validated['name'];
@@ -112,54 +100,11 @@ class UserController extends Controller
 
         $user->save();
 
-        // Sync roles - convert IDs to Role objects
-        $roleIds = $request->input('roles', []);
-        if (empty($roleIds)) {
-            $user->syncRoles([]);
-        } else {
-            $roles = Role::whereIn('id', $roleIds)->get();
-            $user->syncRoles($roles);
+        // Sync single role
+        if ($request->filled('role_id')) {
+            $user->syncRoles([Role::findById($request->input('role_id'))]);
         }
 
-        return to_route('users.index')->with('status', 'User updated successfully.');
-    }
-
-    public function destroy(User $user): RedirectResponse
-    {
-        if ($user->id === auth()->id()) {
-            return back()->with('error', 'You cannot delete your own account.');
-        }
-
-        $user->delete();
-
-        return to_route('users.index')->with('status', 'User deleted successfully.');
-    }
-
-    /**
-     * Show the form for managing user roles.
-     */
-    public function editRoles(User $user): View
-    {
-        $user->load('roles');
-        $roles = Role::all();
-        $userRoles = $user->roles->pluck('id')->toArray();
-
-        return view('users.roles', compact('user', 'roles', 'userRoles'));
-    }
-
-    /**
-     * Update user roles.
-     */
-    public function updateRoles(AssignRolesToUserRequest $request, User $user): RedirectResponse
-    {
-        $roleIds = $request->input('roles', []);
-        if (empty($roleIds)) {
-            $user->syncRoles([]);
-        } else {
-            $roles = Role::whereIn('id', $roleIds)->get();
-            $user->syncRoles($roles);
-        }
-
-        return back()->with('status', 'Roles updated successfully.');
+        return $this->successRedirect('updated');
     }
 }

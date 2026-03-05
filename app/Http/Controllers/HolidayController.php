@@ -2,134 +2,87 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\BaseController\BaseController;
 use App\Http\Requests\StoreHolidayRequest;
 use App\Http\Requests\UpdateHolidayRequest;
 use App\Models\Holiday;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Milenmk\LaravelLocations\Models\City;
 use Milenmk\LaravelLocations\Models\Country;
-use Yajra\DataTables\Facades\DataTables;
 
-class HolidayController extends Controller
+class HolidayController extends BaseController
 {
-    public function index(Request $request): View|JsonResponse
+    public function __construct(HolidayDataTableController $dataTableController)
     {
-        if ($request->ajax()) {
-            $query = Holiday::with(['country', 'city'])->orderBy('date');
+        $this->model = Holiday::class;
+        $this->routePrefix = 'holidays';
+        $this->viewPrefix = 'holidays';
+        $this->resourceName = 'Holiday';
+        $this->dataTableController = $dataTableController;
+    }
 
-            return DataTables::of($query)
-                ->addIndexColumn()
-                ->addColumn('date_formatted', function (Holiday $holiday) {
-                    return $holiday->date->format('M d, Y');
-                })
-                ->addColumn('type_badge', function (Holiday $holiday) {
-                    $class = $holiday->holiday_type === 'global' ? 'bg-primary' : 'bg-info';
-
-                    return '<span class="badge '.$class.'">'.ucfirst($holiday->holiday_type).'</span>';
-                })
-                ->addColumn('location', function (Holiday $holiday) {
-                    if ($holiday->holiday_type === 'global') {
-                        return '<span class="text-muted">—</span>';
-                    }
-
-                    $location = [];
-                    if ($holiday->country) {
-                        $location[] = $holiday->country->name;
-                    }
-                    if ($holiday->city) {
-                        $location[] = $holiday->city->name;
-                    }
-
-                    return $location ? implode(', ', $location) : '<span class="text-muted">—</span>';
-                })
-                ->addColumn('recurring_badge', function (Holiday $holiday) {
-                    if ($holiday->is_recurring) {
-                        return '<span class="badge bg-success"><i class="bi bi-arrow-repeat me-1"></i>Yes</span>';
-                    }
-
-                    return '<span class="text-muted">No</span>';
-                })
-                ->addColumn('status_badge', function (Holiday $holiday) {
-                    $class = $holiday->is_active ? 'bg-success' : 'bg-secondary';
-
-                    return '<span class="badge '.$class.'">'.($holiday->is_active ? 'Active' : 'Inactive').'</span>';
-                })
-                ->addColumn('action', function (Holiday $holiday) {
-                    $showUrl = route('holidays.show', $holiday);
-                    $editUrl = route('holidays.edit', $holiday);
-                    $deleteUrl = route('holidays.destroy', $holiday);
-
-                    return '
-                        <div class="btn-group btn-group-sm">
-                            <a href="'.$showUrl.'" class="btn btn-info" title="View">
-                                <i class="bi bi-eye"></i>
-                            </a>
-                            <a href="'.$editUrl.'" class="btn btn-primary" title="Edit">
-                                <i class="bi bi-pencil"></i>
-                            </a>
-                            <button type="button" class="btn btn-danger btn-delete"
-                                data-url="'.$deleteUrl.'"
-                                data-name="'.e($holiday->name).'" title="Delete">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </div>
-                    ';
-                })
-                ->rawColumns(['type_badge', 'location', 'recurring_badge', 'status_badge', 'action'])
-                ->make(true);
+    protected function authorizeAction(string $ability, ?Model $record = null): void
+    {
+        if ($record) {
+            $this->authorize($ability, $record);
+        } else {
+            $this->authorize($ability, Holiday::class);
         }
-
-        return view('holidays.index');
     }
 
-    public function create(): View
+    protected function createViewData(): array
     {
-        $countries = Country::orderBy('name')->get();
-        $cities = City::orderBy('name')->get();
-
-        return view('holidays.create', compact('countries', 'cities'));
+        return [
+            'countries' => Country::orderBy('name')->get(),
+            'cities' => City::orderBy('name')->get(),
+        ];
     }
 
-    public function store(StoreHolidayRequest $request): RedirectResponse
+    protected function editViewData(Model $record): array
     {
-        Holiday::create($request->validated());
+        $record->load(['country', 'city']);
 
-        return to_route('holidays.index')->with('status', 'Holiday created successfully.');
+        return [
+            'countries' => Country::orderBy('name')->get(),
+            'cities' => City::orderBy('name')->get(),
+        ];
     }
 
-    public function show(Holiday $holiday): View
+    public function show(int|string $record): View
     {
+        $holiday = $this->findRecord($record);
         $holiday->load(['country', 'city']);
+        $this->authorize('view', $holiday);
 
         return view('holidays.show', compact('holiday'));
     }
 
-    public function edit(Holiday $holiday): View
+    public function store(StoreHolidayRequest $request): RedirectResponse
     {
-        $countries = Country::orderBy('name')->get();
-        $cities = City::orderBy('name')->get();
-        $holiday->load(['country', 'city']);
+        $this->authorize('create', Holiday::class);
 
-        return view('holidays.edit', compact('holiday', 'countries', 'cities'));
+        Holiday::create($request->validated());
+
+        return $this->successRedirect('created');
     }
 
-    public function update(UpdateHolidayRequest $request, Holiday $holiday): RedirectResponse
+    public function update(UpdateHolidayRequest $request, int|string $record): RedirectResponse
     {
+        $holiday = $this->findRecord($record);
+        $this->authorize('update', $holiday);
+
         $holiday->update($request->validated());
 
-        return to_route('holidays.index')->with('status', 'Holiday updated successfully.');
+        return $this->successRedirect('updated');
     }
 
-    public function destroy(Holiday $holiday): JsonResponse
-    {
-        $holiday->delete();
-
-        return response()->json(['message' => 'Holiday deleted successfully.']);
-    }
-
+    /**
+     * Get holidays for a date range (used for leave calculations).
+     */
     public function getHolidaysForDateRange(Request $request): JsonResponse
     {
         $request->validate([
