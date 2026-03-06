@@ -16,13 +16,21 @@ A step-by-step reference for building CRUD modules that follow this project's ar
   - [4. Add Validation Rules](#4-add-validation-rules)
   - [5. Register the Route](#5-register-the-route)
   - [6. Permissions (Automatic)](#6-permissions-automatic)
-  - [7. Add a Sidebar Link](#7-add-a-sidebar-link)
-  - [8. Customise the Views](#8-customise-the-views)
+  - [7. Assign Permissions to Roles](#7-assign-permissions-to-roles)
+  - [8. Add a Sidebar Link](#8-add-a-sidebar-link)
+  - [9. Customise the Views](#9-customise-the-views)
+- [Permission & Authorization System](#permission--authorization-system)
+  - [How the System Works](#how-the-system-works)
+  - [Layer 1 — Database Permissions](#layer-1--database-permissions)
+  - [Layer 2 — Policy](#layer-2--policy)
+  - [Layer 3 — Controller](#layer-3--controller)
+  - [Layer 4 — DataTable Query Scoping](#layer-4--datatable-query-scoping)
+  - [Layer 5 — Blade Views](#layer-5--blade-views)
+  - [Checking Permissions in PHP (Any Context)](#checking-permissions-in-php-any-context)
+  - [Common Mistakes](#common-mistakes)
 - [Removing a Module](#removing-a-module)
 - [Reference](#reference)
   - [Observer](#observer)
-  - [Policy](#policy)
-  - [Authorization Notes](#authorization-notes)
   - [DataTable Controller](#datatable-controller)
   - [Controller](#controller)
   - [Form Input Components](#form-input-components)
@@ -35,17 +43,15 @@ A step-by-step reference for building CRUD modules that follow this project's ar
 
 ## Quick Start Checklist
 
-Use this as a task list when creating a new module. Steps 1–7 are **required** for the module to be fully functional.
-
 ```
 [ ] 1. php artisan make:crud-module YourModuleName
 [ ] 2. Add columns to the generated migration → php artisan migrate
-       (permissions are created automatically by the migration)
+       (4 permissions are created automatically by the migration)
 [ ] 3. Add columns to $fillable (and casts if needed) in the Model
 [ ] 4. Add validation rules to StoreYourModuleRequest and UpdateYourModuleRequest
 [ ] 5. Add Route::crudModule(...) to routes/web.php
-[ ] 6. Add a sidebar link
-[ ] 7. Assign permissions to roles (via Roles UI or role seeder)
+[ ] 6. Assign permissions to roles (via Roles UI or role seeder)
+[ ] 7. Add a sidebar link
 [ ] 8. Customise views (add form fields, table columns, show page)
 ```
 
@@ -53,16 +59,24 @@ Use this as a task list when creating a new module. Steps 1–7 are **required**
 
 ## Architecture Overview
 
-Every module is built on two base classes:
+Every module is built on three base classes:
 
 | Class | Purpose |
 |---|---|
-| `BaseController` | Handles `index`, `create`, `edit`, `show`, `destroy` with hooks for auth and flash messages |
+| `BaseController` | Handles `index`, `create`, `edit`, `show`, `destroy` with built-in authorization and flash messages |
 | `BaseDataTableController` | Handles the server-side DataTables AJAX endpoint |
+| `BasePolicy` | Provides Superuser bypass and default CRUD permission checks; extended by every module policy |
 
 ```
 YourModuleController          → extends BaseController
 YourModuleDataTableController → extends BaseDataTableController
+YourModulePolicy              → extends BasePolicy
+```
+
+Authorization flows through three layers in order:
+
+```
+Route Middleware → BaseController → Policy → Spatie Permission
 ```
 
 ---
@@ -74,6 +88,7 @@ The scaffold command generates these 11 files:
 ```
 database/migrations/
     YYYY_MM_DD_HHMMSS_create_{module_names}_table.php
+        └─ creates the table AND seeds 4 permissions automatically
 
 app/
     Models/
@@ -81,7 +96,7 @@ app/
     Observers/
         YourModuleObserver.php
     Policies/
-        YourModulePolicy.php
+        YourModulePolicy.php           ← extends BasePolicy (8 lines)
     Http/
         Requests/
             StoreYourModuleRequest.php
@@ -121,7 +136,7 @@ The command prints the remaining steps in your terminal after generation.
 
 **File:** `database/migrations/YYYY_MM_DD_HHMMSS_create_post_categories_table.php`
 
-The generated migration includes the standard audit columns. Add your module-specific columns in the gap shown:
+The generated migration creates the table **and** seeds 4 permissions automatically. Add your module-specific columns in the gap shown:
 
 ```php
 Schema::create('post_categories', function (Blueprint $table) {
@@ -140,6 +155,13 @@ Schema::create('post_categories', function (Blueprint $table) {
     $table->softDeletes();
     $table->unsignedBigInteger('deleted_by')->nullable();
 });
+
+// Permissions are created here — do not remove this block
+collect(['post-categories.view', 'post-categories.create', 'post-categories.update', 'post-categories.delete'])
+    ->each(fn ($name) => Permission::firstOrCreate(
+        ['name' => $name, 'guard_name' => 'web'],
+        ['module' => 'post-categories']
+    ));
 ```
 
 Then run:
@@ -147,6 +169,8 @@ Then run:
 ```bash
 php artisan migrate
 ```
+
+The `down()` method reverses both: drops the table and deletes all permissions for this module.
 
 ---
 
@@ -226,6 +250,8 @@ public function rules(): array
 
 Add custom messages in the `messages()` method of both requests if needed.
 
+Both `authorize()` methods return `true` — authorization is handled by the Policy, not the Form Request.
+
 ---
 
 ### 5. Register the Route
@@ -245,20 +271,18 @@ Route::middleware('auth')->group(function () {
 });
 ```
 
-This single call registers all 8 routes and wires up permission middleware automatically:
+This single call registers all 8 routes with permission middleware automatically:
 
 | Method | URI | Route name | Permission required |
 |--------|-----|------------|---------------------|
-| GET | `/post-categories/datatable` | `post-categories.datatable` | `view any post categories` |
-| GET | `/post-categories` | `post-categories.index` | `view any post categories` |
-| GET | `/post-categories/create` | `post-categories.create` | `create post categories` |
-| POST | `/post-categories` | `post-categories.store` | `create post categories` |
-| GET | `/post-categories/{record}` | `post-categories.show` | `view any post categories` |
-| GET | `/post-categories/{record}/edit` | `post-categories.edit` | `update post categories` |
-| PUT | `/post-categories/{record}` | `post-categories.update` | `update post categories` |
-| DELETE | `/post-categories/{record}` | `post-categories.destroy` | `delete post categories` |
-
-The permission slug is derived from the prefix: `post-categories` → `post categories`.
+| GET | `/post-categories/datatable` | `post-categories.datatable` | `post-categories.view` |
+| GET | `/post-categories` | `post-categories.index` | `post-categories.view` |
+| GET | `/post-categories/create` | `post-categories.create` | `post-categories.create` |
+| POST | `/post-categories` | `post-categories.store` | `post-categories.create` |
+| GET | `/post-categories/{record}` | `post-categories.show` | `post-categories.view` |
+| GET | `/post-categories/{record}/edit` | `post-categories.edit` | `post-categories.update` |
+| PUT | `/post-categories/{record}` | `post-categories.update` | `post-categories.update` |
+| DELETE | `/post-categories/{record}` | `post-categories.destroy` | `post-categories.delete` |
 
 **Need extra routes?** Pass a closure as the fourth argument:
 
@@ -266,7 +290,7 @@ The permission slug is derived from the prefix: `post-categories` → `post cate
 Route::crudModule('post-categories', PostCategoryController::class, PostCategoryDataTableController::class, function () {
     Route::post('/{record}/publish', [PostCategoryController::class, 'publish'])
         ->name('publish')
-        ->middleware('permission:update post categories');
+        ->middleware('permission:post-categories.update');
 });
 ```
 
@@ -274,36 +298,66 @@ Route::crudModule('post-categories', PostCategoryController::class, PostCategory
 
 ### 6. Permissions (Automatic)
 
-No manual seeding required. The generated migration creates all four permissions automatically when you run `php artisan migrate`:
+No manual work required here — `php artisan migrate` already created these four permissions in the database:
 
 ```
-view any post categories
-create post categories
-update post categories
-delete post categories
+post-categories.view
+post-categories.create
+post-categories.update
+post-categories.delete
 ```
 
-The migration's `down()` method removes them if rolled back.
+The permission key is always the route prefix in kebab-case: `post-categories`.
 
-The permission slug is the module's human-readable plural name in lowercase (hyphens become spaces): `post-categories` → `post categories`.
-
-**Assigning permissions to roles** is the only manual step — do this in your role seeder or via the Roles UI in the application. Superusers bypass all permission checks globally via `Gate::before()` in `AppServiceProvider` and do not need permissions assigned explicitly.
+If you roll back the migration, these permissions are automatically deleted.
 
 ---
 
-### 7. Add a Sidebar Link
+### 7. Assign Permissions to Roles
+
+The permissions exist in the database, but no role has them yet (except Superuser, who bypasses all checks automatically).
+
+Assign permissions using the **Roles UI** in the application, or add them to your role seeder:
+
+```php
+// In RbacSeeder or a dedicated role seeder:
+$admin = Role::findByName('Admin');
+$admin->givePermissionTo([
+    'post-categories.view',
+    'post-categories.create',
+    'post-categories.update',
+    'post-categories.delete',
+]);
+```
+
+---
+
+### 8. Add a Sidebar Link
 
 **File:** `resources/views/layouts/dashboard/partials/sidebar.blade.php`
 
-The sidebar uses a priority variable to show links based on role level:
+The sidebar is divided into three role-priority blocks. Find the right block and add your link inside it:
 
 ```blade
-@if($priority >= 3)   {{-- Superuser --}}
-@elseif($priority >= 2) {{-- Admin --}}
-@else                 {{-- Employee --}}
+@php
+    $userRole = auth()->user()->roles->pluck('name')->first();
+    $rolePriority = ['Superuser' => 3, 'Admin' => 2, 'Employee' => 1];
+    $priority = $rolePriority[$userRole] ?? 0;
+@endphp
+
+@if($priority >= 3)
+    {{-- Superuser Menu — links visible only to Superusers --}}
+
+@elseif($priority >= 2)
+    {{-- Admin Menu — links visible to Admins (and Superusers via the block above) --}}
+
+@else
+    {{-- Employee Menu — links visible to all authenticated users --}}
+
+@endif
 ```
 
-Add your link inside the appropriate block:
+Add your `<li>` inside the appropriate block:
 
 ```blade
 <li class="nav-item">
@@ -319,13 +373,13 @@ Use Bootstrap Icons (`bi bi-*`) for `nav-icon`. The `request()->routeIs('post-ca
 
 ---
 
-### 8. Customise the Views
+### 9. Customise the Views
 
 At this point the module is fully functional with a basic name-only form. Customise the three generated views to match your columns.
 
 #### form.blade.php
 
-Add `@include` calls for each field using the form input partials. See [Form Input Components](#form-input-components) for all available inputs.
+Add `@include` calls for each field using the form input partials:
 
 ```blade
 <div class="row">
@@ -339,27 +393,6 @@ Add `@include` calls for each field using the form input partials. See [Form Inp
         'autofocus'   => true,
     ]])
 
-    @include('layouts.form.inputs.text', ['var' => [
-        'name'        => 'slug',
-        'label'       => 'Slug',
-        'value'       => $record?->slug,
-        'placeholder' => 'e.g., technology',
-        'div'         => 'col-md-6',
-        'required'    => true,
-    ]])
-</div>
-
-<div class="row">
-    @include('layouts.form.inputs.textarea', ['var' => [
-        'name'  => 'description',
-        'label' => 'Description',
-        'value' => $record?->description,
-        'rows'  => 3,
-        'div'   => 'col-md-12',
-    ]])
-</div>
-
-<div class="row">
     @include('layouts.form.inputs.select', ['var' => [
         'name'     => 'is_active',
         'label'    => 'Status',
@@ -372,13 +405,453 @@ Add `@include` calls for each field using the form input partials. See [Form Inp
 </div>
 ```
 
-#### index.blade.php — table columns
+#### index.blade.php
 
-Update `tableColumns()` in `PostCategoryDataTableController` to match the columns you want in the table. See [DataTable Controller](#datatable-controller) for full details.
+Update `tableColumns()` in `PostCategoryDataTableController` to match the columns you want in the table.
 
 #### show.blade.php
 
-Add rows to the detail table for each field you want to display on the show page.
+Add rows to the detail table for each field you want to display.
+
+---
+
+## Permission & Authorization System
+
+This section is a practical implementation guide. It covers every layer where permissions are enforced and shows exactly what to write in each case.
+
+---
+
+### How the System Works
+
+There are **five layers** where access is controlled. Each has a distinct job:
+
+```
+Layer 1 — Migration         Creates the permissions in the database
+Layer 2 — Policy            Defines who can do what (class-level and row-level)
+Layer 3 — Controller        Enforces the policy before executing an action
+Layer 4 — DataTable query   Scopes what rows a user can see in the list
+Layer 5 — Blade views       Shows or hides UI elements (buttons, links, sections)
+```
+
+A request to edit a record flows through all of them:
+
+```
+GET /post-categories/5/edit
+
+  → Route middleware: does user have 'post-categories.update' permission?
+      NO  → 403 (controller never runs)
+      YES ↓
+
+  → BaseController::edit() calls authorizeAction('update', $record)
+      → PostCategoryPolicy::before()  — Superuser? return true immediately
+      → PostCategoryPolicy::update()  — return $user->can('post-categories.update')
+          NO  → 403
+          YES → render the edit view
+
+  → Blade view renders — @can('update', $postCategory) controls buttons
+```
+
+> **Superuser bypass:** `PostCategoryPolicy::before()` (inherited from `BasePolicy`) returns `true` for any user with the `Superuser` role. Every layer respects this — no further checks run.
+
+---
+
+### Layer 1 — Database Permissions
+
+#### Naming convention
+
+All permissions use **dot-notation**: `{module-key}.{action}`
+
+The module key is the **kebab-case plural** of the model name — the same as the route prefix.
+
+| Model | Module key | Standard permissions |
+|-------|-----------|----------------------|
+| `PostCategory` | `post-categories` | `post-categories.view` `.create` `.update` `.delete` |
+| `LeaveRequest` | `leave-requests` | `leave-requests.view` `.create` `.update` `.delete` |
+| `Department` | `departments` | `departments.view` `.create` `.update` `.delete` |
+
+For custom actions beyond CRUD, add extra permissions with the same pattern:
+
+```
+leave-requests.approve
+leave-requests.reject
+leave-requests.cancel
+```
+
+#### Creating permissions — in the migration (standard)
+
+The generated migration creates the 4 standard permissions automatically. Do not remove this block:
+
+```php
+collect(['post-categories.view', 'post-categories.create', 'post-categories.update', 'post-categories.delete'])
+    ->each(fn ($name) => Permission::firstOrCreate(
+        ['name' => $name, 'guard_name' => 'web'],
+        ['module' => 'post-categories']
+    ));
+```
+
+#### Creating permissions — for custom actions
+
+Add extra `firstOrCreate` calls in the same migration block:
+
+```php
+collect([
+    'post-categories.view',
+    'post-categories.create',
+    'post-categories.update',
+    'post-categories.delete',
+    'post-categories.approve',   // ← custom action
+])
+    ->each(fn ($name) => Permission::firstOrCreate(
+        ['name' => $name, 'guard_name' => 'web'],
+        ['module' => 'post-categories']
+    ));
+```
+
+Remember to also delete them in `down()`:
+
+```php
+Permission::where('module', 'post-categories')->delete();
+```
+
+---
+
+### Layer 2 — Policy
+
+The policy is where access rules live. Laravel auto-discovers it: `PostCategory` model → `PostCategoryPolicy`.
+
+#### Case A: Standard CRUD (no custom rules)
+
+The generated policy is complete as-is. No changes needed:
+
+```php
+class PostCategoryPolicy extends BasePolicy
+{
+    protected function resource(): string
+    {
+        return 'post-categories';
+    }
+}
+```
+
+`BasePolicy` provides default implementations for `viewAny`, `view`, `create`, `update`, and `delete` — all delegating to `$user->can("{resource}.{action}")`. The `before()` method handles the Superuser bypass.
+
+#### Case B: Users can only access their own records
+
+Override `viewAny` and `view`. Users without the permission still access their own records; users with the permission see everything:
+
+```php
+class LeaveRequestPolicy extends BasePolicy
+{
+    protected function resource(): string
+    {
+        return 'leave-requests';
+    }
+
+    // viewAny returns true for all authenticated users
+    // (list is scoped in the DataTable query — see Layer 4)
+    public function viewAny(User $user): bool
+    {
+        return true;
+    }
+
+    // Row-level: own record always allowed; others need the permission
+    public function view(User $user, Model $model): bool
+    {
+        return $user->id === $model->user_id || $user->can('leave-requests.view');
+    }
+
+    public function update(User $user, Model $model): bool
+    {
+        return $user->id === $model->user_id || $user->can('leave-requests.update');
+    }
+}
+```
+
+> **Important:** Always type-hint `Model $model` (not the specific model type e.g. `LeaveRequest $model`) in policy overrides. PHP does not allow narrowing parameter types in method overrides — using the specific type causes a fatal error.
+
+#### Case C: Status-based rules (e.g. only pending records can be edited)
+
+```php
+public function update(User $user, Model $model): bool
+{
+    // Own pending record: user can edit
+    if ($model->user_id === $user->id && $model->isPending()) {
+        return true;
+    }
+
+    // Admin with permission: can edit any
+    return $user->can('leave-requests.update');
+}
+```
+
+#### Case D: Custom actions (approve, reject, cancel)
+
+Add a method named after the custom ability. The method name must exactly match what you pass to `authorizeAction()`:
+
+```php
+public function approve(User $user, Model $model): bool
+{
+    return $model->isPending() && $user->can('leave-requests.approve');
+}
+
+public function reject(User $user, Model $model): bool
+{
+    return $model->isPending() && $user->can('leave-requests.reject');
+}
+```
+
+---
+
+### Layer 3 — Controller
+
+#### What BaseController handles automatically
+
+`BaseController` calls `authorizeAction()` for all four inherited methods. You do not repeat this yourself:
+
+| Inherited method | Ability enforced automatically |
+|-----------------|-------------------------------|
+| `index()` | `viewAny` |
+| `create()` | `create` |
+| `edit()` | `update` |
+| `destroy()` | `delete` |
+
+#### What you must add yourself
+
+`store()` and `update()` are not in `BaseController` (they need module-specific Form Requests), so you call `authorizeAction()` manually:
+
+```php
+public function store(StorePostCategoryRequest $request): RedirectResponse
+{
+    $this->authorizeAction('create');                     // no record — class-level check
+
+    PostCategory::create($request->validated());
+
+    return $this->successRedirect('created');
+}
+
+public function update(UpdatePostCategoryRequest $request, int|string $record): RedirectResponse
+{
+    $postCategory = $this->findRecord($record);
+    $this->authorizeAction('update', $postCategory);      // pass the record — row-level check
+
+    $postCategory->update($request->validated());
+
+    return $this->successRedirect('updated');
+}
+```
+
+If you override `show()` to render a view (the base default just redirects to edit):
+
+```php
+public function show(int|string $record): View
+{
+    $postCategory = $this->findRecord($record);
+    $this->authorizeAction('view', $postCategory);
+
+    return view('post-categories.show', compact('postCategory'));
+}
+```
+
+#### Custom actions
+
+For actions beyond CRUD, add the method and call `authorizeAction()` with the ability name matching your Policy method:
+
+```php
+public function approve(Request $request, int|string $record): RedirectResponse
+{
+    $leaveRequest = $this->findRecord($record);
+    $this->authorizeAction('approve', $leaveRequest);    // → LeaveRequestPolicy::approve()
+
+    $leaveRequest->update(['status' => 'approved']);
+
+    return $this->successRedirect('approved');
+}
+```
+
+#### Quick reference: when to call `authorizeAction()` in a module controller
+
+| Method | Call authorizeAction? | Notes |
+|--------|-----------------------|-------|
+| `store()` | **Yes** | Always |
+| `update()` | **Yes** | Always, pass the record |
+| `show()` | **Only if overriding** | Base default redirects to edit (already authorized) |
+| `approve()` / custom | **Yes** | Always, pass the record |
+| `index()` | No | Base handles it |
+| `create()` | No | Base handles it |
+| `edit()` | No | Base handles it |
+| `destroy()` | No | Base handles it |
+
+> **Never call `$this->authorize()` directly.** Always use `$this->authorizeAction()`. It is the single authorization entry point for module controllers.
+
+---
+
+### Layer 4 — DataTable Query Scoping
+
+When `viewAny` returns `true` for all users (Case B in the Policy), the list page loads for everyone — but the rows returned must be scoped. This is handled in the DataTable controller's `indexQuery()` method.
+
+**Example: regular users see only their own records; users with the view permission see all**
+
+```php
+// In LeaveRequestDataTableController:
+protected function indexQuery(): Builder
+{
+    $user = auth()->user();
+
+    return LeaveRequest::query()
+        ->with(['user', 'leaveType'])
+        ->when(
+            ! $user->can('leave-requests.view'),
+            fn ($q) => $q->where('user_id', $user->id)
+        );
+}
+```
+
+If the module has no own-record scoping (all users with access see all rows), leave `indexQuery()` without the `when()` condition:
+
+```php
+protected function indexQuery(): Builder
+{
+    return PostCategory::query()->with(['createdBy']);
+}
+```
+
+---
+
+### Layer 5 — Blade Views
+
+Use `@can` / `@cannot` to show or hide buttons, links, and sections. The Superuser bypass fires here too.
+
+#### Gating action buttons (show.blade.php, index.blade.php rows)
+
+Pass the record as the second argument to trigger a row-level policy check:
+
+```blade
+@can('update', $postCategory)
+    <a href="{{ route('post-categories.edit', $postCategory) }}" class="btn btn-primary">Edit</a>
+@endcan
+
+@can('delete', $postCategory)
+    <button class="btn btn-danger btn-delete"
+            data-url="{{ route('post-categories.destroy', $postCategory) }}">Delete</button>
+@endcan
+```
+
+#### Gating the Create button (class-level, no record)
+
+Pass the model class string instead of a record instance:
+
+```blade
+@can('create', App\Models\PostCategory::class)
+    <a href="{{ route('post-categories.create') }}" class="btn btn-primary">
+        <i class="bi bi-plus-lg"></i> New Post Category
+    </a>
+@endcan
+```
+
+#### Gating custom action buttons
+
+```blade
+@can('approve', $leaveRequest)
+    <button class="btn btn-success btn-approve"
+            data-url="{{ route('leave-requests.approve', $leaveRequest) }}">Approve</button>
+@endcan
+```
+
+#### Checking a permission string directly (no Policy, no record)
+
+Use this for sidebar links and other UI that is not tied to a specific record:
+
+```blade
+@can('post-categories.view')
+    <li>
+        <a href="{{ route('post-categories.index') }}">Post Categories</a>
+    </li>
+@endcan
+```
+
+#### Sidebar link gating
+
+In `resources/views/layouts/dashboard/partials/sidebar.blade.php`, wrap each module link with the view permission:
+
+```blade
+@can('departments.view')
+    <li class="nav-item">
+        <a class="nav-link {{ request()->routeIs('departments.*') ? 'active' : '' }}"
+           href="{{ route('departments.index') }}">
+            <i class="bi bi-building"></i>
+            <span>Departments</span>
+        </a>
+    </li>
+@endcan
+```
+
+---
+
+### Checking Permissions in PHP (Any Context)
+
+Always use `$user->can()` — never `$user->hasPermissionTo()` or `$user->hasRole()` directly. `can()` goes through the Laravel Gate, which fires the Superuser bypass. The other methods bypass the Gate entirely.
+
+```php
+// In a controller, job, service, or anywhere you have a User instance:
+$user = auth()->user();
+
+if ($user->can('post-categories.approve')) {
+    // ...
+}
+
+// Checking role (goes through Gate):
+if ($user->can('some-permission')) { ... }
+
+// ❌ Never do this — bypasses Gate, Superuser bypass does NOT fire:
+if ($user->hasPermissionTo('post-categories.approve')) { ... }
+if ($user->hasRole('Admin')) { ... }
+```
+
+---
+
+### Common Mistakes
+
+**1. Forgetting `authorizeAction()` in `store()` or `update()`**
+
+Route middleware protects the page load (GET). It does not protect the form submit (POST/PUT). Without `authorizeAction()` in `store()` and `update()`, any authenticated user can write data.
+
+**2. Using `$this->authorize()` instead of `$this->authorizeAction()`**
+
+```php
+// ❌ Wrong
+$this->authorize('create', PostCategory::class);
+
+// ✅ Correct
+$this->authorizeAction('create');
+```
+
+**3. Overriding `authorizeAction` in a module controller**
+
+The base implementation already resolves `$this->model`. Any override is redundant and should be deleted.
+
+**4. Using the specific model type in a Policy override**
+
+```php
+// ❌ Wrong — "Declaration must be compatible" fatal error
+public function update(User $user, PostCategory $model): bool { ... }
+
+// ✅ Correct
+public function update(User $user, Model $model): bool { ... }
+```
+
+**5. Using `hasPermissionTo()` or `hasRole()` instead of `can()`**
+
+```php
+// ❌ Wrong — Superuser bypass does not fire
+$user->hasPermissionTo('post-categories.view');
+
+// ✅ Correct — Superuser bypass fires correctly
+$user->can('post-categories.view');
+```
+
+**6. Not scoping the DataTable query when `viewAny` returns `true`**
+
+If `viewAny` allows all users to load the list page, the DataTable query must use `->when()` to filter rows by `user_id`. Without it, every user sees every row.
 
 ---
 
@@ -393,33 +866,27 @@ php artisan remove:crud-module PostCategory
 Before deleting anything the command prints an inventory of what it found:
 
 ```
-Inventory for PostCategory:
-  [DELETE]  app/Models/PostCategory.php
-  [DELETE]  app/Observers/PostCategoryObserver.php
-  [DELETE]  app/Policies/PostCategoryPolicy.php
-  [DELETE]  app/Http/Requests/StorePostCategoryRequest.php
-  [DELETE]  app/Http/Requests/UpdatePostCategoryRequest.php
-  [DELETE]  app/Http/Controllers/PostCategoryController.php
-  [DELETE]  app/Http/Controllers/PostCategoryDataTableController.php
-  [DELETE]  resources/views/post-categories/  (directory)
-  [DROP]    database table: post_categories
-  [DELETE]  4 permissions: view any post categories, create post categories, ...
-  [SKIP]    migration file not found (already rolled back or never created)
+The following will be permanently removed:
+
+  PHP Files:
+    [DELETE]  app/Models/PostCategory.php
+    [DELETE]  app/Observers/PostCategoryObserver.php
+    [DELETE]  app/Policies/PostCategoryPolicy.php
+    ...
+
+  Permissions:
+    [DELETE]  post-categories.view
+    [DELETE]  post-categories.create
+    [DELETE]  post-categories.update
+    [DELETE]  post-categories.delete
 ```
 
-Add `--force` to skip the confirmation prompt:
+Add `--force` to skip the confirmation prompt.
 
-```bash
-php artisan remove:crud-module PostCategory --force
-```
-
-After the command runs, you must manually remove three things the command cannot safely touch:
-
-1. **Route line** in `routes/web.php` — remove the `Route::crudModule(...)` call and its `use` imports
+After the command runs, manually remove:
+1. **Route line** in `routes/web.php` — `Route::crudModule(...)` call and its `use` imports
 2. **Sidebar link** in `resources/views/layouts/dashboard/partials/sidebar.blade.php`
-3. **Any references** to the module in seeders, other controllers, or existing tests
-
-> **Tip:** Run `php artisan migrate:rollback` **before** `remove:crud-module` if you want the migration's `down()` method to handle permission cleanup — the remove command also deletes permissions, so either order works.
+3. **Any references** in seeders, other controllers, or existing tests
 
 ---
 
@@ -439,54 +906,12 @@ public function deleting(PostCategory $postCategory): void
     $postCategory->deleted_by = auth()->id();
     $postCategory->saveQuietly();
 
-    // Example: cancel related records
-    $postCategory->posts()->update(['status' => 'draft']);
+    // Cancel related records before this record is gone
+    $postCategory->posts()->each(fn ($post) => $post->update(['status' => 'draft']));
 }
 ```
 
----
-
-### Policy
-
-**File:** `app/Policies/PostCategoryPolicy.php`
-
-Each ability checks a named permission using `$user->can()`, which routes through the Gate and respects the global Superuser bypass:
-
-```php
-public function viewAny(User $user): bool     { return $user->can('view any post categories'); }
-public function view(User $user, ...): bool   { return $user->can('view any post categories'); }
-public function create(User $user): bool      { return $user->can('create post categories'); }
-public function update(User $user, ...): bool { return $user->can('update post categories'); }
-public function delete(User $user, ...): bool { return $user->can('delete post categories'); }
-```
-
-> **Superuser bypass** — `Gate::before()` in `AppServiceProvider` returns `true` for any user with the `Superuser` role, short-circuiting every policy, gate, and permission middleware check. There is no per-policy `before()` hook needed.
-
-**Policy auto-discovery** is on by default in Laravel 12. If it does not resolve automatically, register it manually in a service provider:
-
-```php
-use Illuminate\Support\Facades\Gate;
-
-Gate::policy(PostCategory::class, PostCategoryPolicy::class);
-```
-
----
-
-### Authorization Notes
-
-**Always use `can()` / `canAny()` — never call Spatie methods directly.**
-
-Spatie provides low-level methods (`hasPermissionTo()`, `hasAnyPermission()`, `hasAllPermissions()`) that query its permission tables directly, bypassing the Laravel Gate entirely. The `Gate::before()` Superuser bypass only fires when code goes through the Gate.
-
-| Use this | Not this |
-|---|---|
-| `$user->can('view any posts')` | `$user->hasPermissionTo('view any posts')` |
-| `$user->canAny(['create posts', 'update posts'])` | `$user->hasAnyPermission([...])` |
-| `collect($perms)->every(fn($p) => $user->can($p))` | `$user->hasAllPermissions([...])` |
-
-This applies everywhere: controllers, middleware, policies, services, blade `@can` directives.
-
-`@can` and `@canany` in Blade already go through the Gate — they are safe to use as-is.
+Use `each()` with individual saves (not mass `update()`) so `HasActivityLog` records each change.
 
 ---
 
@@ -501,22 +926,11 @@ public function __construct()
 {
     $this->model = PostCategory::class;
     $this->routePrefix = 'post-categories';
-    $this->rawColumns = ['status_badge']; // list any HTML columns here; 'action' is always included
+    $this->rawColumns = ['status_badge']; // declare any HTML columns; 'action' is always included
 }
 ```
 
 #### `indexQuery()` — base query
-
-```php
-protected function indexQuery(): Builder
-{
-    return PostCategory::query()
-        ->with(['updatedBy'])
-        ->orderBy('name');
-}
-```
-
-Support filter inputs from the index page via request parameters:
 
 ```php
 protected function indexQuery(): Builder
@@ -534,8 +948,7 @@ protected function indexQuery(): Builder
 protected function dataTableColumns(): array
 {
     return [
-        'updated_by_name' => fn (PostCategory $r) => $r->updatedBy?->name ?? '—',
-        'status_badge'    => fn (PostCategory $r) => $r->is_active
+        'status_badge' => fn (PostCategory $r) => $r->is_active
             ? '<span class="badge bg-success">Active</span>'
             : '<span class="badge bg-secondary">Inactive</span>',
     ];
@@ -548,19 +961,18 @@ protected function dataTableColumns(): array
 public function tableColumns(): array
 {
     return [
-        ['data' => 'DT_RowIndex',    'name' => 'DT_RowIndex', 'label' => '#',           'width' => '50', 'orderable' => false, 'searchable' => false, 'className' => 'text-center'],
-        ['data' => 'name',           'name' => 'name',        'label' => 'Name'],
-        ['data' => 'status_badge',   'name' => 'is_active',   'label' => 'Status',       'orderable' => false, 'searchable' => false, 'className' => 'text-center'],
-        ['data' => 'updated_at',     'name' => 'updated_at',  'label' => 'Last Updated', 'orderable' => true,  'searchable' => false, 'className' => 'text-center'],
-        ['data' => 'updated_by_name','name' => 'updated_by',  'label' => 'Updated By',   'orderable' => false, 'searchable' => false],
-        ['data' => 'action',         'name' => 'action',      'label' => 'Actions',      'width' => '180', 'orderable' => false, 'searchable' => false, 'className' => 'text-center'],
+        ['data' => 'DT_RowIndex',  'name' => 'DT_RowIndex', 'label' => '#',       'width' => '50',  'orderable' => false, 'searchable' => false, 'className' => 'text-center'],
+        ['data' => 'name',         'name' => 'name',         'label' => 'Name'],
+        ['data' => 'status_badge', 'name' => 'is_active',    'label' => 'Status',  'orderable' => false, 'searchable' => false, 'className' => 'text-center'],
+        ['data' => 'updated_at',   'name' => 'updated_at',   'label' => 'Updated', 'orderable' => true, 'searchable' => false],
+        ['data' => 'action',       'name' => 'action',       'label' => 'Actions', 'width' => '180', 'orderable' => false, 'searchable' => false, 'className' => 'text-center'],
     ];
 }
 ```
 
 #### `actionColumn()` — override to customise buttons
 
-> **Important:** Do **not** type-hint the parameter. The base class declares `actionColumn($record): string` without a type, and PHP does not allow narrowing parameter types in overrides. Adding a type hint causes a fatal `Declaration must be compatible` error.
+> Do **not** type-hint the parameter. The base declares `actionColumn($record): string` without a type, and narrowing it causes a fatal `Declaration must be compatible` error.
 
 ```php
 protected function actionColumn($postCategory): string
@@ -588,12 +1000,12 @@ protected function actionColumn($postCategory): string
 
 **File:** `app/Http/Controllers/PostCategoryController.php`
 
-The constructor wires up `BaseController`. No changes required unless you need custom store/update logic.
+The constructor wires up `BaseController`. No additional authorization setup is needed.
 
 ```php
 public function __construct(PostCategoryDataTableController $dataTableController)
 {
-    $this->model = PostCategory::class;
+    $this->model = PostCategory::class;       // authorizeAction() reads this automatically
     $this->routePrefix = 'post-categories';
     $this->viewPrefix = 'post-categories';
     $this->resourceName = 'Post Category';
@@ -601,7 +1013,7 @@ public function __construct(PostCategoryDataTableController $dataTableController
 }
 ```
 
-#### Available hooks
+#### Override hooks
 
 **`createViewData()` / `editViewData()`** — pass extra data to the form:
 
@@ -623,22 +1035,26 @@ protected function beforeDestroy(Model $record): void
 }
 ```
 
-**`store()` / `update()`** — override for file uploads or relation syncing:
+**`store()` / `update()`** — always call `authorizeAction()`:
 
 ```php
 public function store(StorePostCategoryRequest $request): RedirectResponse
 {
-    $this->authorize('create', PostCategory::class);
+    $this->authorizeAction('create');
 
-    $data = $request->validated();
-
-    if ($request->hasFile('thumbnail')) {
-        $data['thumbnail'] = $request->file('thumbnail')->store('post-categories', 'public');
-    }
-
-    PostCategory::create($data);
+    PostCategory::create($request->validated());
 
     return $this->successRedirect('created');
+}
+
+public function update(UpdatePostCategoryRequest $request, int|string $record): RedirectResponse
+{
+    $postCategory = $this->findRecord($record);
+    $this->authorizeAction('update', $postCategory);
+
+    $postCategory->update($request->validated());
+
+    return $this->successRedirect('updated');
 }
 ```
 
@@ -659,8 +1075,6 @@ Use `@include` with the `layouts.form.inputs.*` partials. Each accepts a `$var` 
     'div'         => 'col-md-6',  // Bootstrap column class
     'required'    => true,
     'autofocus'   => true,
-    'disabled'    => false,
-    'tooltip'     => 'Help text shown on hover',
     'params'      => ['min' => '0', 'data-custom' => 'value'],
 ]])
 
@@ -679,7 +1093,7 @@ Use `@include` with the `layouts.form.inputs.*` partials. Each accepts a `$var` 
     'label'       => 'Status',
     'value'       => $record?->is_active ?? 1,
     'options'     => [1 => 'Active', 0 => 'Inactive'],
-    'prompt'      => 'Select status',  // blank first option
+    'prompt'      => 'Select status',
     'div'         => 'col-md-4',
     'required'    => true,
     'select2'     => true,
@@ -692,7 +1106,6 @@ Use `@include` with the `layouts.form.inputs.*` partials. Each accepts a `$var` 
     'label'   => 'Supporting Document',
     'accept'  => '.pdf,.doc,.docx',
     'div'     => 'col-md-12',
-    'tooltip' => 'Max 5MB.',
     'preview' => $record?->supporting_document
         ? Storage::disk('public')->url($record->supporting_document)
         : null,
@@ -739,55 +1152,11 @@ For Spatie MediaLibrary uploads, use `layouts.form.inputs.media-file`.
 ]])
 ```
 
-| `type` value | Behaviour |
-|---|---|
-| `image-circle` | Round 80px thumbnail with person-fill fallback |
-| `image` | Rectangular thumbnail with image-fill fallback |
-| `file` | Dismissible alert (single) or badge links (multiple) |
-
-**Controller — handling uploads:**
-
-```php
-if ($request->hasFile('profile_picture')) {
-    $record->clearMediaCollection('profile_picture');
-    $record->addMediaFromRequest('profile_picture')->toMediaCollection('profile_picture');
-}
-```
-
-**Model — defining collections:**
-
-```php
-public function registerMediaCollections(): void
-{
-    $this->addMediaCollection('profile_picture')->singleFile();
-}
-
-public function registerMediaConversions(?Media $media = null): void
-{
-    $this->addMediaConversion('thumb')->width(200)->height(200);
-}
-```
-
 ---
 
 ### Select2 Dropdowns
 
-Any `<select>` rendered by the `layouts.form.inputs.select` partial with `'select2' => true` is automatically enhanced.
-
-For raw selects, add `data-toggle="select2"` and always include a blank first option:
-
-```blade
-<select name="country_id" class="form-select" data-toggle="select2" data-placeholder="Select country" data-allow-clear="true">
-    <option value=""></option>
-    @foreach($countries as $country)
-        <option value="{{ $country->id }}" {{ $record?->country_id == $country->id ? 'selected' : '' }}>
-            {{ $country->name }}
-        </option>
-    @endforeach
-</select>
-```
-
-For AJAX/cascading selects, call `.trigger('change')` after appending options so Select2 updates:
+For AJAX/cascading selects, call `.trigger('change')` after appending options:
 
 ```javascript
 $.getJSON(url, { country_id: countryId }, function (data) {
@@ -803,9 +1172,7 @@ $.getJSON(url, { country_id: countryId }, function (data) {
 
 ### JavaScript Timing Pattern
 
-Vite injects bundles as `type="module"` (deferred). Inline `@push('scripts')` blocks run before the module finishes loading, so `$` and `bootstrap` are not yet defined. **Do not** use `$(document).ready(...)` directly.
-
-Use the polling-retry pattern for all inline scripts:
+Vite injects bundles as `type="module"` (deferred). Inline `@push('scripts')` blocks run before the module finishes loading. Use the polling-retry pattern for all inline scripts:
 
 ```javascript
 function initMyModule() {
@@ -821,8 +1188,6 @@ function initMyModule() {
 
 initMyModule();
 ```
-
-The generated `index.blade.php` already uses this pattern for DataTables. Apply the same to any other inline scripts (cascade dropdowns, custom event handlers, etc.).
 
 ---
 

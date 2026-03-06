@@ -6,7 +6,6 @@ use App\Http\Controllers\BaseController\BaseController;
 use App\Http\Requests\Store{ModuleName}Request;
 use App\Http\Requests\Update{ModuleName}Request;
 use App\Models\{ModuleName};
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
@@ -21,26 +20,17 @@ class {ModuleName}Controller extends BaseController
         $this->dataTableController = $dataTableController;
     }
 
-    protected function authorizeAction(string $ability, ?Model $record = null): void
-    {
-        if ($record) {
-            $this->authorize($ability, $record);
-        } else {
-            $this->authorize($ability, {ModuleName}::class);
-        }
-    }
-
     public function show(int|string $record): View
     {
         ${moduleName} = $this->findRecord($record);
-        $this->authorize('view', ${moduleName});
+        $this->authorizeAction('view', ${moduleName});
 
         return view('{module-names}.show', compact('{moduleName}'));
     }
 
     public function store(Store{ModuleName}Request $request): RedirectResponse
     {
-        $this->authorize('create', {ModuleName}::class);
+        $this->authorizeAction('create');
 
         {ModuleName}::create($request->validated());
 
@@ -50,7 +40,7 @@ class {ModuleName}Controller extends BaseController
     public function update(Update{ModuleName}Request $request, int|string $record): RedirectResponse
     {
         ${moduleName} = $this->findRecord($record);
-        $this->authorize('update', ${moduleName});
+        $this->authorizeAction('update', ${moduleName});
 
         ${moduleName}->update($request->validated());
 

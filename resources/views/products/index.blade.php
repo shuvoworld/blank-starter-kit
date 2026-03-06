@@ -17,7 +17,7 @@
                     <i class="bi bi-box-seam me-2"></i>
                     All Products
                 </h3>
-                @can('create products')
+                @can('products.create')
                     <a href="{{ route('products.create') }}" class="btn btn-primary">
                         <i class="bi bi-plus-lg me-1"></i> Add Product
                     </a>

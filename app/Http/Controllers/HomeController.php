@@ -165,31 +165,31 @@ class HomeController extends Controller
     {
         $stats = [];
 
-        if ($user->can('view any users')) {
+        if ($user->can('users.view')) {
             $stats['users'] = \App\Models\User::count();
         }
 
-        if ($user->can('view any employees')) {
+        if ($user->can('employees.view')) {
             $stats['employees'] = \App\Models\Employee::count();
             $stats['activeEmployees'] = \App\Models\Employee::where('status', 'active')->count();
             $stats['recentEmployees'] = \App\Models\Employee::latest()->limit(10)->get();
         }
 
-        if ($user->can('view any leave requests')) {
+        if ($user->can('leave-requests.view')) {
             $stats['pendingRequests'] = \App\Models\LeaveRequest::pending()->count();
             $stats['approvedToday'] = \App\Models\LeaveRequest::approved()
                 ->whereDate('approved_at', today())
                 ->count();
         }
 
-        if ($user->can('view any leave balances')) {
+        if ($user->can('leave-balances.view')) {
             $currentYear = now()->year;
             $stats['usersWithBalances'] = \App\Models\LeaveBalance::where('year', $currentYear)
                 ->distinct('user_id')
                 ->count();
         }
 
-        if ($user->can('view any roles')) {
+        if ($user->can('roles.view')) {
             $stats['roles'] = \App\Models\Role::count();
         }
 
@@ -201,7 +201,7 @@ class HomeController extends Controller
      */
     protected function getRecentActivities()
     {
-        if (! auth()->user()->can('view any activity log')) {
+        if (! auth()->user()->can('activity-log.view')) {
             return collect();
         }
 

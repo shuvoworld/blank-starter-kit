@@ -6,7 +6,6 @@ use App\Http\Controllers\BaseController\BaseController;
 use App\Http\Requests\StoreDesignationRequest;
 use App\Http\Requests\UpdateDesignationRequest;
 use App\Models\Designation;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
@@ -21,26 +20,17 @@ class DesignationController extends BaseController
         $this->dataTableController = $dataTableController;
     }
 
-    protected function authorizeAction(string $ability, ?Model $record = null): void
-    {
-        if ($record) {
-            $this->authorize($ability, $record);
-        } else {
-            $this->authorize($ability, Designation::class);
-        }
-    }
-
     public function show(int|string $record): View
     {
         $designation = $this->findRecord($record);
-        $this->authorize('view', $designation);
+        $this->authorizeAction('view', $designation);
 
         return view('designations.show', compact('designation'));
     }
 
     public function store(StoreDesignationRequest $request): RedirectResponse
     {
-        $this->authorize('create', Designation::class);
+        $this->authorizeAction('create');
 
         Designation::create($request->validated());
 
@@ -50,7 +40,7 @@ class DesignationController extends BaseController
     public function update(UpdateDesignationRequest $request, int|string $record): RedirectResponse
     {
         $designation = $this->findRecord($record);
-        $this->authorize('update', $designation);
+        $this->authorizeAction('update', $designation);
 
         $designation->update($request->validated());
 

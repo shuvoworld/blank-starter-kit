@@ -41,7 +41,7 @@ class RoleDataTableController extends BaseDataTableController
     {
         $viewUrl = route('roles.show', $role);
         $editUrl = route('roles.edit', $role);
-        $canUpdate = auth()->user()?->can('update roles');
+        $canUpdate = auth()->user()?->can('roles.update');
 
         $actions = '<div class="btn-group btn-group-sm">';
         $actions .= '<a href="'.$viewUrl.'" class="btn btn-info" title="View"><i class="bi bi-eye"></i></a>';

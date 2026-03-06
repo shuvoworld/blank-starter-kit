@@ -63,7 +63,7 @@
         <a href="{{ route('employee-categories.index') }}" class="btn btn-secondary">
             <i class="bi bi-arrow-left me-1"></i> Back to Employee Categories
         </a>
-        @can('update employee categories')
+        @can('employee-categories.update')
             <a href="{{ route('employee-categories.edit', $employeeCategory) }}" class="btn btn-primary">
                 <i class="bi bi-pencil me-1"></i> Edit Employee Category
             </a>

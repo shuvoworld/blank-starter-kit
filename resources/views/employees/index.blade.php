@@ -68,7 +68,7 @@
                     <i class="bi bi-person-badge me-2"></i>
                     All Employees
                 </h3>
-                @can('create employees')
+                @can('employees.create')
                     <a href="{{ route('employees.create') }}" class="btn btn-primary">
                         <i class="bi bi-plus-lg me-1"></i> Add Employee
                     </a>

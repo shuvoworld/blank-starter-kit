@@ -17,7 +17,7 @@
                     <i class="bi bi-grid me-2"></i>
                     All Employee Categories
                 </h3>
-                @can('create employee categories')
+                @can('employee-categories.create')
                     <a href="{{ route('employee-categories.create') }}" class="btn btn-primary">
                         <i class="bi bi-plus-lg me-1"></i> Add Employee Category
                     </a>

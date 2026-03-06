@@ -140,7 +140,7 @@
         </div>
 
         {{-- Leave Balance Summary --}}
-        @if(isset($leaveSummary) && $leaveSummary && auth()->user()->can('view any leave balances'))
+        @if(isset($leaveSummary) && $leaveSummary && auth()->user()->can('leave-balances.view'))
         <div class="card card-primary card-outline mt-3">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h3 class="card-title">
@@ -364,7 +364,7 @@
         <a href="{{ route('employees.index') }}" class="btn btn-secondary">
             <i class="bi bi-arrow-left me-1"></i> Back to Employees
         </a>
-        @can('update employees')
+        @can('employees.update')
             <a href="{{ route('employees.edit', $employee) }}" class="btn btn-primary">
                 <i class="bi bi-pencil me-1"></i> Edit Employee
             </a>

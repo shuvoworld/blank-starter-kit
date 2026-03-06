@@ -82,7 +82,7 @@ class LeaveRequestController extends BaseController
     public function show(int|string $record): View
     {
         $leaveRequest = $this->findRecord($record);
-        $this->authorize('view', $leaveRequest);
+        $this->authorizeAction('view', $leaveRequest);
         $leaveRequest->load(['user', 'leaveType', 'approvedBy', 'rejectedBy']);
 
         return view('leave-requests.show', compact('leaveRequest'));
@@ -109,7 +109,7 @@ class LeaveRequestController extends BaseController
      */
     public function store(StoreLeaveRequestRequest $request): RedirectResponse
     {
-        $this->authorize('create', \App\Models\LeaveRequest::class);
+        $this->authorizeAction('create');
 
         $leaveType = LeaveType::findOrFail($request->leave_type_id);
 
@@ -179,7 +179,7 @@ class LeaveRequestController extends BaseController
     public function approve(ApproveLeaveRequestRequest $request, int|string $record): JsonResponse
     {
         $leaveRequest = $this->findRecord($record);
-        $this->authorize('approve', $leaveRequest);
+        $this->authorizeAction('approve', $leaveRequest);
 
         if (! $leaveRequest->isPending()) {
             return response()->json(['error' => 'Only pending requests can be approved.'], 422);
@@ -222,7 +222,7 @@ class LeaveRequestController extends BaseController
     public function reject(RejectLeaveRequestRequest $request, int|string $record): JsonResponse
     {
         $leaveRequest = $this->findRecord($record);
-        $this->authorize('reject', $leaveRequest);
+        $this->authorizeAction('reject', $leaveRequest);
 
         if (! $leaveRequest->isPending()) {
             return response()->json(['error' => 'Only pending requests can be rejected.'], 422);
@@ -262,7 +262,7 @@ class LeaveRequestController extends BaseController
     public function cancel(Request $request, int|string $record): JsonResponse
     {
         $leaveRequest = $this->findRecord($record);
-        $this->authorize('cancel', $leaveRequest);
+        $this->authorizeAction('cancel', $leaveRequest);
 
         if (! $leaveRequest->canBeCancelled()) {
             return response()->json(['error' => 'This request cannot be cancelled.'], 422);

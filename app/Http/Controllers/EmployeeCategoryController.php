@@ -6,7 +6,6 @@ use App\Http\Controllers\BaseController\BaseController;
 use App\Http\Requests\StoreEmployeeCategoryRequest;
 use App\Http\Requests\UpdateEmployeeCategoryRequest;
 use App\Models\EmployeeCategory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
@@ -21,26 +20,17 @@ class EmployeeCategoryController extends BaseController
         $this->dataTableController = $dataTableController;
     }
 
-    protected function authorizeAction(string $ability, ?Model $record = null): void
-    {
-        if ($record) {
-            $this->authorize($ability, $record);
-        } else {
-            $this->authorize($ability, EmployeeCategory::class);
-        }
-    }
-
     public function show(int|string $record): View
     {
         $employeeCategory = $this->findRecord($record);
-        $this->authorize('view', $employeeCategory);
+        $this->authorizeAction('view', $employeeCategory);
 
         return view('employee-categories.show', compact('employeeCategory'));
     }
 
     public function store(StoreEmployeeCategoryRequest $request): RedirectResponse
     {
-        $this->authorize('create', EmployeeCategory::class);
+        $this->authorizeAction('create');
 
         EmployeeCategory::create($request->validated());
 
@@ -50,7 +40,7 @@ class EmployeeCategoryController extends BaseController
     public function update(UpdateEmployeeCategoryRequest $request, int|string $record): RedirectResponse
     {
         $employeeCategory = $this->findRecord($record);
-        $this->authorize('update', $employeeCategory);
+        $this->authorizeAction('update', $employeeCategory);
 
         $employeeCategory->update($request->validated());
 

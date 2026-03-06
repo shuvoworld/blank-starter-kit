@@ -21,12 +21,11 @@ return new class extends Migration
 
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
-        collect([
-            'view any {module names}',
-            'create {module names}',
-            'update {module names}',
-            'delete {module names}',
-        ])->each(fn (string $name) => Permission::firstOrCreate(['name' => $name]));
+        collect(['{module-names}.view', '{module-names}.create', '{module-names}.update', '{module-names}.delete'])
+            ->each(fn (string $name) => Permission::firstOrCreate(
+                ['name' => $name, 'guard_name' => 'web'],
+                ['module' => '{module-names}']
+            ));
     }
 
     public function down(): void
@@ -35,11 +34,6 @@ return new class extends Migration
 
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
-        Permission::whereIn('name', [
-            'view any {module names}',
-            'create {module names}',
-            'update {module names}',
-            'delete {module names}',
-        ])->delete();
+        Permission::where('module', '{module-names}')->delete();
     }
 };

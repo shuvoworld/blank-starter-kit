@@ -33,7 +33,8 @@
       "Bash(done)",
       "mcp__laravel-boost__read-log-entries",
       "Bash(php:*)",
-      "Bash(xargs grep:*)"
+      "Bash(xargs grep:*)",
+      "Bash(perl:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

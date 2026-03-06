@@ -9,7 +9,7 @@ class RejectLeaveRequestRequest extends FormRequest
     public function authorize(): bool
     {
         // Only admins/superusers can reject
-        return auth()->user()->can('reject leave requests');
+        return auth()->user()->can('leave-requests.reject');
     }
 
     /**

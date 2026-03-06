@@ -32,15 +32,6 @@ class EmployeeController extends BaseController
         $this->dataTableController = $dataTableController;
     }
 
-    protected function authorizeAction(string $ability, ?Model $record = null): void
-    {
-        if ($record) {
-            $this->authorize($ability, $record);
-        } else {
-            $this->authorize($ability, Employee::class);
-        }
-    }
-
     public function index(Request $request): View
     {
         $this->authorizeAction('viewAny');
@@ -94,7 +85,7 @@ class EmployeeController extends BaseController
     public function show(int|string $record): View
     {
         $employee = $this->findRecord($record);
-        $this->authorize('view', $employee);
+        $this->authorizeAction('view', $employee);
 
         $employee->load('user', 'country', 'city', 'area', 'departmentRelation', 'designation');
 
@@ -109,7 +100,7 @@ class EmployeeController extends BaseController
 
     public function store(StoreEmployeeRequest $request): RedirectResponse
     {
-        $this->authorize('create', Employee::class);
+        $this->authorizeAction('create');
 
         $employee = Employee::create($request->validated());
 
@@ -139,7 +130,7 @@ class EmployeeController extends BaseController
     public function update(UpdateEmployeeRequest $request, int|string $record): RedirectResponse
     {
         $employee = $this->findRecord($record);
-        $this->authorize('update', $employee);
+        $this->authorizeAction('update', $employee);
 
         $employee->update($request->validated());
 

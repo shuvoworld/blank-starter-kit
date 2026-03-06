@@ -18,8 +18,11 @@ class LeaveRequestDataTableController extends BaseDataTableController
     {
         $request = request();
 
+        $user = auth()->user();
+
         return LeaveRequest::query()
             ->with(['user', 'leaveType', 'approvedBy', 'rejectedBy', 'updatedBy'])
+            ->when(! $user->can('leave-requests.view'), fn ($q) => $q->where('user_id', $user->id))
             ->when($request->input('status') && $request->status !== 'all', fn ($q, $status) => $q->where('status', $status))
             ->when($request->input('year'), fn ($q, $year) => $q->where('year', $year))
             ->orderBy('created_at', 'desc');
@@ -50,8 +53,8 @@ class LeaveRequestDataTableController extends BaseDataTableController
     protected function actionColumn($leaveRequest): string
     {
         $showUrl = route('leave-requests.show', $leaveRequest);
-        $canApprove = auth()->user()?->can('approve leave requests');
-        $canReject = auth()->user()?->can('reject leave requests');
+        $canApprove = auth()->user()?->can('leave-requests.approve');
+        $canReject = auth()->user()?->can('leave-requests.reject');
 
         $actions = '
             <div class="btn-group btn-group-sm">

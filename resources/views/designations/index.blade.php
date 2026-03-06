@@ -42,7 +42,7 @@
                     <i class="bi bi-person-badge me-2"></i>
                     All Designations
                 </h3>
-                @can('create designations')
+                @can('designations.create')
                     <a href="{{ route('designations.create') }}" class="btn btn-primary">
                         <i class="bi bi-plus-lg me-1"></i> Add Designation
                     </a>

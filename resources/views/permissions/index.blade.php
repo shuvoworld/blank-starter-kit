@@ -17,7 +17,7 @@
                     <i class="bi bi-key me-2"></i>
                     All Permissions
                 </h3>
-                @can('create permissions')
+                @can('permissions.create')
                     <a href="{{ route('permissions.create') }}" class="btn btn-primary">
                         <i class="bi bi-plus-lg me-1"></i> Create Permission
                     </a>

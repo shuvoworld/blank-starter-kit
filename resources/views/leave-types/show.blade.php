@@ -168,7 +168,7 @@
     <a href="{{ route('leave-types.index') }}" class="btn btn-secondary">
         <i class="bi bi-arrow-left me-1"></i> Back to Leave Types
     </a>
-    @can('update leave types')
+    @can('leave-types.update')
         <a href="{{ route('leave-types.edit', $leaveType) }}" class="btn btn-primary">
             <i class="bi bi-pencil me-1"></i> Edit Leave Type
         </a>

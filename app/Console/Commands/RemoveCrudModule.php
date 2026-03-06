@@ -93,7 +93,6 @@ class RemoveCrudModule extends Command
         $module = $this->replacements['{ModuleName}'];
         $kebab = $this->replacements['{module-names}'];
         $snake = $this->replacements['{module_names}'];
-        $permSlug = $this->replacements['{module names}'];
 
         $files = [
             "app/Models/{$module}.php" => base_path("app/Models/{$module}.php"),
@@ -110,10 +109,10 @@ class RemoveCrudModule extends Command
         $migrations = glob(base_path("database/migrations/*_create_{$snake}_table.php")) ?: [];
 
         $permissions = [
-            "view any {$permSlug}",
-            "create {$permSlug}",
-            "update {$permSlug}",
-            "delete {$permSlug}",
+            "{$kebab}.view",
+            "{$kebab}.create",
+            "{$kebab}.update",
+            "{$kebab}.delete",
         ];
 
         return [
