@@ -23,15 +23,6 @@ class UserController extends BaseController
         $this->dataTableController = $dataTableController;
     }
 
-    protected function authorizeAction(string $ability, ?Model $record = null): void
-    {
-        if ($record) {
-            $this->authorize($ability, $record);
-        } else {
-            $this->authorize($ability, User::class);
-        }
-    }
-
     protected function createViewData(): array
     {
         return [
@@ -51,7 +42,7 @@ class UserController extends BaseController
     public function show(int|string $record): View
     {
         $user = $this->findRecord($record);
-        $this->authorize('view', $user);
+        $this->authorizeAction('view', $user);
         $user->load(['roles', 'employee', 'leaveBalances', 'leaveRequests']);
 
         return view('users.show', compact('user'));
@@ -59,7 +50,7 @@ class UserController extends BaseController
 
     public function store(Request $request): RedirectResponse
     {
-        $this->authorize('create', User::class);
+        $this->authorizeAction('create');
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -82,7 +73,7 @@ class UserController extends BaseController
     public function update(Request $request, int|string $record): RedirectResponse
     {
         $user = $this->findRecord($record);
-        $this->authorize('update', $user);
+        $this->authorizeAction('update', $user);
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],

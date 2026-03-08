@@ -17,7 +17,7 @@
                     <i class="bi bi-shield me-2"></i>
                     All Roles
                 </h3>
-                @can('create roles')
+                @can('roles.create')
                     <a href="{{ route('roles.create') }}" class="btn btn-primary">
                         <i class="bi bi-plus-lg me-1"></i> Create Role
                     </a>

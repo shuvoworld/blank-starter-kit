@@ -25,15 +25,6 @@ class HolidayController extends BaseController
         $this->dataTableController = $dataTableController;
     }
 
-    protected function authorizeAction(string $ability, ?Model $record = null): void
-    {
-        if ($record) {
-            $this->authorize($ability, $record);
-        } else {
-            $this->authorize($ability, Holiday::class);
-        }
-    }
-
     protected function createViewData(): array
     {
         return [
@@ -56,14 +47,14 @@ class HolidayController extends BaseController
     {
         $holiday = $this->findRecord($record);
         $holiday->load(['country', 'city']);
-        $this->authorize('view', $holiday);
+        $this->authorizeAction('view', $holiday);
 
         return view('holidays.show', compact('holiday'));
     }
 
     public function store(StoreHolidayRequest $request): RedirectResponse
     {
-        $this->authorize('create', Holiday::class);
+        $this->authorizeAction('create');
 
         Holiday::create($request->validated());
 
@@ -73,7 +64,7 @@ class HolidayController extends BaseController
     public function update(UpdateHolidayRequest $request, int|string $record): RedirectResponse
     {
         $holiday = $this->findRecord($record);
-        $this->authorize('update', $holiday);
+        $this->authorizeAction('update', $holiday);
 
         $holiday->update($request->validated());
 

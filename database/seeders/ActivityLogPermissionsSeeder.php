@@ -13,15 +13,12 @@ class ActivityLogPermissionsSeeder extends Seeder
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
         $permission = Permission::firstOrCreate(
-            ['name' => 'view any activity log', 'guard_name' => 'web'],
-            ['module' => 'activity-log', 'description' => 'View activity log']
+            ['name' => 'activity-log.view', 'guard_name' => 'web'],
+            ['module' => 'activity-log', 'description' => 'Activity Log — View']
         );
 
         foreach (['Superuser', 'Admin'] as $roleName) {
-            $role = Role::where('name', $roleName)->first();
-            if ($role) {
-                $role->givePermissionTo($permission);
-            }
+            Role::where('name', $roleName)->first()?->givePermissionTo($permission);
         }
 
         $this->command->info('Activity log permission seeded successfully.');

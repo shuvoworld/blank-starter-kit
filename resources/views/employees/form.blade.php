@@ -334,7 +334,7 @@
                     </div>
                 </div>
 
-                @can('delete employees')
+                @can('employees.delete')
                     <div class="card card-danger card-outline">
                         <div class="card-header">
                             <h3 class="card-title">

@@ -17,7 +17,7 @@
                     <i class="bi bi-building me-2"></i>
                     All Departments
                 </h3>
-                @can('create departments')
+                @can('departments.create')
                     <a href="{{ route('departments.create') }}" class="btn btn-primary">
                         <i class="bi bi-plus-lg me-1"></i> Add Department
                     </a>

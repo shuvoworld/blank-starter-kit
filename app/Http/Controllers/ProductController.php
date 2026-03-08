@@ -6,7 +6,6 @@ use App\Http\Controllers\BaseController\BaseController;
 use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
 use App\Models\Product;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
@@ -21,26 +20,17 @@ class ProductController extends BaseController
         $this->dataTableController = $dataTableController;
     }
 
-    protected function authorizeAction(string $ability, ?Model $record = null): void
-    {
-        if ($record) {
-            $this->authorize($ability, $record);
-        } else {
-            $this->authorize($ability, Product::class);
-        }
-    }
-
     public function show(int|string $record): View
     {
         $product = $this->findRecord($record);
-        $this->authorize('view', $product);
+        $this->authorizeAction('view', $product);
 
         return view('products.show', compact('product'));
     }
 
     public function store(StoreProductRequest $request): RedirectResponse
     {
-        $this->authorize('create', Product::class);
+        $this->authorizeAction('create');
 
         Product::create($request->validated());
 
@@ -50,7 +40,7 @@ class ProductController extends BaseController
     public function update(UpdateProductRequest $request, int|string $record): RedirectResponse
     {
         $product = $this->findRecord($record);
-        $this->authorize('update', $product);
+        $this->authorizeAction('update', $product);
 
         $product->update($request->validated());
 

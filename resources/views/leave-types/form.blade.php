@@ -24,9 +24,7 @@
                 <form action="{{ $editing ? route('leave-types.update', $record) : route('leave-types.store') }}"
                       method="POST" enctype="multipart/form-data">
                     @csrf
-                    @if($editing)
-                        @method('PUT')
-                    @endif
+                    @if($editing) @method('PUT') @endif
 
                     <div class="card-body">
                         <div class="row">
@@ -249,9 +247,52 @@
 
         <div class="col-lg-4">
             @if($editing)
-                @include('layouts.form.includes.audits', ['element' => $record])
+                <div class="card card-info card-outline">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="bi bi-info-circle me-2"></i>
+                            Leave Type Metadata
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-sm table-borderless mb-0">
+                            <tr>
+                                <td class="text-muted">ID:</td>
+                                <td>{{ $record->id }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Created:</td>
+                                <td>{{ $record->created_at->format('M d, Y H:i') }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Updated:</td>
+                                <td>{{ $record->updated_at->format('M d, Y H:i') }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
 
-                @include('layouts.form.includes.delete-warning', ['element' => $record,'module' => 'leave-types','moduleTitle'=>'Leave Type'])
+                @can('leave-types.delete')
+                    <div class="card card-danger card-outline">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                Danger Zone
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted small">Once deleted, this leave type record cannot be recovered.</p>
+                            <form action="{{ route('leave-types.destroy', $record) }}" method="POST" class="d-inline"
+                                  onsubmit="return confirm('Are you sure you want to delete {{ $record->name }}?')">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-danger btn-sm">
+                                    <i class="bi bi-trash me-1"></i> Delete Leave Type
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                @endcan
             @else
                 <div class="card card-info card-outline">
                     <div class="card-header">

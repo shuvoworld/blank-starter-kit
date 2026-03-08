@@ -80,7 +80,7 @@
         <a href="{{ route('permissions.index') }}" class="btn btn-secondary">
             <i class="bi bi-arrow-left me-1"></i> Back to Permissions
         </a>
-        @can('update permissions')
+        @can('permissions.update')
             <a href="{{ route('permissions.edit', $permission) }}" class="btn btn-primary">
                 <i class="bi bi-pencil me-1"></i> Edit Permission
             </a>

@@ -33,7 +33,7 @@ class PermissionDataTableController extends BaseDataTableController
     {
         $viewUrl = route('permissions.show', $permission);
         $editUrl = route('permissions.edit', $permission);
-        $canEdit = auth()->user()?->can('update permissions');
+        $canEdit = auth()->user()?->can('permissions.update');
         $hasRoles = $permission->roles_count > 0;
 
         $actions = '<div class="btn-group btn-group-sm">';

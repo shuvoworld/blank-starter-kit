@@ -17,7 +17,7 @@
                     <i class="bi bi-people me-2"></i>
                     All Users
                 </h3>
-                @can('create users')
+                @can('users.create')
                     <a href="{{ route('users.create') }}" class="btn btn-primary">
                         <i class="bi bi-plus-lg me-1"></i> Create User
                     </a>

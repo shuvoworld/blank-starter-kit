@@ -17,12 +17,12 @@
                 <p class="mb-0 text-white-50 text-sm">{{ now()->format('l, F j, Y') }} &mdash; Laravel 12 + RBAC + Activity Log Starter Kit</p>
             </div>
             <div class="d-flex gap-2 flex-wrap">
-                @can('view any employees')
+                @can('employees.view')
                     <a href="{{ route('employees.create') }}" class="btn btn-sm btn-light fw-semibold">
                         <i class="bi bi-person-plus me-1"></i> Add Employee
                     </a>
                 @endcan
-                @can('view any products')
+                @can('products.view')
                     <a href="{{ route('products.create') }}" class="btn btn-sm btn-outline-light fw-semibold">
                         <i class="bi bi-plus-circle me-1"></i> Add Product
                     </a>
@@ -158,10 +158,10 @@
                     </div>
                     <div class="alert alert-light mb-0 small">
                         <strong>Usage:</strong>
-                        <code class="ms-1">$user->hasPermissionTo('create employees')</code>
-                        <code class="ms-1 d-block mt-1">{{ '@can' }}('view any users')</code>
+                        <code class="ms-1">$user->hasPermissionTo('employees.create')</code>
+                        <code class="ms-1 d-block mt-1">{{ '@can' }}('users.view')</code>
                     </div>
-                    @can('view any roles')
+                    @can('roles.view')
                         <a href="{{ route('roles.index') }}" class="btn btn-sm btn-outline-primary w-100 mt-2">
                             <i class="bi bi-gear me-1"></i> Manage Roles
                         </a>
@@ -203,7 +203,7 @@
                         <strong>Trait:</strong>
                         <code class="ms-1">use App\Traits\HasActivityLog;</code>
                     </div>
-                    @can('view any activity log')
+                    @can('activity-log.view')
                         <a href="{{ route('activity-log.index') }}" class="btn btn-sm btn-outline-success w-100 mt-2">
                             <i class="bi bi-journal-text me-1"></i> View Activity Log
                         </a>
@@ -325,7 +325,7 @@
     </div>
 
     {{-- Recent Activity Log --}}
-    @can('view any activity log')
+    @can('activity-log.view')
         <div class="row g-3 mb-3">
             <div class="col-12">
                 <div class="card">
@@ -416,11 +416,11 @@
                             <h6 class="fw-semibold mb-2">
                                 <i class="bi bi-shield-check text-success me-1"></i> Permission Check (Blade)
                             </h6>
-                            <pre class="bg-dark text-light rounded p-3 mb-0"><code class="small">{{ '@can' }}('view any employees')
+                            <pre class="bg-dark text-light rounded p-3 mb-0"><code class="small">{{ '@can' }}('employees.view')
     // User can view employees
 {{ '@endcan' }}
 
-{{ '@can' }}('create employees')
+{{ '@can' }}('employees.create')
     <a href="{{ route('employees.create') }}">Add Employee</a>
 {{ '@endcan' }}</code></pre>
                         </div>
@@ -568,7 +568,7 @@ mcp-laravel-boost_tinker:
     {{-- Quick Access & Recent Records --}}
     <div class="row g-3 mb-3">
         {{-- Recent Employees --}}
-        @can('view any employees')
+        @can('employees.view')
         <div class="col-lg-8">
             <div class="card pk-recent-card h-100">
                 <div class="card-header">
@@ -628,7 +628,7 @@ mcp-laravel-boost_tinker:
         @endcan
 
         {{-- Quick Links --}}
-        <div class="col-lg-{{ Auth::user()->can('view any employees') ? '4' : '12' }}">
+        <div class="col-lg-{{ Auth::user()->can('employees.view') ? '4' : '12' }}">
             <div class="card h-100">
                 <div class="card-header">
                     <h3 class="card-title">
@@ -646,7 +646,7 @@ mcp-laravel-boost_tinker:
                         </div>
                     </a>
 
-                    @can('view any users')
+                    @can('users.view')
                         <a href="{{ route('users.index') }}" class="pk-quick-link">
                             <div class="pk-quick-icon" style="background:var(--pk-info-light);color:#0891b2">
                                 <i class="bi bi-people"></i>
@@ -658,7 +658,7 @@ mcp-laravel-boost_tinker:
                         </a>
                     @endcan
 
-                    @can('view any roles')
+                    @can('roles.view')
                         <a href="{{ route('roles.index') }}" class="pk-quick-link">
                             <div class="pk-quick-icon" style="background:var(--pk-warning-light);color:#d97706">
                                 <i class="bi bi-shield"></i>
@@ -670,7 +670,7 @@ mcp-laravel-boost_tinker:
                         </a>
                     @endcan
 
-                    @can('view any employees')
+                    @can('employees.view')
                         <a href="{{ route('employees.create') }}" class="pk-quick-link">
                             <div class="pk-quick-icon" style="background:var(--pk-success-light);color:#16a34a">
                                 <i class="bi bi-person-plus"></i>
@@ -682,7 +682,7 @@ mcp-laravel-boost_tinker:
                         </a>
                     @endcan
 
-                    @can('view any products')
+                    @can('products.view')
                         <a href="{{ route('products.create') }}" class="pk-quick-link">
                             <div class="pk-quick-icon" style="background:var(--pk-purple-light);color:#7c3aed">
                                 <i class="bi bi-plus-circle"></i>
@@ -699,7 +699,7 @@ mcp-laravel-boost_tinker:
     </div>
 
     {{-- Recent Products --}}
-    @can('view any products')
+    @can('products.view')
     <div class="row g-3">
         <div class="col-12">
             <div class="card pk-recent-card">

@@ -98,7 +98,7 @@
         <a href="{{ route('designations.index') }}" class="btn btn-secondary">
             <i class="bi bi-arrow-left me-1"></i> Back to Designations
         </a>
-        @can('update designations')
+        @can('designations.update')
             <a href="{{ route('designations.edit', $designation) }}" class="btn btn-primary">
                 <i class="bi bi-pencil me-1"></i> Edit Designation
             </a>

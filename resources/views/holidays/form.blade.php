@@ -167,7 +167,7 @@
                     </div>
                 </div>
 
-                @can('delete holidays')
+                @can('holidays.delete')
                     <div class="card card-danger card-outline">
                         <div class="card-header">
                             <h3 class="card-title">

@@ -155,7 +155,7 @@ class LeaveBalanceController extends BaseController
         ]);
 
         // Authorization: users can view their own balance, or admins can view any
-        if ($request->user_id != auth()->id() && ! auth()->user()->can('view any leave balances')) {
+        if ($request->user_id != auth()->id() && ! auth()->user()->can('leave-balances.view')) {
             abort(403, 'You do not have permission to view this balance.');
         }
 

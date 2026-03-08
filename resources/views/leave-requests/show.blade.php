@@ -168,7 +168,7 @@
     <a href="{{ route('leave-requests.index') }}" class="btn btn-secondary">
         <i class="bi bi-arrow-left me-1"></i> Back to Leave Requests
     </a>
-    @can('approve leave requests')
+    @can('leave-requests.approve')
         @if($leaveRequest->isPending())
             <button type="button" class="btn btn-success btn-approve-request" data-url="{{ route('leave-requests.approve', $leaveRequest) }}">
                 <i class="bi bi-check-lg me-1"></i> Approve
@@ -180,7 +180,7 @@
     @endcan
 </div>
 
-@can('approve leave requests')
+@can('leave-requests.approve')
     @if($leaveRequest->isPending())
         <!-- Approve Modal -->
         <div class="modal fade" id="approveModal" tabindex="-1">
@@ -237,7 +237,7 @@
 
 @push('scripts')
 <script>
-    @can('approve leave requests')
+    @can('leave-requests.approve')
         @if($leaveRequest->isPending())
             document.addEventListener('DOMContentLoaded', function() {
                 const approveModal = new bootstrap.Modal(document.getElementById('approveModal'));

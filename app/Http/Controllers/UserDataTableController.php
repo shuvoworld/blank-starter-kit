@@ -50,7 +50,7 @@ class UserDataTableController extends BaseDataTableController
     {
         $editUrl = route('users.edit', $user);
         $deleteUrl = route('users.destroy', $user);
-        $canDelete = auth()->user()?->can('delete users') && auth()->id() !== $user->id;
+        $canDelete = auth()->user()?->can('users.delete') && auth()->id() !== $user->id;
 
         $actions = '
             <div class="btn-group btn-group-sm">

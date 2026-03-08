@@ -122,7 +122,7 @@
                 </div>
 
                 @if($record->id !== auth()->id())
-                    @can('delete users')
+                    @can('users.delete')
                         <div class="card card-danger card-outline">
                             <div class="card-header">
                                 <h3 class="card-title">

@@ -17,7 +17,7 @@
                     <i class="bi bi-calendar-event me-2"></i>
                     All Holidays
                 </h3>
-                @can('create holidays')
+                @can('holidays.create')
                     <a href="{{ route('holidays.create') }}" class="btn btn-primary">
                         <i class="bi bi-plus-lg me-1"></i> Add Holiday
                     </a>

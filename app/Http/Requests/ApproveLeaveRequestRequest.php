@@ -9,7 +9,7 @@ class ApproveLeaveRequestRequest extends FormRequest
     public function authorize(): bool
     {
         // Only admins/superusers can approve
-        return auth()->user()->can('approve leave requests');
+        return auth()->user()->can('leave-requests.approve');
     }
 
     /**

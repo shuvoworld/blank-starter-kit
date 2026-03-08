@@ -141,7 +141,7 @@
     <a href="{{ route('holidays.index') }}" class="btn btn-secondary">
         <i class="bi bi-arrow-left me-1"></i> Back to Holidays
     </a>
-    @can('update holidays')
+    @can('holidays.update')
         <a href="{{ route('holidays.edit', $holiday) }}" class="btn btn-primary">
             <i class="bi bi-pencil me-1"></i> Edit Holiday
         </a>

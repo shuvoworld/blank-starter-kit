@@ -17,7 +17,7 @@
                     <i class="bi bi-calendar-check me-2"></i>
                     All Leave Types
                 </h3>
-                @can('create leave types')
+                @can('leave-types.create')
                     <a href="{{ route('leave-types.create') }}" class="btn btn-primary">
                         <i class="bi bi-plus-lg me-1"></i> Add Leave Type
                     </a>

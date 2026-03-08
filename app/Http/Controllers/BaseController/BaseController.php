@@ -54,10 +54,13 @@ abstract class BaseController extends Controller
     }
 
     /**
-     * Authorization hook — override to add gate/policy checks.
-     * Example: $this->authorize($ability, $record ?? User::class);
+     * Delegates to the Gate using the model class registered in $this->model.
+     * Pass a record for row-level checks (view/update/delete), omit for class-level (viewAny/create).
      */
-    protected function authorizeAction(string $ability, ?Model $record = null): void {}
+    protected function authorizeAction(string $ability, ?Model $record = null): void
+    {
+        $this->authorize($ability, $record ?? $this->model);
+    }
 
     public function index(Request $request): View
     {

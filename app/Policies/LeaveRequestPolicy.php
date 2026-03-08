@@ -2,110 +2,52 @@
 
 namespace App\Policies;
 
-use App\Models\LeaveRequest;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Model;
 
-class LeaveRequestPolicy
+class LeaveRequestPolicy extends BasePolicy
 {
-    /**
-     * Super admins skip all checks below and are automatically allowed to do everything.
-     *
-     * Returning true  = allow immediately, do not run the specific method.
-     * Returning null  = continue to the specific method below.
-     */
-    public function before(User $user, string $ability): ?bool
+    protected function resource(): string
     {
-        if ($user->hasRole('Superuser')) {
-            return true;
-        }
-
-        return null;
+        return 'leave-requests';
     }
 
     /**
-     * Can the user see the full list of leave requests?
+     * Any authenticated user can reach the list.
+     * The query is scoped to their own records unless they have leave-requests.view.
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('view any leave requests');
+        return true;
     }
 
-    /**
-     * Can the user view a single leave request record?
-     */
-    public function view(User $user, LeaveRequest $leaveRequest): bool
+    /** Users can view their own requests. */
+    public function view(User $user, Model $model): bool
     {
-        // Users can view their own requests
-        if ($user->id === $leaveRequest->user_id) {
-            return true;
-        }
-
-        return $user->can('view any leave requests');
+        return $user->id === $model->user_id || $user->can('leave-requests.view');
     }
 
-    /**
-     * Can the user create a new leave request?
-     */
-    public function create(User $user): bool
+    /** Only the owner can update a pending request; admins always can. */
+    public function update(User $user, Model $model): bool
     {
-        return $user->can('create leave requests');
+        return ($model->isPending() && $user->id === $model->user_id)
+            || $user->can('leave-requests.update');
     }
 
-    /**
-     * Can the user update this leave request?
-     */
-    public function update(User $user, LeaveRequest $leaveRequest): bool
+    public function approve(User $user, Model $model): bool
     {
-        // Only pending requests can be updated, and only by the owner
-        if ($leaveRequest->isPending() && $user->id === $leaveRequest->user_id) {
-            return true;
-        }
-
-        return $user->can('update leave requests');
+        return $model->isPending() && $user->can('leave-requests.approve');
     }
 
-    /**
-     * Can the user delete this leave request record?
-     */
-    public function delete(User $user, LeaveRequest $leaveRequest): bool
+    public function reject(User $user, Model $model): bool
     {
-        return $user->can('delete leave requests');
+        return $model->isPending() && $user->can('leave-requests.reject');
     }
 
-    /**
-     * Can the user approve this leave request?
-     */
-    public function approve(User $user, LeaveRequest $leaveRequest): bool
+    /** The owner can cancel their own cancellable request; admins always can. */
+    public function cancel(User $user, Model $model): bool
     {
-        if (! $leaveRequest->isPending()) {
-            return false;
-        }
-
-        return $user->can('approve leave requests');
-    }
-
-    /**
-     * Can the user reject this leave request?
-     */
-    public function reject(User $user, LeaveRequest $leaveRequest): bool
-    {
-        if (! $leaveRequest->isPending()) {
-            return false;
-        }
-
-        return $user->can('reject leave requests');
-    }
-
-    /**
-     * Can the user cancel this leave request?
-     */
-    public function cancel(User $user, LeaveRequest $leaveRequest): bool
-    {
-        // Users can cancel their own pending requests
-        if ($leaveRequest->user_id === $user->id && $leaveRequest->canBeCancelled()) {
-            return true;
-        }
-
-        return $user->can('cancel leave requests');
+        return ($model->user_id === $user->id && $model->canBeCancelled())
+            || $user->can('leave-requests.cancel');
     }
 }
