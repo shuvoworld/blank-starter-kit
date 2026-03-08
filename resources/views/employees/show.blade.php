@@ -360,14 +360,5 @@
         </div>
     </div>
 
-    <div class="mt-3">
-        <a href="{{ route('employees.index') }}" class="btn btn-secondary">
-            <i class="bi bi-arrow-left me-1"></i> Back to Employees
-        </a>
-        @can('employees.update')
-            <a href="{{ route('employees.edit', $employee) }}" class="btn btn-primary">
-                <i class="bi bi-pencil me-1"></i> Edit Employee
-            </a>
-        @endcan
-    </div>
+@include('layouts.form.includes.action-buttons', ['element' => $employee,'module' => 'employees','moduleTitle'=>'Employee'])
 @endsection
