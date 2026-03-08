@@ -23,7 +23,9 @@
                 <form action="{{ $editing ? route('employees.update', $record) : route('employees.store') }}"
                       method="POST" enctype="multipart/form-data">
                     @csrf
-                    @if($editing) @method('PUT') @endif
+                    @if($editing)
+                        @method('PUT')
+                    @endif
 
                     <div class="card-body">
                         <div class="row">
@@ -72,13 +74,13 @@
                                         <option value=""></option>
                                         @foreach($users as $user)
                                             <option value="{{ $user->id }}"
-                                                {{ old('user_id', $record?->user_id) == $user->id ? 'selected' : '' }}>
+                                                    {{ old('user_id', $record?->user_id) == $user->id ? 'selected' : '' }}>
                                                 {{ $user->name }} ({{ $user->email }})
                                             </option>
                                         @endforeach
                                     </select>
                                     @error('user_id')
-                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                     <div class="form-text">Link this employee to a system user account.</div>
                                 @else
@@ -112,13 +114,13 @@
                                     <option value=""></option>
                                     @foreach($departments as $dept)
                                         <option value="{{ $dept->id }}"
-                                            {{ old('department_id', $record?->department_id) == $dept->id ? 'selected' : '' }}>
+                                                {{ old('department_id', $record?->department_id) == $dept->id ? 'selected' : '' }}>
                                             {{ $dept->name }}
                                         </option>
                                     @endforeach
                                 </select>
                                 @error('department_id')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                                <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                                 <div class="form-text">
                                     <a href="{{ route('departments.index') }}" target="_blank" class="text-info">
@@ -137,13 +139,13 @@
                                     <option value=""></option>
                                     @foreach($designations as $designation)
                                         <option value="{{ $designation->id }}"
-                                            {{ old('designation_id', $record?->designation_id) == $designation->id ? 'selected' : '' }}>
+                                                {{ old('designation_id', $record?->designation_id) == $designation->id ? 'selected' : '' }}>
                                             {{ $designation->name }}
                                         </option>
                                     @endforeach
                                 </select>
                                 @error('designation_id')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                                <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                                 <div class="form-text">
                                     <a href="{{ route('designations.index') }}" target="_blank" class="text-info">
@@ -173,7 +175,7 @@
                                            value="{{ old('salary', $record?->salary) }}"
                                            placeholder="0.00" min="0" step="0.01" required>
                                     @error('salary')
-                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
                             </div>
@@ -190,13 +192,13 @@
                                     <option value=""></option>
                                     @foreach($countries as $country)
                                         <option value="{{ $country->id }}"
-                                            {{ old('country_id', $record?->country_id) == $country->id ? 'selected' : '' }}>
+                                                {{ old('country_id', $record?->country_id) == $country->id ? 'selected' : '' }}>
                                             {{ $country->name }}
                                         </option>
                                     @endforeach
                                 </select>
                                 @error('country_id')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                                <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
 
@@ -211,13 +213,13 @@
                                     <option value=""></option>
                                     @foreach($cities as $city)
                                         <option value="{{ $city->id }}"
-                                            {{ old('city_id', $record?->city_id) == $city->id ? 'selected' : '' }}>
+                                                {{ old('city_id', $record?->city_id) == $city->id ? 'selected' : '' }}>
                                             {{ $city->name }}
                                         </option>
                                     @endforeach
                                 </select>
                                 @error('city_id')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                                <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
                         </div>
@@ -234,13 +236,13 @@
                                     <option value=""></option>
                                     @foreach($areas as $area)
                                         <option value="{{ $area->id }}"
-                                            {{ old('area_id', $record?->area_id) == $area->id ? 'selected' : '' }}>
+                                                {{ old('area_id', $record?->area_id) == $area->id ? 'selected' : '' }}>
                                             {{ $area->name }}
                                         </option>
                                     @endforeach
                                 </select>
                                 @error('area_id')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                                <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
 
@@ -294,82 +296,17 @@
                         </div>
                     </div>
 
-                    <div class="card-footer">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-check-lg me-1"></i>
-                            {{ $editing ? 'Update' : 'Create' }} Employee
-                        </button>
-                        <a href="{{ route('employees.index') }}" class="btn btn-secondary">
-                            <i class="bi bi-x-lg me-1"></i> Cancel
-                        </a>
-                    </div>
+                    @include('layouts.form.includes.footer', ['element' => $record,'module' => 'employees','moduleTitle'=>'Employee'])
                 </form>
             </div>
         </div>
 
         <div class="col-lg-4">
             @if($editing)
-                <div class="card card-info card-outline">
-                    <div class="card-header">
-                        <h3 class="card-title">
-                            <i class="bi bi-info-circle me-2"></i>
-                            Employee Metadata
-                        </h3>
-                    </div>
-                    <div class="card-body">
-                        <table class="table table-sm table-borderless mb-0">
-                            <tr>
-                                <td class="text-muted">ID:</td>
-                                <td>{{ $record->id }}</td>
-                            </tr>
-                            <tr>
-                                <td class="text-muted">Created:</td>
-                                <td>{{ $record->created_at->format('M d, Y H:i') }}</td>
-                            </tr>
-                            <tr>
-                                <td class="text-muted">Updated:</td>
-                                <td>{{ $record->updated_at->format('M d, Y H:i') }}</td>
-                            </tr>
-                        </table>
-                    </div>
-                </div>
-
-                @can('employees.delete')
-                    <div class="card card-danger card-outline">
-                        <div class="card-header">
-                            <h3 class="card-title">
-                                <i class="bi bi-exclamation-triangle me-2"></i>
-                                Danger Zone
-                            </h3>
-                        </div>
-                        <div class="card-body">
-                            <p class="text-muted small">Once deleted, this employee record cannot be recovered.</p>
-                            <form action="{{ route('employees.destroy', $record) }}" method="POST" class="d-inline"
-                                  onsubmit="return confirm('Are you sure you want to delete {{ $record->name }}?')">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn btn-danger btn-sm">
-                                    <i class="bi bi-trash me-1"></i> Delete Employee
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                @endcan
+                @include('layouts.form.includes.audits', ['element' => $record])
+                @include('layouts.form.includes.delete-warning', ['element' => $record,'module' => 'employees','moduleTitle'=>'Employee'])
             @else
-                <div class="card card-info card-outline">
-                    <div class="card-header">
-                        <h3 class="card-title">
-                            <i class="bi bi-info-circle me-2"></i>
-                            Information
-                        </h3>
-                    </div>
-                    <div class="card-body">
-                        <p class="text-muted small"><i class="bi bi-dot"></i> Fields marked with <span class="text-danger">*</span> are required.</p>
-                        <p class="text-muted small"><i class="bi bi-dot"></i> Email must be unique across all employees.</p>
-                        <p class="text-muted small"><i class="bi bi-dot"></i> Phone number is optional.</p>
-                        <p class="text-muted small mb-0"><i class="bi bi-dot"></i> Salary should be entered as an annual amount.</p>
-                    </div>
-                </div>
+                @include('layouts.form.includes.information', ['element' => $record,'module' => 'employees','moduleTitle'=>'Employee'])
             @endif
         </div>
     </div>

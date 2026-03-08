@@ -234,15 +234,7 @@
                         </div>
                     </div>
 
-                    <div class="card-footer">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-check-lg me-1"></i>
-                            {{ $editing ? 'Update' : 'Create' }} Leave Type
-                        </button>
-                        <a href="{{ route('leave-types.index') }}" class="btn btn-secondary">
-                            <i class="bi bi-x-lg me-1"></i> Cancel
-                        </a>
-                    </div>
+                    @include('layouts.form.includes.footer', ['element' => $record,'module' => 'leave-types','moduleTitle'=>'Leave Type'])
                 </form>
             </div>
         </div>
@@ -252,21 +244,7 @@
                 @include('layouts.form.includes.audits', ['element' => $record])
                 @include('layouts.form.includes.delete-warning', ['element' => $record,'module' => 'leave-types','moduleTitle'=>'Leave Type'])
             @else
-                <div class="card card-info card-outline">
-                    <div class="card-header">
-                        <h3 class="card-title">
-                            <i class="bi bi-info-circle me-2"></i>
-                            Information
-                        </h3>
-                    </div>
-                    <div class="card-body">
-                        <p class="text-muted small"><i class="bi bi-dot"></i> Fields marked with <span class="text-danger">*</span> are required.</p>
-                        <p class="text-muted small"><i class="bi bi-dot"></i> Code must be unique and short (e.g., SL, AL).</p>
-                        <p class="text-muted small"><i class="bi bi-dot"></i> Max days per year/month limit leave allocation.</p>
-                        <p class="text-muted small"><i class="bi bi-dot"></i> Carry forward allows unused leave to next year.</p>
-                        <p class="text-muted small mb-0"><i class="bi bi-dot"></i> Only active leave types will be available for selection.</p>
-                    </div>
-                </div>
+                @include('layouts.form.includes.information', ['element' => $record,'module' => 'leave-types','moduleTitle'=>'Leave Type'])
             @endif
         </div>
     </div>
