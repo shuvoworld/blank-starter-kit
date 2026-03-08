@@ -79,15 +79,7 @@
                         </div>
                     </div>
 
-                    <div class="card-footer">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-check-lg me-1"></i>
-                            {{ $editing ? 'Update' : 'Create' }} Department
-                        </button>
-                        <a href="{{ route('departments.index') }}" class="btn btn-secondary">
-                            <i class="bi bi-x-lg me-1"></i> Cancel
-                        </a>
-                    </div>
+                    @include('layouts.form.includes.footer', ['element' => $record,'module' => 'departments','moduleTitle'=>'Department'])
                 </form>
             </div>
         </div>
