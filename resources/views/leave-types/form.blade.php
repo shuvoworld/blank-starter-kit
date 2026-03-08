@@ -249,37 +249,9 @@
 
         <div class="col-lg-4">
             @if($editing)
-                <div class="card card-info card-outline">
-                    <div class="card-header">
-                        <h3 class="card-title">
-                            <i class="bi bi-info-circle me-2"></i>
-                            Leave Type Metadata
-                        </h3>
-                    </div>
-                    @include('leave-types.includes.record-info', ['leaveType' => $record])
-                </div>
+                @include('layouts.form.includes.audits', ['element' => $record])
 
-                @can('delete leave types')
-                    <div class="card card-danger card-outline">
-                        <div class="card-header">
-                            <h3 class="card-title">
-                                <i class="bi bi-exclamation-triangle me-2"></i>
-                                Danger Zone
-                            </h3>
-                        </div>
-                        <div class="card-body">
-                            <p class="text-muted small">Once deleted, this leave type record cannot be recovered.</p>
-                            <form action="{{ route('leave-types.destroy', $record) }}" method="POST" class="d-inline"
-                                  onsubmit="return confirm('Are you sure you want to delete {{ $record->name }}?')">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn btn-danger btn-sm">
-                                    <i class="bi bi-trash me-1"></i> Delete Leave Type
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                @endcan
+                @include('layouts.form.includes.delete-warning', ['element' => $record,'module' => 'leave-types','moduleTitle'=>'Leave Type'])
             @else
                 <div class="card card-info card-outline">
                     <div class="card-header">

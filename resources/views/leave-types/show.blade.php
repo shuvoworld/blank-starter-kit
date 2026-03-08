@@ -132,27 +132,10 @@
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">
-                        <i class="bi bi-clock-history me-2"></i>
-                        Record Info
-                    </h3>
-                </div>
-                @include('leave-types.includes.record-info')
-            </div>
+            @include('layouts.form.includes.audits', ['element' => $leaveType])
         </div>
 
     </div>
 
-    <div class="mt-3">
-        <a href="{{ route('leave-types.index') }}" class="btn btn-secondary">
-            <i class="bi bi-arrow-left me-1"></i> Back to Leave Types
-        </a>
-        @can('update leave types')
-            <a href="{{ route('leave-types.edit', $leaveType) }}" class="btn btn-primary">
-                <i class="bi bi-pencil me-1"></i> Edit Leave Type
-            </a>
-        @endcan
-    </div>
+    @include('layouts.form.includes.action-buttons', ['element' => $leaveType,'module' => 'leave-types','moduleTitle'=>'Leave Type'])
 @endsection
