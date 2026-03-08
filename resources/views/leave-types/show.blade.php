@@ -133,45 +133,9 @@
     </div>
 
     <div class="col-md-4">
-        <div class="card">
-            <div class="card-header">
-                <h3 class="card-title">
-                    <i class="bi bi-clock-history me-2"></i>
-                    Record Info
-                </h3>
-            </div>
-            <div class="card-body">
-                <table class="table table-sm table-borderless mb-0">
-                    <tr>
-                        <td class="text-muted">ID:</td>
-                        <td>{{ $leaveType->id }}</td>
-                    </tr>
-                    <tr>
-                        <td class="text-muted">Sort Order:</td>
-                        <td>{{ $leaveType->sort_order }}</td>
-                    </tr>
-                    <tr>
-                        <td class="text-muted">Created:</td>
-                        <td>{{ $leaveType->created_at->format('M d, Y H:i') }}</td>
-                    </tr>
-                    <tr>
-                        <td class="text-muted">Updated:</td>
-                        <td>{{ $leaveType->updated_at->format('M d, Y H:i') }}</td>
-                    </tr>
-                </table>
-            </div>
-        </div>
+        @include('layouts.form.includes.audits', ['element' => $leaveType])
     </div>
 </div>
 
-<div class="mt-3">
-    <a href="{{ route('leave-types.index') }}" class="btn btn-secondary">
-        <i class="bi bi-arrow-left me-1"></i> Back to Leave Types
-    </a>
-    @can('leave-types.update')
-        <a href="{{ route('leave-types.edit', $leaveType) }}" class="btn btn-primary">
-            <i class="bi bi-pencil me-1"></i> Edit Leave Type
-        </a>
-    @endcan
-</div>
+@include('layouts.form.includes.action-buttons', ['element' => $leaveType,'module' => 'leave-types','moduleTitle'=>'Leave Type'])
 @endsection
