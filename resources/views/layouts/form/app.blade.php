@@ -11,6 +11,18 @@
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
+    <!-- App Ready Helper — must be before Vite -->
+    <script>
+        window.appReady = false;
+        window._appReadyQueue = [];
+        window.onAppReady = function (fn) {
+            if (window.appReady) {
+                fn();
+            } else {
+                window._appReadyQueue.push(fn);
+            }
+        };
+    </script>
     <!-- Styles -->
     @vite(['resources/scss/app.scss', 'resources/css/project.css','resources/js/app.js'])
     @stack('styles')
@@ -70,7 +82,7 @@
     @endif
 
 </div>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+@include('layouts.form.includes.alert-modal')
 @stack('scripts')
 </body>
 </html>

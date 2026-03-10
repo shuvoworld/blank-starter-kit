@@ -22,7 +22,9 @@
                     </h3>
                 </div>
                 <form action="{{ $editing ? route('leave-types.update', $record) : route('leave-types.store') }}"
-                      method="POST" enctype="multipart/form-data">
+                      method="POST"
+                      enctype="multipart/form-data"
+                      data-ajax>
                     @csrf
                     @if($editing)
                         @method('PUT')
@@ -251,10 +253,11 @@
 
     @push('scripts')
         <script>
-            document.addEventListener('DOMContentLoaded', function () {
-                document.getElementById('code').addEventListener('input', function () {
+            window.onAppReady(function () {
+                $('#code').on('input', function () {
                     this.value = this.value.toUpperCase();
                 });
+                // window.showAlertModal('Test', 'Testing modal', 'danger');
             });
         </script>
     @endpush

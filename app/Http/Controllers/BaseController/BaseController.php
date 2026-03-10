@@ -225,7 +225,7 @@ abstract class BaseController extends Controller
      * Otherwise, creates the model directly.
      * ValidationException is handled automatically by Laravel.
      */
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request): RedirectResponse|JsonResponse
     {
         $this->authorizeAction('create');
 
@@ -236,16 +236,18 @@ abstract class BaseController extends Controller
             ? $this->service->create($data)
             : ($this->model)::create($data);
 
+        if ($request->ajax()) {
+            return response()->json([
+                'success'  => true,
+                'message'  => $this->resolveMessage('created'),
+                'redirect' => route("{$this->routePrefix}.index"),
+            ]);
+        }
+
         return $this->successRedirect('created');
     }
 
-    /**
-     * If a service is set, delegates to service->update() which handles
-     * business rules and after-update logic internally.
-     * Otherwise, updates the model directly.
-     * ValidationException is handled automatically by Laravel.
-     */
-    public function update(Request $request, int|string $record): RedirectResponse
+    public function update(Request $request, int|string $record): RedirectResponse|JsonResponse
     {
         $model = $this->findRecord($record);
         $this->authorizeAction('update', $model);
@@ -257,9 +259,16 @@ abstract class BaseController extends Controller
             ? $this->service->update($model, $data)
             : $model->update($data);
 
+        if ($request->ajax()) {
+            return response()->json([
+                'success'  => true,
+                'message'  => $this->resolveMessage('updated'),
+                'redirect' => route("{$this->routePrefix}.index"),
+            ]);
+        }
+
         return $this->successRedirect('updated');
     }
-
     /**
      * Handles both ajax (JSON) and standard (redirect) delete requests.
      * Override beforeDestroy() for guards instead of overriding this method.

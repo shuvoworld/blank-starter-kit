@@ -26,27 +26,20 @@ class LeaveTypeService extends BaseService
 
     private function validateBusinessRules(array $data, ?LeaveType $existing = null): void
     {
-        $this->validateCarryForward($data);
+        $this->validateRequireApproval($data);
         $this->validateGenderSpecific($data, $existing);
     }
 
-    private function validateCarryForward(array $data): void
+    private function validateRequireApproval(array $data): void
     {
-        // carry_forward_limit can't exceed max_days_per_year
+        // requires approval 1 custom validation
         if (isset($data['requires_approval']) && $data['requires_approval'] != 1) {
             throw ValidationException::withMessages([
                 'requires_approval' => 'Carry forward limit cannot exceed max days per year.',
             ]);
         }
 
-        // carry_forward fields must be empty when carry_forward is disabled
-        if (empty($data['carry_forward'])) {
-            if (!empty($data['carry_forward_limit']) || !empty($data['carry_forward_expiry_days'])) {
-                throw ValidationException::withMessages([
-                    'carry_forward_limit' => 'Carry forward limit should be empty when carry forward is disabled.',
-                ]);
-            }
-        }
+
     }
 
     private function validateGenderSpecific(array $data, ?LeaveType $existing = null): void
