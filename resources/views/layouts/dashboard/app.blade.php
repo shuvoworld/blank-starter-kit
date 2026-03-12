@@ -11,6 +11,17 @@
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
+    <script>
+        window.appReady = false;
+        window._appReadyQueue = [];
+        window.onAppReady = function (fn) {
+            if (window.appReady) {
+                fn();
+            } else {
+                window._appReadyQueue.push(fn);
+            }
+        };
+    </script>
     <!-- Styles -->
     @vite(['resources/scss/app.scss', 'resources/css/project.css','resources/js/app.js'])
     @stack('styles')
