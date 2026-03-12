@@ -66,8 +66,11 @@ abstract class BaseController extends Controller
     {
         $this->authorizeAction('viewAny');
         $tableColumns = $this->dataTableController?->tableColumns() ?? [];
+        $moduleName = $this->viewPrefix ?? null;
+        $moduleTitle = $this->resourceName ?? null;
+
         // JS only needs data/name/orderable/searchable/className — not label or width
-        $dtColumns = collect($tableColumns)->map(fn ($col) => [
+        $dtColumns = collect($tableColumns)->map(fn($col) => [
             'data' => $col['data'],
             'name' => $col['name'],
             'orderable' => $col['orderable'] ?? true,
@@ -75,7 +78,7 @@ abstract class BaseController extends Controller
             'className' => $col['className'] ?? '',
         ])->values()->all();
 
-        return view("{$this->viewPrefix}.index", compact('tableColumns', 'dtColumns'));
+        return view("{$this->viewPrefix}.index", compact('moduleTitle','moduleName', 'tableColumns', 'dtColumns'));
     }
 
     public function create(): View
@@ -147,17 +150,16 @@ abstract class BaseController extends Controller
     /**
      * Hook called before deletion.
      * Throw an exception or abort() here to cancel the delete.
-     *
      * Example:
      *   protected function beforeDestroy(Model $record): void {
      *       abort_if($record->is_system, 403, 'System records cannot be deleted.');
      *   }
      */
-    protected function beforeDestroy(Model $record): void {}
+    protected function beforeDestroy(Model $record): void { }
 
     /**
      * Hook called after deletion.
      * Use for cleanup, logging, firing events, etc.
      */
-    protected function afterDestroy(Model $record): void {}
+    protected function afterDestroy(Model $record): void { }
 }

@@ -37,7 +37,9 @@ class EmployeeController extends BaseController
         $this->authorizeAction('viewAny');
 
         $tableColumns = $this->dataTableController?->tableColumns() ?? [];
-        $dtColumns = collect($tableColumns)->map(fn ($col) => [
+        $moduleName = $this->viewPrefix ?? null;
+        $moduleTitle = $this->resourceName ?? null;
+        $dtColumns = collect($tableColumns)->map(fn($col) => [
             'data' => $col['data'],
             'name' => $col['name'],
             'orderable' => $col['orderable'] ?? true,
@@ -49,7 +51,7 @@ class EmployeeController extends BaseController
         $designations = Designation::active()->orderBy('sort_order')->orderBy('name')->get(['id', 'name']);
         $countries = Country::activated()->orderBy('name')->get(['id', 'name']);
 
-        return view('employees.index', compact('tableColumns', 'dtColumns', 'departments', 'designations', 'countries'));
+        return view('employees.index', compact('moduleTitle', 'moduleName', 'tableColumns', 'dtColumns', 'departments', 'designations', 'countries'));
     }
 
     protected function createViewData(): array
