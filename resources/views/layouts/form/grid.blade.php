@@ -90,7 +90,7 @@
                                 type: 'GET'
                             },
                             columns: dtColumns,
-                            order: [[2, 'asc']],
+                            order: [[0, 'asc']],
                             pageLength: 10,
                             lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
                             language: {
