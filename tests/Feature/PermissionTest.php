@@ -7,19 +7,17 @@ use function Pest\Laravel\actingAs;
 use function Pest\Laravel\assertDatabaseHas;
 
 beforeEach(function () {
-    // Reset cached permissions
     app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
-    // Create common permissions for tests
-    Permission::firstOrCreate(['name' => 'view any permissions', 'guard_name' => 'web']);
-    Permission::firstOrCreate(['name' => 'create permissions', 'guard_name' => 'web']);
-    Permission::firstOrCreate(['name' => 'update permissions', 'guard_name' => 'web']);
-    Permission::firstOrCreate(['name' => 'delete permissions', 'guard_name' => 'web']);
+    Permission::firstOrCreate(['name' => 'permissions.view', 'guard_name' => 'web']);
+    Permission::firstOrCreate(['name' => 'permissions.create', 'guard_name' => 'web']);
+    Permission::firstOrCreate(['name' => 'permissions.update', 'guard_name' => 'web']);
+    Permission::firstOrCreate(['name' => 'permissions.delete', 'guard_name' => 'web']);
 });
 
 it('can display permissions index page', function () {
     $user = User::factory()->create();
-    $user->givePermissionTo('view any permissions');
+    $user->givePermissionTo('permissions.view');
 
     actingAs($user)
         ->get(route('permissions.index'))
@@ -36,7 +34,7 @@ it('requires permission to view permissions', function () {
 
 it('can create a new permission', function () {
     $user = User::factory()->create();
-    $user->givePermissionTo(['view any permissions', 'create permissions']);
+    $user->givePermissionTo(['permissions.view', 'permissions.create']);
 
     actingAs($user)
         ->post(route('permissions.store'), [
@@ -55,7 +53,7 @@ it('can create a new permission', function () {
 
 it('cannot create duplicate permission', function () {
     $user = User::factory()->create();
-    $user->givePermissionTo(['view any permissions', 'create permissions']);
+    $user->givePermissionTo(['permissions.view', 'permissions.create']);
 
     Permission::create(['name' => 'delete posts', 'guard_name' => 'web']);
 
@@ -70,7 +68,7 @@ it('cannot create duplicate permission', function () {
 
 it('can update an existing permission', function () {
     $user = User::factory()->create();
-    $user->givePermissionTo(['view any permissions', 'update permissions']);
+    $user->givePermissionTo(['permissions.view', 'permissions.update']);
 
     $permission = Permission::create(['name' => 'old permission', 'guard_name' => 'web']);
 
@@ -89,7 +87,7 @@ it('can update an existing permission', function () {
 
 it('can delete a permission', function () {
     $user = User::factory()->create();
-    $user->givePermissionTo(['view any permissions', 'delete permissions']);
+    $user->givePermissionTo(['permissions.view', 'permissions.delete']);
 
     $permission = Permission::create(['name' => 'temporary permission', 'guard_name' => 'web']);
 
@@ -102,44 +100,59 @@ it('can delete a permission', function () {
 
 it('cannot delete permission assigned to roles', function () {
     $user = User::factory()->create();
-    $user->givePermissionTo(['view any permissions', 'delete permissions']);
+    $user->givePermissionTo(['permissions.view', 'permissions.delete']);
 
     $permission = Permission::create(['name' => 'protected permission', 'guard_name' => 'web']);
-    $role = \App\Models\Role::create(['name' => 'Admin', 'guard_name' => 'web']);
+    $role = \App\Models\Role::firstOrCreate(['name' => 'Admin', 'guard_name' => 'web']);
     $role->givePermissionTo($permission);
 
     actingAs($user)
         ->delete(route('permissions.destroy', $permission))
-        ->assertRedirect();
+        ->assertStatus(422);
 
     expect(Permission::where('name', 'protected permission')->exists())->toBeTrue();
 });
 
 it('can filter permissions by module', function () {
     $user = User::factory()->create();
-    $user->givePermissionTo('view any permissions');
+    $user->givePermissionTo('permissions.view');
 
     Permission::create(['name' => 'view posts', 'module' => 'posts', 'guard_name' => 'web']);
     Permission::create(['name' => 'view users', 'module' => 'users', 'guard_name' => 'web']);
 
-    actingAs($user)
-        ->get(route('permissions.index', ['module' => 'posts']))
-        ->assertStatus(200)
-        ->assertSee('view posts');
+    $response = actingAs($user)
+        ->getJson(route('permissions.by-module', ['module' => 'posts']));
+
+    $response->assertStatus(200);
+    $names = collect($response->json('permissions'))->pluck('name');
+    expect($names)->toContain('view posts')
+        ->not->toContain('view users');
 });
 
-it('can search permissions', function () {
+it('can search permissions via datatable', function () {
     $user = User::factory()->create();
-    $user->givePermissionTo('view any permissions');
+    $user->givePermissionTo('permissions.view');
 
     Permission::create(['name' => 'create posts', 'module' => 'posts', 'guard_name' => 'web']);
     Permission::create(['name' => 'delete posts', 'module' => 'posts', 'guard_name' => 'web']);
     Permission::create(['name' => 'edit users', 'module' => 'users', 'guard_name' => 'web']);
 
     actingAs($user)
-        ->get(route('permissions.index', ['search' => 'posts']))
+        ->withHeaders(['X-Requested-With' => 'XMLHttpRequest'])
+        ->getJson(route('permissions.datatable', [
+            'draw' => 1,
+            'columns' => [
+                ['data' => 'name_badge', 'name' => 'name', 'searchable' => 'true', 'orderable' => 'true', 'search' => ['value' => '', 'regex' => 'false']],
+                ['data' => 'module_badge', 'name' => 'module', 'searchable' => 'false', 'orderable' => 'true', 'search' => ['value' => '', 'regex' => 'false']],
+                ['data' => 'description', 'name' => 'description', 'searchable' => 'true', 'orderable' => 'false', 'search' => ['value' => '', 'regex' => 'false']],
+                ['data' => 'roles_count', 'name' => 'roles_count', 'searchable' => 'false', 'orderable' => 'true', 'search' => ['value' => '', 'regex' => 'false']],
+                ['data' => 'action', 'name' => 'action', 'searchable' => 'false', 'orderable' => 'false', 'search' => ['value' => '', 'regex' => 'false']],
+            ],
+            'order' => [['column' => 0, 'dir' => 'asc']],
+            'start' => 0,
+            'length' => 100,
+            'search' => ['value' => 'create posts', 'regex' => 'false'],
+        ]))
         ->assertStatus(200)
-        ->assertSee('create posts')
-        ->assertSee('delete posts')
-        ->assertDontSee('edit users');
+        ->assertJsonFragment(['name' => 'create posts']);
 });

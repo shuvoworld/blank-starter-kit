@@ -48,8 +48,7 @@ class HomeController extends Controller
         // Get role-specific dashboard data
         $dashboardData = match ($userRole) {
             'Superuser', 'Admin' => $this->getAdminDashboardData(),
-            'Employee' => $this->getEmployeeDashboardData($user),
-            default => [],
+            default => $this->getEmployeeDashboardData($user),
         };
 
         return view($dashboardView, array_merge(

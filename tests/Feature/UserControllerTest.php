@@ -11,13 +11,6 @@ use function Pest\Laravel\assertSoftDeleted;
 beforeEach(function () {
     app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
-    // Route middleware format (used by Route::crudModule)
-    Permission::firstOrCreate(['name' => 'view any users', 'guard_name' => 'web']);
-    Permission::firstOrCreate(['name' => 'create users', 'guard_name' => 'web']);
-    Permission::firstOrCreate(['name' => 'update users', 'guard_name' => 'web']);
-    Permission::firstOrCreate(['name' => 'delete users', 'guard_name' => 'web']);
-
-    // Policy format (used by UserPolicy via BasePolicy)
     Permission::firstOrCreate(['name' => 'users.view', 'guard_name' => 'web']);
     Permission::firstOrCreate(['name' => 'users.create', 'guard_name' => 'web']);
     Permission::firstOrCreate(['name' => 'users.update', 'guard_name' => 'web']);
@@ -26,7 +19,7 @@ beforeEach(function () {
 
 it('can display users index page', function () {
     $actor = User::factory()->create();
-    $actor->givePermissionTo(['view any users', 'users.view']);
+    $actor->givePermissionTo(['users.view']);
 
     actingAs($actor)
         ->get(route('users.index'))
@@ -41,7 +34,7 @@ it('requires permission to view users', function () {
 
 it('can create a new user', function () {
     $actor = User::factory()->create();
-    $actor->givePermissionTo(['view any users', 'users.view', 'create users', 'users.create']);
+    $actor->givePermissionTo(['users.view', 'users.create']);
 
     $role = Role::create(['name' => 'Editor', 'guard_name' => 'web']);
 
@@ -63,7 +56,7 @@ it('can create a new user', function () {
 
 it('can update an existing user without changing password', function () {
     $actor = User::factory()->create();
-    $actor->givePermissionTo(['view any users', 'users.view', 'update users', 'users.update']);
+    $actor->givePermissionTo(['users.view', 'users.update']);
 
     $role = Role::create(['name' => 'Viewer', 'guard_name' => 'web']);
     $target = User::factory()->create(['email' => 'old@example.com']);
@@ -85,7 +78,7 @@ it('can update an existing user without changing password', function () {
 
 it('can update an existing user with a new password', function () {
     $actor = User::factory()->create();
-    $actor->givePermissionTo(['view any users', 'users.view', 'update users', 'users.update']);
+    $actor->givePermissionTo(['users.view', 'users.update']);
 
     $role = Role::create(['name' => 'Member', 'guard_name' => 'web']);
     $target = User::factory()->create();
@@ -106,7 +99,7 @@ it('can update an existing user with a new password', function () {
 
 it('can delete a user', function () {
     $actor = User::factory()->create();
-    $actor->givePermissionTo(['view any users', 'users.view', 'delete users', 'users.delete']);
+    $actor->givePermissionTo(['users.view', 'users.delete']);
 
     $target = User::factory()->create();
 
@@ -119,7 +112,7 @@ it('can delete a user', function () {
 
 it('requires unique email on store', function () {
     $actor = User::factory()->create();
-    $actor->givePermissionTo(['view any users', 'users.view', 'create users', 'users.create']);
+    $actor->givePermissionTo(['users.view', 'users.create']);
 
     $role = Role::create(['name' => 'Tester', 'guard_name' => 'web']);
     User::factory()->create(['email' => 'taken@example.com']);

@@ -56,10 +56,10 @@ Route::middleware('auth')->group(function () {
     Route::crudModule('roles', RoleController::class, RoleDataTableController::class, function () {
         Route::post('/{role}/permissions', [RoleController::class, 'assignPermissions'])
             ->name('permissions.assign')
-            ->middleware('permission:update roles');
+            ->middleware('permission:roles.update');
         Route::delete('/{role}/permissions/{permission}', [RoleController::class, 'removePermission'])
             ->name('permissions.remove')
-            ->middleware('permission:update roles');
+            ->middleware('permission:roles.update');
     });
 
     // Permissions — standard CRUD + by-module lookup
@@ -81,13 +81,13 @@ Route::middleware('auth')->group(function () {
     Route::crudModule('employee-categories', EmployeeCategoryController::class, EmployeeCategoryDataTableController::class);
 
     // Leave Requests — admin view (no create/edit; approve/reject/cancel actions)
-    Route::prefix('leave-requests')->name('leave-requests.')->middleware('permission:view any leave requests')->group(function () {
+    Route::prefix('leave-requests')->name('leave-requests.')->middleware('permission:leave-requests.view')->group(function () {
         Route::get('/datatable', [LeaveRequestDataTableController::class, 'datatable'])->name('datatable');
         Route::get('', [LeaveRequestController::class, 'index'])->name('index');
         Route::get('/{record}', [LeaveRequestController::class, 'show'])->name('show');
-        Route::post('/{record}/approve', [LeaveRequestController::class, 'approve'])->name('approve')->middleware('permission:approve leave requests');
-        Route::post('/{record}/reject', [LeaveRequestController::class, 'reject'])->name('reject')->middleware('permission:reject leave requests');
-        Route::post('/{record}/cancel', [LeaveRequestController::class, 'cancel'])->name('cancel')->middleware('permission:cancel leave requests');
+        Route::post('/{record}/approve', [LeaveRequestController::class, 'approve'])->name('approve')->middleware('permission:leave-requests.approve');
+        Route::post('/{record}/reject', [LeaveRequestController::class, 'reject'])->name('reject')->middleware('permission:leave-requests.reject');
+        Route::post('/{record}/cancel', [LeaveRequestController::class, 'cancel'])->name('cancel')->middleware('permission:leave-requests.cancel');
     });
 
     // My Leave Requests — employee's own requests
@@ -100,7 +100,7 @@ Route::middleware('auth')->group(function () {
     });
 
     // Leave Balances — admin view + employee summary
-    Route::prefix('leave-balances')->name('leave-balances.')->middleware('permission:view any leave balances')->group(function () {
+    Route::prefix('leave-balances')->name('leave-balances.')->middleware('permission:leave-balances.view')->group(function () {
         Route::get('/datatable', [LeaveBalanceDataTableController::class, 'datatable'])->name('datatable');
         Route::get('/summary', [LeaveBalanceController::class, 'userSummary'])->name('summary');
         Route::get('', [LeaveBalanceController::class, 'index'])->name('index');
@@ -110,7 +110,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/my-leave-summary', [LeaveBalanceController::class, 'mySummary'])->name('my-leave-summary');
 
     // Landing Page Sections — edit/update only
-    Route::prefix('landing-page-sections')->name('landing-page-sections.')->middleware('permission:manage landing page')->group(function () {
+    Route::prefix('landing-page-sections')->name('landing-page-sections.')->middleware('permission:landing-page-sections.view')->group(function () {
         Route::get('/datatable', [LandingPageSectionDataTableController::class, 'datatable'])->name('datatable');
         Route::get('', [LandingPageSectionController::class, 'index'])->name('index');
         Route::get('/{record}/edit', [LandingPageSectionController::class, 'edit'])->name('edit');
@@ -118,7 +118,7 @@ Route::middleware('auth')->group(function () {
     });
 
     // Activity Log — view only
-    Route::prefix('activity-log')->name('activity-log.')->middleware('permission:view any activity log')->group(function () {
+    Route::prefix('activity-log')->name('activity-log.')->middleware('permission:activity-log.view')->group(function () {
         Route::get('/', [ActivityLogController::class, 'index'])->name('index');
         Route::get('/{activity}', [ActivityLogController::class, 'show'])->name('show');
     });

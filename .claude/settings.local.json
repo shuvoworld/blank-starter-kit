@@ -34,7 +34,8 @@
       "mcp__laravel-boost__read-log-entries",
       "Bash(php:*)",
       "Bash(xargs grep:*)",
-      "Bash(perl:*)"
+      "Bash(perl:*)",
+      "Bash(cd E:/Xampp/htdocs/blank-starter-kit && php artisan route:list --name=permissions 2>&1 | grep -v \"^$\")"
     ]
   },
   "enableAllProjectMcpServers": true,

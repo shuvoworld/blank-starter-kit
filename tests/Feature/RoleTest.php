@@ -12,15 +12,15 @@ beforeEach(function () {
     app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
     // Create common permissions for tests
-    Permission::firstOrCreate(['name' => 'view any roles', 'guard_name' => 'web']);
-    Permission::firstOrCreate(['name' => 'create roles', 'guard_name' => 'web']);
-    Permission::firstOrCreate(['name' => 'update roles', 'guard_name' => 'web']);
-    Permission::firstOrCreate(['name' => 'delete roles', 'guard_name' => 'web']);
+    Permission::firstOrCreate(['name' => 'roles.view', 'guard_name' => 'web']);
+    Permission::firstOrCreate(['name' => 'roles.create', 'guard_name' => 'web']);
+    Permission::firstOrCreate(['name' => 'roles.update', 'guard_name' => 'web']);
+    Permission::firstOrCreate(['name' => 'roles.delete', 'guard_name' => 'web']);
 });
 
 it('can display roles index page', function () {
     $user = User::factory()->create();
-    $user->givePermissionTo('view any roles');
+    $user->givePermissionTo('roles.view');
 
     actingAs($user)
         ->get(route('roles.index'))
@@ -37,7 +37,7 @@ it('requires permission to view roles', function () {
 
 it('can create a new role', function () {
     $user = User::factory()->create();
-    $user->givePermissionTo(['view any roles', 'create roles']);
+    $user->givePermissionTo(['roles.view', 'roles.create']);
 
     $permission = Permission::create(['name' => 'edit posts', 'guard_name' => 'web']);
 
@@ -58,7 +58,7 @@ it('can create a new role', function () {
 
 it('can update an existing role', function () {
     $user = User::factory()->create();
-    $user->givePermissionTo(['view any roles', 'update roles']);
+    $user->givePermissionTo(['roles.view', 'roles.update']);
 
     $role = Role::create(['name' => 'Writer', 'guard_name' => 'web']);
     $permission = Permission::create(['name' => 'publish posts', 'guard_name' => 'web']);
@@ -77,7 +77,7 @@ it('can update an existing role', function () {
 
 it('can delete a role', function () {
     $user = User::factory()->create();
-    $user->givePermissionTo(['view any roles', 'delete roles']);
+    $user->givePermissionTo(['roles.view', 'roles.delete']);
 
     $role = Role::create(['name' => 'Temporary', 'guard_name' => 'web']);
 
@@ -90,20 +90,20 @@ it('can delete a role', function () {
 
 it('cannot delete super admin role', function () {
     $user = User::factory()->create();
-    $user->givePermissionTo(['view any roles', 'delete roles']);
+    $user->givePermissionTo(['roles.view', 'roles.delete']);
 
-    $superAdmin = Role::create(['name' => 'Super Admin', 'guard_name' => 'web']);
+    $superuser = Role::firstOrCreate(['name' => 'Superuser', 'guard_name' => 'web']);
 
     actingAs($user)
-        ->delete(route('roles.destroy', $superAdmin))
-        ->assertRedirect();
+        ->delete(route('roles.destroy', $superuser))
+        ->assertForbidden();
 
-    expect(Role::where('name', 'Super Admin')->exists())->toBeTrue();
+    expect(Role::where('name', 'Superuser')->exists())->toBeTrue();
 });
 
 it('can assign permissions to a role', function () {
     $user = User::factory()->create();
-    $user->givePermissionTo(['view any roles', 'update roles']);
+    $user->givePermissionTo(['roles.view', 'roles.update']);
 
     $role = Role::create(['name' => 'Moderator', 'guard_name' => 'web']);
     $permission1 = Permission::create(['name' => 'moderate comments', 'guard_name' => 'web']);
@@ -120,9 +120,9 @@ it('can assign permissions to a role', function () {
 
 it('can remove a permission from a role', function () {
     $user = User::factory()->create();
-    $user->givePermissionTo(['view any roles', 'update roles']);
+    $user->givePermissionTo(['roles.view', 'roles.update']);
 
-    $role = Role::create(['name' => 'Admin', 'guard_name' => 'web']);
+    $role = Role::firstOrCreate(['name' => 'Admin', 'guard_name' => 'web']);
     $permission = Permission::create(['name' => 'delete users', 'guard_name' => 'web']);
     $role->givePermissionTo($permission);
 
@@ -135,14 +135,14 @@ it('can remove a permission from a role', function () {
 
 it('cannot delete role with assigned users', function () {
     $user = User::factory()->create();
-    $user->givePermissionTo(['view any roles', 'delete roles']);
+    $user->givePermissionTo(['roles.view', 'roles.delete']);
 
     $role = Role::create(['name' => 'User Role', 'guard_name' => 'web']);
     $user->assignRole($role);
 
     actingAs($user)
         ->delete(route('roles.destroy', $role))
-        ->assertRedirect();
+        ->assertStatus(422);
 
     expect(Role::where('name', 'User Role')->exists())->toBeTrue();
 });

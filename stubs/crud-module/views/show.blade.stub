@@ -63,7 +63,7 @@
         <a href="{{ route('{module-names}.index') }}" class="btn btn-secondary">
             <i class="bi bi-arrow-left me-1"></i> Back to {Module Names}
         </a>
-        @can('update {module names}')
+        @can('{module-names}.update')
             <a href="{{ route('{module-names}.edit', ${moduleName}) }}" class="btn btn-primary">
                 <i class="bi bi-pencil me-1"></i> Edit {Module Name}
             </a>

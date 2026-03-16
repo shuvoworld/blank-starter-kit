@@ -11,7 +11,7 @@ beforeEach(function () {
     app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
     // Create common permissions for tests
-    Permission::firstOrCreate(['name' => 'view any roles', 'guard_name' => 'web']);
+    Permission::firstOrCreate(['name' => 'roles.view', 'guard_name' => 'web']);
     Permission::firstOrCreate(['name' => 'access dashboard', 'guard_name' => 'web']);
 });
 
@@ -166,7 +166,7 @@ it('can remove role from user', function () {
 });
 
 it('can sync permissions to role', function () {
-    $role = Role::create(['name' => 'Admin', 'guard_name' => 'web']);
+    $role = Role::firstOrCreate(['name' => 'Admin', 'guard_name' => 'web']);
     $permission1 = Permission::create(['name' => 'view users', 'guard_name' => 'web']);
     $permission2 = Permission::create(['name' => 'manage users', 'guard_name' => 'web']);
 
