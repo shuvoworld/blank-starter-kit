@@ -22,8 +22,6 @@ use App\Http\Controllers\LeaveTypeController;
 use App\Http\Controllers\LeaveTypeDataTableController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\PermissionDataTableController;
-use App\Http\Controllers\PostCategoryController;
-use App\Http\Controllers\PostCategoryDataTableController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductDataTableController;
 use App\Http\Controllers\ProfileController;
@@ -81,7 +79,6 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::crudModule('employee-categories', EmployeeCategoryController::class, EmployeeCategoryDataTableController::class);
-    Route::crudModule('post-categories', PostCategoryController::class, PostCategoryDataTableController::class);
 
     // Leave Requests — admin view (no create/edit; approve/reject/cancel actions)
     Route::prefix('leave-requests')->name('leave-requests.')->middleware('permission:view any leave requests')->group(function () {
