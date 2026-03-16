@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Spatie\Permission\Models\Permission;
@@ -33,6 +34,25 @@ class RemoveCrudModule extends Command
         $inventory = $this->buildInventory();
 
         $this->printInventory($inventory);
+
+        if (! $this->option('force') && $inventory['row_count'] > 0) {
+            $table = $inventory['table'];
+            $count = number_format($inventory['row_count']);
+
+            $this->line("<fg=red;options=bold>  WARNING: The `{$table}` table contains {$count} row(s).</>");
+            $this->line('  Dropping it will permanently destroy all stored data.');
+            $this->newLine();
+
+            $typed = $this->ask("  Type the table name <fg=yellow>{$table}</> to confirm data deletion (or leave blank to abort)");
+
+            if ($typed !== $table) {
+                $this->line('  Aborted — table name did not match.');
+
+                return self::SUCCESS;
+            }
+
+            $this->newLine();
+        }
 
         if (! $this->option('force') && ! $this->confirm('Proceed with removal? This cannot be undone.', false)) {
             $this->line('  Aborted.');
@@ -85,6 +105,7 @@ class RemoveCrudModule extends Command
      *   view_dir: string,
      *   migrations: array<string>,
      *   table: string,
+     *   row_count: int,
      *   permissions: array<string>
      * }
      */
@@ -114,11 +135,14 @@ class RemoveCrudModule extends Command
             "{$kebab}.delete",
         ];
 
+        $rowCount = Schema::hasTable($snake) ? (int) DB::table($snake)->count() : 0;
+
         return [
             'files' => $files,
             'view_dir' => $viewDir,
             'migrations' => $migrations,
             'table' => $snake,
+            'row_count' => $rowCount,
             'permissions' => $permissions,
         ];
     }
@@ -162,7 +186,13 @@ class RemoveCrudModule extends Command
         $this->line('  <fg=cyan>Database Table:</>');
         $tableExists = Schema::hasTable($inventory['table']);
         $tableTag = $tableExists ? '<fg=red>DROP  </>' : '<fg=gray>SKIP  </>';
-        $this->line("    [{$tableTag}]  {$inventory['table']}");
+        $rowCount = $inventory['row_count'];
+        $rowSuffix = $tableExists
+            ? ($rowCount > 0
+                ? " — <fg=red;options=bold>{$rowCount} rows of data will be permanently lost</>"
+                : ' — <fg=green>empty</>')
+            : '';
+        $this->line("    [{$tableTag}]  {$inventory['table']}{$rowSuffix}");
 
         $this->newLine();
         $this->line('  <fg=cyan>Permissions:</>');
