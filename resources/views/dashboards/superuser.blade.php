@@ -281,8 +281,10 @@
                                         <td>{{ $loop->iteration }}</td>
                                         <td>
                                             <span class="fw-semibold">{{ $activity->subject_type ? class_basename($activity->subject_type) : 'N/A' }}</span>
-                                            @if($activity->subject)
+                                            @if($activity->subject_type && class_exists($activity->subject_type) && $activity->subject)
                                                 <small class="text-muted d-block">{{ optional($activity->subject)->name ?? optional($activity->subject)->title ?? $activity->subject_id }}</small>
+                                            @elseif($activity->subject_id)
+                                                <small class="text-muted d-block text-secondary">#{{ $activity->subject_id }}</small>
                                             @endif
                                         </td>
                                         <td>

@@ -21,12 +21,15 @@ A step-by-step reference for building CRUD modules that follow this project's ar
   - [9. Customise the Views](#9-customise-the-views)
 - [Permission & Authorization System](#permission--authorization-system)
   - [How the System Works](#how-the-system-works)
-  - [Layer 1 — Database Permissions](#layer-1--database-permissions)
-  - [Layer 2 — Policy](#layer-2--policy)
-  - [Layer 3 — Controller](#layer-3--controller)
-  - [Layer 4 — DataTable Query Scoping](#layer-4--datatable-query-scoping)
-  - [Layer 5 — Blade Views](#layer-5--blade-views)
+  - [Layer 0 — Global Superuser Bypass](#layer-0--global-superuser-bypass)
+  - [Layer 1 — Route Middleware](#layer-1--route-middleware)
+  - [Layer 2 — Database Permissions](#layer-2--database-permissions)
+  - [Layer 3 — Policy](#layer-3--policy)
+  - [Layer 4 — Controller](#layer-4--controller)
+  - [Layer 5 — DataTable Query Scoping](#layer-5--datatable-query-scoping)
+  - [Layer 6 — Blade Views](#layer-6--blade-views)
   - [Checking Permissions in PHP (Any Context)](#checking-permissions-in-php-any-context)
+  - [Seeded Permissions Reference](#seeded-permissions-reference)
   - [Common Mistakes](#common-mistakes)
 - [Removing a Module](#removing-a-module)
 - [Reference](#reference)
@@ -437,39 +440,156 @@ This section is a practical implementation guide. It covers every layer where pe
 
 ### How the System Works
 
-There are **five layers** where access is controlled. Each has a distinct job:
+Authorization is enforced at **seven distinct points**. Every request passes through all that apply:
 
 ```
-Layer 1 — Migration         Creates the permissions in the database
-Layer 2 — Policy            Defines who can do what (class-level and row-level)
-Layer 3 — Controller        Enforces the policy before executing an action
-Layer 4 — DataTable query   Scopes what rows a user can see in the list
-Layer 5 — Blade views       Shows or hides UI elements (buttons, links, sections)
+Layer 0 — Gate::before()       Global Superuser bypass (AppServiceProvider)
+Layer 1 — Route Middleware      HTTP-level guard before the controller runs
+Layer 2 — Database Permissions  The permission records that layers 1–6 check against
+Layer 3 — Policy                Class-level and row-level authorization logic
+Layer 4 — Controller            authorizeAction() / direct ownership guard
+Layer 5 — DataTable query       Scopes what rows a user can see
+Layer 6 — Blade views           Hides buttons and UI sections the user cannot use
 ```
 
 A request to edit a record flows through all of them:
 
 ```
 GET /post-categories/5/edit
-
-  → Route middleware: does user have 'update post-categories' permission?
-      NO  → 403 (controller never runs)
-      YES ↓
-
-  → BaseController::edit() calls authorizeAction('update', $record)
-      → PostCategoryPolicy::before()  — Superuser? return true immediately
-      → PostCategoryPolicy::update()  — return $user->can('post-categories.update')
-          NO  → 403
-          YES → render the edit view
-
-  → Blade view renders — @can('update', $postCategory) controls buttons
+  │
+  ├─ [AUTH middleware]  — is the user logged in? NO → redirect to login
+  │
+  ├─ [Layer 1: permission middleware]
+  │    HasPermission::handle() calls $user->can('update post-categories')
+  │      → Gate::before() fires first — Superuser? return true immediately ✓
+  │      → Otherwise: does user have the 'update post-categories' permission?
+  │           NO  → 403, controller never runs
+  │           YES ↓
+  │
+  ├─ [Layer 4: BaseController::edit()]
+  │    $this->authorizeAction('update', $record)
+  │      → PostCategoryPolicy::before()  — Superuser? return true ✓
+  │      → PostCategoryPolicy::update()  — $user->can('post-categories.update')
+  │           NO  → 403
+  │           YES → view rendered
+  │
+  └─ [Layer 6: Blade view]
+       @can('update', $postCategory) — controls Edit / Delete button visibility
 ```
 
-> **Superuser bypass:** `PostCategoryPolicy::before()` (inherited from `BasePolicy`) returns `true` for any user with the `Superuser` role. Every layer respects this — no further checks run.
+> **Two permission name formats run on every request.** The route middleware uses a space format (`update post-categories`) while the policy checks use dot-notation (`post-categories.update`). Both must pass for a non-Superuser to succeed. Superusers skip both via `Gate::before()`.
 
 ---
 
-### Layer 1 — Database Permissions
+### Layer 0 — Global Superuser Bypass
+
+**File:** `app/Providers/AppServiceProvider.php`
+
+```php
+Gate::before(function (User $user, string $ability): ?bool {
+    if ($user->hasRole('Superuser')) {
+        return true;   // short-circuits every Gate, policy, and permission check
+    }
+    return null;       // null = continue to normal evaluation
+});
+```
+
+`Gate::before()` runs before any policy method or `$user->can()` call. Returning `true` immediately grants the ability — no further checks run. Returning `null` tells Laravel to continue with normal evaluation.
+
+**What this means in practice:**
+- Superusers pass every route middleware, every policy, and every `@can` check automatically.
+- `$user->can('anything')` → `true` for Superusers, regardless of assigned permissions.
+- `$user->hasRole('Superuser')` bypasses the Gate and is the one safe place to check for the Superuser role.
+
+> **Do not rely on `Gate::before()` as the only guard.** It fires for `$user->can()` but not for `$user->hasRole()` or `$user->hasPermissionTo()` called directly — use `$user->can()` everywhere except when you explicitly need to check a role (see [Checking Permissions in PHP](#checking-permissions-in-php-any-context)).
+
+---
+
+### Layer 1 — Route Middleware
+
+**Files:** `app/Http/Middleware/HasPermission.php`, `app/Http/Middleware/HasRole.php`
+**Registration:** `bootstrap/app.php` (aliases `permission` and `role`)
+
+The middleware is the **first enforced gate**. If it fails, the controller never runs.
+
+#### `permission:` middleware
+
+```php
+// Usage on a route:
+->middleware('permission:update post-categories')
+
+// What it does (HasPermission.php):
+if (! auth()->user()->can($permission)) {
+    abort(403);
+}
+```
+
+`can()` goes through the Laravel Gate → `Gate::before()` fires → **Superuser bypass works correctly**.
+
+#### `role:` middleware
+
+```php
+// Usage on a route:
+->middleware('role:Admin')
+
+// What it does (HasRole.php):
+if (! auth()->user()->hasRole($role)) {
+    abort(403);
+}
+```
+
+`hasRole()` is a Spatie method that queries the database directly — it **does NOT go through the Gate**. The Superuser bypass in `Gate::before()` does **not** fire. A Superuser without the explicit role assigned would be blocked.
+
+> **Always prefer `permission:` over `role:` middleware.** The `role:` middleware breaks the Superuser bypass and creates brittle role-name coupling. Reserve it for edge cases where you genuinely need to gate on role identity rather than capability.
+
+#### Permission name format in route middleware
+
+The `Route::crudModule()` macro derives permission names from the URL prefix by converting hyphens to spaces:
+
+```
+prefix: post-categories  →  view any post-categories / create post-categories / etc.
+prefix: leave-requests   →  view any leave-requests  / approve leave requests / etc.
+```
+
+| Route action | Middleware applied |
+|---|---|
+| `index`, `datatable`, `show` | `permission:view any {prefix}` (group-level) |
+| `create`, `store` | `permission:create {prefix}` |
+| `edit`, `update` | `permission:update {prefix}` |
+| `destroy` | `permission:delete {prefix}` |
+
+These space-format names are **different from the dot-notation names** stored in the database (`post-categories.view`). Both must be granted to non-Superusers or the request will fail.
+
+#### Ownership-only routes (no permission middleware)
+
+Some routes are intentionally unprotected by permission middleware because they are scoped to the authenticated user's own data. Access is enforced in the controller with a direct ownership check:
+
+```php
+// routes/web.php — no permission middleware on this group
+Route::prefix('my-leave-requests')->name('my-leave-requests.')->group(function () {
+    Route::get('', [LeaveRequestController::class, 'myRequests'])->name('index');
+    Route::post('/', [LeaveRequestController::class, 'store'])->name('store');
+    // ...
+});
+
+// LeaveRequestController.php — ownership enforced in the method
+public function showMy(int|string $record): View
+{
+    $leaveRequest = $this->findRecord($record);
+
+    if ($leaveRequest->user_id !== auth()->id()) {
+        abort(403);   // ownership guard — no policy involved
+    }
+
+    return view('leave-requests.show-my', compact('leaveRequest'));
+}
+```
+
+Use this pattern when every authenticated user is entitled to access their own records regardless of role, and no admin-level permission gate is needed.
+
+---
+
+### Layer 2 — Database Permissions
 
 #### Naming convention
 
@@ -529,7 +649,7 @@ Permission::where('module', 'post-categories')->delete();
 
 ---
 
-### Layer 2 — Policy
+### Layer 3 — Policy
 
 The policy is where access rules live. Laravel auto-discovers it: `PostCategory` model → `PostCategoryPolicy`.
 
@@ -562,7 +682,7 @@ class LeaveRequestPolicy extends BasePolicy
     }
 
     // viewAny returns true for all authenticated users
-    // (list is scoped in the DataTable query — see Layer 4)
+    // (list is scoped in the DataTable query — see Layer 5)
     public function viewAny(User $user): bool
     {
         return true;
@@ -616,7 +736,7 @@ public function reject(User $user, Model $model): bool
 
 ---
 
-### Layer 3 — Controller
+### Layer 4 — Controller
 
 #### What BaseController handles automatically
 
@@ -716,13 +836,35 @@ public function approve(Request $request, int|string $record): RedirectResponse
 | `edit()` | No | Base handles it |
 | `destroy()` | No | Base handles it |
 
+#### Direct ownership guard (no policy)
+
+For employee self-service actions where no admin-level permission is needed, skip `authorizeAction()` and do a direct ID check:
+
+```php
+public function showMy(int|string $record): View
+{
+    $leaveRequest = $this->findRecord($record);
+
+    if ($leaveRequest->user_id !== auth()->id()) {
+        abort(403);   // ownership guard — not routed through policy
+    }
+
+    return view('leave-requests.show-my', compact('leaveRequest'));
+}
+```
+
+This is appropriate when:
+- The route has no permission middleware (any authenticated user may reach it)
+- The only valid access is ownership — there is no admin-override path
+- You do not want a policy method for this action
+
 > **Never call `$this->authorize()` directly.** Always use `$this->authorizeAction()`. It is the single authorization entry point for module controllers.
 
 ---
 
-### Layer 4 — DataTable Query Scoping
+### Layer 5 — DataTable Query Scoping
 
-When `viewAny` returns `true` for all users (Case B in the Policy), the list page loads for everyone — but the rows returned must be scoped. This is handled in the DataTable controller's `indexQuery()` method.
+When `viewAny` returns `true` for all users (Case B in Layer 3 — Policy), the list page loads for everyone — but the rows returned must be scoped. This is handled in the DataTable controller's `indexQuery()` method.
 
 **Example: regular users see only their own records; users with the view permission see all**
 
@@ -752,7 +894,7 @@ protected function indexQuery(): Builder
 
 ---
 
-### Layer 5 — Blade Views
+### Layer 6 — Blade Views
 
 Use `@can` / `@cannot` to show or hide buttons, links, and sections. The Superuser bypass fires here too.
 
@@ -827,17 +969,104 @@ In `resources/views/layouts/dashboard/partials/sidebar.blade.php`, wrap each mod
 Always use `$user->can()` — never `$user->hasPermissionTo()` or `$user->hasRole()` directly. `can()` goes through the Laravel Gate, which fires the Superuser bypass. The other methods bypass the Gate entirely.
 
 ```php
-// In a controller, job, service, or anywhere you have a User instance:
+// Single permission check
+$user->can('post-categories.approve');          // ✅ Gate fires, Superuser bypass works
+$user->hasPermissionTo('post-categories.view'); // ❌ bypasses Gate
+
+// Any of several permissions
+$user->canAny(['leave-requests.approve', 'leave-requests.reject']); // ✅
+
+// Role check — ONLY safe use of hasRole()
+// Use this when you genuinely need role identity, not a capability check:
+$user->hasRole('Superuser'); // ✅ safe — used in Gate::before() itself
+$user->hasRole('Admin');     // ⚠️ does not respect Superuser bypass — prefer can()
+```
+
+#### Checking in a controller, service, or job
+
+```php
 $user = auth()->user();
 
-if ($user->can('post-categories.approve')) {
+// Single
+if ($user->can('departments.delete')) {
     // ...
 }
 
-// ❌ Never do this — bypasses Gate, Superuser bypass does NOT fire:
-if ($user->hasPermissionTo('post-categories.approve')) { ... }
-if ($user->hasRole('Admin')) { ... }
+// Any of a set
+if ($user->canAny(['leave-requests.approve', 'leave-requests.reject'])) {
+    // show action buttons
+}
+
+// Current authenticated user shorthand
+if (auth()->user()->can('products.create')) {
+    // ...
+}
 ```
+
+#### Using RbacService
+
+`App\Services\RbacService` wraps the above into injectable, testable methods. Inject it when you need permission or role checks inside a service class:
+
+```php
+class ReportService
+{
+    public function __construct(private RbacService $rbac) {}
+
+    public function exportAll(User $user): void
+    {
+        if (! $this->rbac->userHasPermission($user, 'reports.export')) {
+            abort(403);
+        }
+        // ...
+    }
+}
+```
+
+| Method | Equivalent |
+|---|---|
+| `userHasPermission($user, $perm)` | `$user->can($perm)` |
+| `userHasAnyPermission($user, [...])` | `$user->canAny([...])` |
+| `userHasAllPermissions($user, [...])` | all of `$user->can(...)` |
+| `userHasRole($user, $role)` | `$user->hasRole($role)` |
+| `isSuperuser($user)` | `$user->hasRole('Superuser')` |
+| `getUserPermissions($user)` | `$user->getAllPermissions()` |
+| `getUserPermissionsGrouped($user)` | permissions grouped by module |
+
+> `RbacService::userHasPermission()` delegates to `$user->can()`, so the Superuser bypass fires correctly. `userHasRole()` delegates to `$user->hasRole()` — it does not fire the bypass, which is intentional for role-identity checks.
+
+---
+
+### Seeded Permissions Reference
+
+All permissions are created in `database/seeders/RbacSeeder.php` using `{module}.{action}` naming. This is the complete inventory:
+
+| Module | Permissions |
+|--------|------------|
+| `users` | `view` `create` `update` `delete` `manage-roles` |
+| `roles` | `view` `create` `update` `delete` |
+| `permissions` | `view` `update` |
+| `employees` | `view` `create` `update` `delete` |
+| `departments` | `view` `create` `update` `delete` |
+| `designations` | `view` `create` `update` `delete` |
+| `employee-categories` | `view` `create` `update` `delete` |
+| `leave-types` | `view` `create` `update` `delete` |
+| `leave-requests` | `view` `create` `update` `delete` `approve` `reject` `cancel` |
+| `leave-balances` | `view` `create` `update` `delete` |
+| `holidays` | `view` `create` `update` `delete` |
+| `schedules` | `view` `create` `update` `delete` `assign` |
+| `shifts` | `view` `create` `update` `delete` |
+| `products` | `view` `create` `update` `delete` |
+| `landing-page-sections` | `view` `create` `update` `delete` |
+| `dashboard` | `view` |
+| `activity-log` | `view` |
+
+**Roles and their permission scope:**
+
+| Role | Scope |
+|------|-------|
+| **Superuser** | All permissions (plus `Gate::before()` bypass) |
+| **Admin** | All permissions except `users.delete` and `roles.delete` |
+| **Employee** | `dashboard.view`, `employees.view`, `departments.view`, `designations.view`, `holidays.view`, `leave-requests.create`, `leave-balances.view` |
 
 ---
 
@@ -896,7 +1125,21 @@ $user->can('post-categories.view');
 
 If `viewAny` allows all users to load the list page, the DataTable query must use `->when()` to filter rows by `user_id`. Without it, every user sees every row.
 
-**7. Not marking virtual/aggregate columns as non-searchable in DataTable**
+**7. Using `role:` middleware when you need Superuser bypass**
+
+The `role:` middleware calls `$user->hasRole()` which bypasses the Laravel Gate. A Superuser user without the specific role explicitly assigned will get a 403.
+
+```php
+// ❌ Wrong — blocks Superusers who don't have the 'Admin' role assigned
+->middleware('role:Admin')
+
+// ✅ Correct — create a permission and use permission: middleware instead
+->middleware('permission:reports.view')
+```
+
+Only use `role:` middleware when you explicitly need to gate on role identity and do not want Superuser bypass (rare — e.g., restricting access to a Superuser-only setup screen).
+
+**8. Not marking virtual/aggregate columns as non-searchable in DataTable**
 
 Computed columns (e.g. `withCount()` aggregates) are not real database columns. If you include them in `tableColumns()` without `'searchable' => false`, Yajra will attempt a SQL `LIKE` search on them and throw a column-not-found error.
 
