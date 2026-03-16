@@ -5,6 +5,7 @@ use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\DepartmentDataTableController;
 use App\Http\Controllers\DesignationController;
 use App\Http\Controllers\DesignationDataTableController;
+use App\Http\Controllers\EmailLogController;
 use App\Http\Controllers\EmployeeCategoryController;
 use App\Http\Controllers\EmployeeCategoryDataTableController;
 use App\Http\Controllers\EmployeeController;
@@ -121,6 +122,12 @@ Route::middleware('auth')->group(function () {
     Route::prefix('activity-log')->name('activity-log.')->middleware('permission:activity-log.view')->group(function () {
         Route::get('/', [ActivityLogController::class, 'index'])->name('index');
         Route::get('/{activity}', [ActivityLogController::class, 'show'])->name('show');
+    });
+
+    // Email Logs — view only
+    Route::prefix('email-logs')->name('email-logs.')->middleware('permission:email-logs.view')->group(function () {
+        Route::get('/', [EmailLogController::class, 'index'])->name('index');
+        Route::get('/{emailLog}', [EmailLogController::class, 'show'])->name('show');
     });
 });
 

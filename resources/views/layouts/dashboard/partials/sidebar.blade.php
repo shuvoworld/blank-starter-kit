@@ -141,6 +141,14 @@
                         </a>
                     </li>
 
+                    <li class="nav-item">
+                        <a href="{{ route('email-logs.index') }}"
+                           class="nav-link {{ request()->routeIs('email-logs.*') ? 'active' : '' }}">
+                            <i class="nav-icon bi bi-envelope"></i>
+                            <p>Email Logs</p>
+                        </a>
+                    </li>
+
                 @elseif($priority >= 2)
                     {{-- Admin Menu --}}
                     <li class="nav-header">ORGANIZATION</li>
@@ -210,6 +218,14 @@
                            class="nav-link {{ request()->routeIs('activity-log.*') ? 'active' : '' }}">
                             <i class="nav-icon bi bi-activity"></i>
                             <p>Activity Log</p>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="{{ route('email-logs.index') }}"
+                           class="nav-link {{ request()->routeIs('email-logs.*') ? 'active' : '' }}">
+                            <i class="nav-icon bi bi-envelope"></i>
+                            <p>Email Logs</p>
                         </a>
                     </li>
 

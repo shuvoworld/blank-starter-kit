@@ -7,6 +7,8 @@ use App\Http\Requests\ApproveLeaveRequestRequest;
 use App\Http\Requests\RejectLeaveRequestRequest;
 use App\Http\Requests\StoreLeaveRequestRequest;
 use App\Models\LeaveType;
+use App\Models\User;
+use App\Services\EmailService;
 use App\Services\LeaveBalanceService;
 use App\Services\LeaveCalculationService;
 use Carbon\Carbon;
@@ -14,6 +16,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 
 class LeaveRequestController extends BaseController
@@ -21,7 +24,8 @@ class LeaveRequestController extends BaseController
     public function __construct(
         LeaveRequestDataTableController $dataTableController,
         private LeaveBalanceService $balanceService,
-        private LeaveCalculationService $calculationService
+        private LeaveCalculationService $calculationService,
+        private EmailService $emailService
     ) {
         $this->model = \App\Models\LeaveRequest::class;
         $this->routePrefix = 'leave-requests';
@@ -164,6 +168,10 @@ class LeaveRequestController extends BaseController
 
             DB::commit();
 
+            $leaveRequest->load(['user', 'leaveType']);
+
+            $this->sendSubmissionEmails($leaveRequest);
+
             return to_route('my-leave-requests.index')
                 ->with('status', 'Leave request submitted successfully.');
         } catch (\Exception $e) {
@@ -255,6 +263,50 @@ class LeaveRequestController extends BaseController
             DB::rollBack();
 
             return response()->json(['error' => 'An error occurred while rejecting the request.'], 500);
+        }
+    }
+
+    /**
+     * Send submission confirmation to the employee and notification to approvers.
+     * Runs after commit — mail failures must not affect the stored request.
+     */
+    private function sendSubmissionEmails(\App\Models\LeaveRequest $leaveRequest): void
+    {
+        try {
+            // Confirmation to the employee
+            $this->emailService->send(
+                $leaveRequest->user->email,
+                'Your Leave Request Has Been Submitted',
+                'emails.leave-request.submitted-employee',
+                ['leaveRequest' => $leaveRequest]
+            );
+        } catch (\Throwable $e) {
+            Log::error('Failed to send leave request confirmation email', [
+                'leave_request_id' => $leaveRequest->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        try {
+            // Notify all users who can approve leave requests
+            $approvers = User::permission('leave-requests.approve')->get();
+
+            foreach ($approvers as $approver) {
+                $this->emailService->send(
+                    $approver->email,
+                    'New Leave Request Pending Approval — '.$leaveRequest->user->name,
+                    'emails.leave-request.submitted-admin',
+                    [
+                        'leaveRequest' => $leaveRequest,
+                        'reviewUrl' => route('leave-requests.show', $leaveRequest),
+                    ]
+                );
+            }
+        } catch (\Throwable $e) {
+            Log::error('Failed to send leave request admin notification email', [
+                'leave_request_id' => $leaveRequest->id,
+                'error' => $e->getMessage(),
+            ]);
         }
     }
 
