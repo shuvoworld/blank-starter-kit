@@ -3,8 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\BaseController\BaseController;
-use App\Http\Requests\StoreEmployeeRequest;
-use App\Http\Requests\UpdateEmployeeRequest;
+use App\Http\Requests\EmployeeRequest;
 use App\Models\Department;
 use App\Models\Designation;
 use App\Models\Employee;
@@ -98,11 +97,12 @@ class EmployeeController extends BaseController
         return view('employees.show', compact('employee', 'leaveSummary', 'currentYear'));
     }
 
-    public function store(StoreEmployeeRequest $request): RedirectResponse
+    public function store(Request $request): RedirectResponse
     {
         $this->authorizeAction('create');
 
-        $employee = Employee::create($request->validated());
+        $formRequest = app(EmployeeRequest::class);
+        $employee = Employee::create($formRequest->validated());
 
         if ($request->hasFile('profile_picture')) {
             $employee->addMediaFromRequest('profile_picture')->toMediaCollection('profile_picture');
@@ -127,12 +127,13 @@ class EmployeeController extends BaseController
         return $this->successRedirect('created');
     }
 
-    public function update(UpdateEmployeeRequest $request, int|string $record): RedirectResponse
+    public function update(Request $request, int|string $record): RedirectResponse
     {
         $employee = $this->findRecord($record);
         $this->authorizeAction('update', $employee);
 
-        $employee->update($request->validated());
+        $formRequest = app(EmployeeRequest::class);
+        $employee->update($formRequest->validated());
 
         if ($request->hasFile('profile_picture')) {
             $employee->clearMediaCollection('profile_picture');

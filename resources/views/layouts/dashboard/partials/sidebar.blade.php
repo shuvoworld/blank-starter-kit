@@ -81,6 +81,14 @@
                         </a>
                     </li>
 
+                    <li class="nav-item">
+                        <a href="{{ route('post-categories.index') }}"
+                           class="nav-link {{ request()->routeIs('post-categories.*') ? 'active' : '' }}">
+                            <i class="nav-icon bi bi-caret-right"></i>
+                            <p>Post Category</p>
+                        </a>
+                    </li>
+
                     <li class="nav-header">LEAVE MANAGEMENT</li>
 
                     <li class="nav-item">

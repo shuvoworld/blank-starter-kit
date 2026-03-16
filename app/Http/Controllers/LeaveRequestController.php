@@ -107,9 +107,11 @@ class LeaveRequestController extends BaseController
     /**
      * Store a new leave request.
      */
-    public function store(StoreLeaveRequestRequest $request): RedirectResponse
+    public function store(Request $request): RedirectResponse
     {
         $this->authorizeAction('create');
+
+        app(StoreLeaveRequestRequest::class);
 
         $leaveType = LeaveType::findOrFail($request->leave_type_id);
 

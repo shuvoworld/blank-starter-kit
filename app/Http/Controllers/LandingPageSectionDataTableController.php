@@ -60,7 +60,7 @@ class LandingPageSectionDataTableController extends BaseDataTableController
                 : '<span class="badge bg-secondary">Inactive</span>',
 
             'preview' => fn (LandingPageSection $section) => '<span class="text-muted small">'
-                .e(strlen($section->value) > 50 ? substr($section->value, 0, 50).'...' : $section->value ?: 'Empty')
+                .e(strlen($section->value) > 50 ? substr($section->value, 0, 50).'...' : ($section->value ?: 'Empty'))
                 .'</span>',
 
             'updated_at' => fn (LandingPageSection $section) => $section->updated_at->format('M d, Y H:i'),

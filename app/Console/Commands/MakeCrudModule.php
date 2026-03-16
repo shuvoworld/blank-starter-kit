@@ -71,8 +71,7 @@ class MakeCrudModule extends Command
             "app/Models/{$module}.php" => 'model.stub',
             "app/Observers/{$module}Observer.php" => 'observer.stub',
             "app/Policies/{$module}Policy.php" => 'policy.stub',
-            "app/Http/Requests/Store{$module}Request.php" => 'store-request.stub',
-            "app/Http/Requests/Update{$module}Request.php" => 'update-request.stub',
+            "app/Http/Requests/{$module}Request.php" => 'request.stub',
             "app/Http/Controllers/{$module}Controller.php" => 'controller.stub',
             "app/Http/Controllers/{$module}DataTableController.php" => 'datatable-controller.stub',
             "resources/views/{$kebabName}/index.blade.php" => 'views/index.blade.stub',
@@ -134,7 +133,7 @@ class MakeCrudModule extends Command
         $this->line('  <fg=cyan>2. Add your columns to $fillable (and casts) in the Model.</>');
         $this->newLine();
 
-        $this->line('  <fg=cyan>3. Add validation rules to StoreRequest and UpdateRequest.</>');
+        $this->line("  <fg=cyan>3. Add validation rules to {$module}Request (uses recordId() for create vs update unique checks).</>");
         $this->newLine();
 
         $this->line('  <fg=cyan>4. Add routes to routes/web.php (inside the auth middleware group):</>');

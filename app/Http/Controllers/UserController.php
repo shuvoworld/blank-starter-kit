@@ -3,24 +3,28 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\BaseController\BaseController;
+use App\Http\Requests\UserRequest;
 use App\Models\Role;
 use App\Models\User;
+use App\Services\UserService;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rules\Password;
 use Illuminate\View\View;
 
 class UserController extends BaseController
 {
-    public function __construct(UserDataTableController $dataTableController)
+    public function __construct(UserDataTableController $dataTableController, UserService $service)
     {
         $this->model = User::class;
         $this->routePrefix = 'users';
         $this->viewPrefix = 'users';
         $this->resourceName = 'User';
         $this->dataTableController = $dataTableController;
+        $this->service = $service;
+    }
+
+    protected function requestClass(): ?string
+    {
+        return UserRequest::class;
     }
 
     protected function createViewData(): array
@@ -46,56 +50,5 @@ class UserController extends BaseController
         $user->load(['roles', 'employee', 'leaveBalances', 'leaveRequests']);
 
         return view('users.show', compact('user'));
-    }
-
-    public function store(Request $request): RedirectResponse
-    {
-        $this->authorizeAction('create');
-
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'password' => ['required', 'confirmed', Password::defaults()],
-            'role_id' => ['required', 'exists:roles,id'],
-        ]);
-
-        $validated['password'] = Hash::make($validated['password']);
-
-        $user = User::create($validated);
-
-        if ($request->filled('role_id')) {
-            $user->syncRoles([Role::findById($request->input('role_id'))]);
-        }
-
-        return $this->successRedirect('created');
-    }
-
-    public function update(Request $request, int|string $record): RedirectResponse
-    {
-        $user = $this->findRecord($record);
-        $this->authorizeAction('update', $user);
-
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,'.$user->id],
-            'password' => ['nullable', 'confirmed', Password::defaults()],
-            'role_id' => ['required', 'exists:roles,id'],
-        ]);
-
-        $user->name = $validated['name'];
-        $user->email = $validated['email'];
-
-        if (! empty($validated['password'])) {
-            $user->password = Hash::make($validated['password']);
-        }
-
-        $user->save();
-
-        // Sync single role
-        if ($request->filled('role_id')) {
-            $user->syncRoles([Role::findById($request->input('role_id'))]);
-        }
-
-        return $this->successRedirect('updated');
     }
 }

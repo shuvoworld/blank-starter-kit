@@ -178,12 +178,12 @@ abstract class BaseController extends Controller
         $this->authorizeAction('viewAny');
 
         $tableColumns = $this->dataTableController?->tableColumns() ?? [];
-        $dtColumns    = collect($tableColumns)->map(fn($col) => [
-            'data'       => $col['data'],
-            'name'       => $col['name'],
-            'orderable'  => $col['orderable'] ?? true,
+        $dtColumns = collect($tableColumns)->map(fn ($col) => [
+            'data' => $col['data'],
+            'name' => $col['name'],
+            'orderable' => $col['orderable'] ?? true,
             'searchable' => $col['searchable'] ?? true,
-            'className'  => $col['className'] ?? '',
+            'className' => $col['className'] ?? '',
         ])->values()->all();
 
         return view("{$this->viewPrefix}.index", compact('tableColumns', 'dtColumns'));
@@ -208,7 +208,7 @@ abstract class BaseController extends Controller
         return to_route("{$this->routePrefix}.edit", $record);
     }
 
-    public function edit(int|string $record): View
+    public function edit(int|string $record): View|JsonResponse
     {
         $model = $this->findRecord($record);
         $this->authorizeAction('update', $model);
@@ -230,7 +230,7 @@ abstract class BaseController extends Controller
         $this->authorizeAction('create');
 
         $formRequest = $this->resolveRequest($request);
-        $data        = $this->handleFileUploads($formRequest, $formRequest->validated());
+        $data = $this->handleFileUploads($formRequest, $formRequest->validated());
 
         $this->service
             ? $this->service->create($data)
@@ -238,8 +238,8 @@ abstract class BaseController extends Controller
 
         if ($request->ajax()) {
             return response()->json([
-                'success'  => true,
-                'message'  => $this->resolveMessage('created'),
+                'success' => true,
+                'message' => $this->resolveMessage('created'),
                 'redirect' => route("{$this->routePrefix}.index"),
             ]);
         }
@@ -253,7 +253,7 @@ abstract class BaseController extends Controller
         $this->authorizeAction('update', $model);
 
         $formRequest = $this->resolveRequest($request);
-        $data        = $this->handleFileUploads($formRequest, $formRequest->validated(), $model);
+        $data = $this->handleFileUploads($formRequest, $formRequest->validated(), $model);
 
         $this->service
             ? $this->service->update($model, $data)
@@ -261,14 +261,15 @@ abstract class BaseController extends Controller
 
         if ($request->ajax()) {
             return response()->json([
-                'success'  => true,
-                'message'  => $this->resolveMessage('updated'),
+                'success' => true,
+                'message' => $this->resolveMessage('updated'),
                 'redirect' => route("{$this->routePrefix}.index"),
             ]);
         }
 
         return $this->successRedirect('updated');
     }
+
     /**
      * Handles both ajax (JSON) and standard (redirect) delete requests.
      * Override beforeDestroy() for guards instead of overriding this method.

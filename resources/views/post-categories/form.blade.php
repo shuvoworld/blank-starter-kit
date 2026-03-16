@@ -1,12 +1,12 @@
 @extends('layouts.form.app')
 
 @section('header')
-    <h1 class="m-0">{{ $editing ? 'Edit {Module Name}' : 'Add {Module Name}' }}</h1>
+    <h1 class="m-0">{{ $editing ? 'Edit Post Category' : 'Add Post Category' }}</h1>
 @endsection
 
 @section('breadcrumb')
     <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
-    <li class="breadcrumb-item"><a href="{{ route('{module-names}.index') }}">{Module Names}</a></li>
+    <li class="breadcrumb-item"><a href="{{ route('post-categories.index') }}">Post Categories</a></li>
     <li class="breadcrumb-item active" aria-current="page">{{ $editing ? 'Edit' : 'Create' }}</li>
 @endsection
 
@@ -17,10 +17,10 @@
                 <div class="card-header">
                     <h3 class="card-title">
                         <i class="bi bi-{{ $editing ? 'pencil' : 'grid' }} me-2"></i>
-                        {{ $editing ? 'Edit {Module Name}: ' . $record->name : 'New {Module Name}' }}
+                        {{ $editing ? 'Edit Post Category: ' . $record->name : 'New Post Category' }}
                     </h3>
                 </div>
-                <form action="{{ $editing ? route('{module-names}.update', $record) : route('{module-names}.store') }}"
+                <form action="{{ $editing ? route('post-categories.update', $record) : route('post-categories.store') }}"
                       method="POST">
                     @csrf
                     @if($editing) @method('PUT') @endif
@@ -39,7 +39,7 @@
                         </div>
                     </div>
 
-                    @include('layouts.form.includes.footer', ['element' => $record, 'module' => '{module-names}', 'moduleTitle' => '{Module Name}'])
+                    @include('layouts.form.includes.footer', ['element' => $record, 'module' => 'post-categories', 'moduleTitle' => 'Post Category'])
                 </form>
             </div>
         </div>
@@ -47,9 +47,9 @@
         <div class="col-lg-4">
             @if($editing)
                 @include('layouts.form.includes.audits', ['element' => $record])
-                @include('layouts.form.includes.delete-warning', ['element' => $record, 'module' => '{module-names}', 'moduleTitle' => '{Module Name}'])
+                @include('layouts.form.includes.delete-warning', ['element' => $record, 'module' => 'post-categories', 'moduleTitle' => 'Post Category'])
             @else
-                @include('layouts.form.includes.information', ['element' => $record, 'module' => '{module-names}', 'moduleTitle' => '{Module Name}'])
+                @include('layouts.form.includes.information', ['element' => $record, 'module' => 'post-categories', 'moduleTitle' => 'Post Category'])
             @endif
         </div>
     </div>

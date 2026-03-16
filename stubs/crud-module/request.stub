@@ -2,22 +2,17 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
+use App\Http\Requests\BaseRequest\BaseFormRequest;
 use Illuminate\Validation\Rule;
 
-class Update{ModuleName}Request extends FormRequest
+class {ModuleName}Request extends BaseFormRequest
 {
-    public function authorize(): bool
-    {
-        return true;
-    }
-
     public function rules(): array
     {
-        $record = $this->route('record');
+        $id = $this->recordId();
 
         return [
-            'name' => ['required', 'string', 'max:255', Rule::unique('{module_names}', 'name')->ignore($record)],
+            'name' => ['required', 'string', 'max:255', Rule::unique('{module_names}', 'name')->ignore($id)],
         ];
     }
 

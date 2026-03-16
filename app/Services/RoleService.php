@@ -4,10 +4,14 @@ namespace App\Services;
 
 use App\Models\Permission;
 use App\Models\Role;
+use App\Services\BaseService\BaseService;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model;
 
-class RoleService
+class RoleService extends BaseService
 {
+    protected string $modelClass = Role::class;
+
     /**
      * Get all roles with their permissions.
      *
@@ -28,60 +32,18 @@ class RoleService
         return Role::withoutSuperuser()->get();
     }
 
-    /**
-     * Create a new role.
-     *
-     * @param  array<string, mixed>  $data
-     */
-    public function create(array $data): Role
+    protected function afterCreate(Model $record, array $data): void
     {
-        $role = Role::create([
-            'name' => $data['name'],
-            'guard_name' => $data['guard_name'] ?? 'web',
-            'description' => $data['description'] ?? null,
-        ]);
-
         if (! empty($data['permissions'])) {
-            $role->syncPermissions($data['permissions']);
+            $record->syncPermissions($data['permissions']);
         }
-
-        return $role;
     }
 
-    /**
-     * Update an existing role.
-     *
-     * @param  array<string, mixed>  $data
-     */
-    public function update(Role $role, array $data): Role
+    protected function afterUpdate(Model $record, array $data): void
     {
-        $role->update([
-            'name' => $data['name'] ?? $role->name,
-            'guard_name' => $data['guard_name'] ?? $role->guard_name,
-            'description' => $data['description'] ?? $role->description,
-        ]);
-
-        if (isset($data['permissions'])) {
-            $role->syncPermissions($data['permissions']);
+        if (array_key_exists('permissions', $data)) {
+            $record->syncPermissions($data['permissions'] ?? []);
         }
-
-        return $role->fresh();
-    }
-
-    /**
-     * Delete a role.
-     */
-    public function delete(Role $role): bool
-    {
-        if ($role->isSuperuser()) {
-            throw new \Exception('Cannot delete Superuser role.');
-        }
-
-        if ($role->users()->count() > 0) {
-            throw new \Exception('Cannot delete role with assigned users.');
-        }
-
-        return $role->delete();
     }
 
     /**

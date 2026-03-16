@@ -33,6 +33,7 @@ A step-by-step reference for building CRUD modules that follow this project's ar
   - [Observer](#observer)
   - [DataTable Controller](#datatable-controller)
   - [Controller](#controller)
+  - [Service Layer (Optional)](#service-layer-optional)
   - [Form Input Components](#form-input-components)
   - [Reusable Media File Input](#reusable-media-file-input)
   - [Select2 Dropdowns](#select2-dropdowns)
@@ -48,7 +49,7 @@ A step-by-step reference for building CRUD modules that follow this project's ar
 [ ] 2. Add columns to the generated migration → php artisan migrate
        (4 permissions are created automatically by the migration)
 [ ] 3. Add columns to $fillable (and casts if needed) in the Model
-[ ] 4. Add validation rules to StoreYourModuleRequest and UpdateYourModuleRequest
+[ ] 4. Add validation rules to YourModuleRequest
 [ ] 5. Add Route::crudModule(...) to routes/web.php
 [ ] 6. Assign permissions to roles (via Roles UI or role seeder)
 [ ] 7. Add a sidebar link
@@ -63,7 +64,7 @@ Every module is built on three base classes:
 
 | Class | Purpose |
 |---|---|
-| `BaseController` | Handles `index`, `create`, `edit`, `show`, `destroy` with built-in authorization and flash messages |
+| `BaseController` | Handles all CRUD actions (`index`, `create`, `store`, `edit`, `update`, `show`, `destroy`) with built-in authorization and flash messages |
 | `BaseDataTableController` | Handles the server-side DataTables AJAX endpoint |
 | `BasePolicy` | Provides Superuser bypass and default CRUD permission checks; extended by every module policy |
 
@@ -71,6 +72,12 @@ Every module is built on three base classes:
 YourModuleController          → extends BaseController
 YourModuleDataTableController → extends BaseDataTableController
 YourModulePolicy              → extends BasePolicy
+```
+
+An optional service layer is available for modules that need post-create / post-update side-effects (e.g. syncing relationships):
+
+```
+YourModuleService             → extends BaseService   (optional)
 ```
 
 Authorization flows through three layers in order:
@@ -83,7 +90,7 @@ Route Middleware → BaseController → Policy → Spatie Permission
 
 ## File Structure
 
-The scaffold command generates these 11 files:
+The scaffold command generates these **10 files**:
 
 ```
 database/migrations/
@@ -99,8 +106,7 @@ app/
         YourModulePolicy.php           ← extends BasePolicy (8 lines)
     Http/
         Requests/
-            StoreYourModuleRequest.php
-            UpdateYourModuleRequest.php
+            YourModuleRequest.php      ← single class handles create & update
         Controllers/
             YourModuleController.php
             YourModuleDataTableController.php
@@ -214,41 +220,47 @@ public function scopeActive(Builder $query): Builder
 
 ### 4. Add Validation Rules
 
-Both request files are generated with a placeholder `name` field. Replace with rules matching your actual columns.
+A **single** `PostCategoryRequest` class handles both create and update. It extends `BaseFormRequest`, which provides `recordId()` — the route `{record}` value — and `isUpdating()` — true when a record ID is present.
 
-**`app/Http/Requests/StorePostCategoryRequest.php`**
+**`app/Http/Requests/PostCategoryRequest.php`**
 
 ```php
-public function rules(): array
+class PostCategoryRequest extends BaseFormRequest
 {
-    return [
-        'name'        => ['required', 'string', 'max:255', 'unique:post_categories,name'],
-        'slug'        => ['required', 'string', 'max:255', 'unique:post_categories,slug'],
-        'description' => ['nullable', 'string'],
-        'is_active'   => ['nullable', 'boolean'],
-    ];
+    public function rules(): array
+    {
+        $id = $this->recordId();   // null on create, record ID on update
+
+        return [
+            'name'        => ['required', 'string', 'max:255', Rule::unique('post_categories', 'name')->ignore($id)],
+            'slug'        => ['required', 'string', 'max:255', Rule::unique('post_categories', 'slug')->ignore($id)],
+            'description' => ['nullable', 'string'],
+            'is_active'   => ['nullable', 'boolean'],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'name.required' => 'The category name is required.',
+            'name.unique'   => 'This name is already in use.',
+            'slug.unique'   => 'This slug is already in use.',
+        ];
+    }
 }
 ```
 
-**`app/Http/Requests/UpdatePostCategoryRequest.php`**
-
-The update request excludes the current record from unique checks using the `record` route parameter:
+**When some fields are required on create but optional on update**, use the `$sometimes` spread pattern:
 
 ```php
-public function rules(): array
-{
-    $id = $this->route('record');
+$id        = $this->recordId();
+$sometimes = $id ? ['sometimes'] : [];
 
-    return [
-        'name'        => ['required', 'string', 'max:255', 'unique:post_categories,name,' . $id],
-        'slug'        => ['required', 'string', 'max:255', 'unique:post_categories,slug,' . $id],
-        'description' => ['nullable', 'string'],
-        'is_active'   => ['nullable', 'boolean'],
-    ];
-}
+return [
+    'name'  => [...$sometimes, 'required', 'string', 'max:255'],
+    'price' => [...$sometimes, 'required', 'numeric', 'min:0'],
+];
 ```
-
-Add custom messages in the `messages()` method of both requests if needed.
 
 Both `authorize()` methods return `true` — authorization is handled by the Policy, not the Form Request.
 
@@ -273,16 +285,18 @@ Route::middleware('auth')->group(function () {
 
 This single call registers all 8 routes with permission middleware automatically:
 
-| Method | URI | Route name | Permission required |
-|--------|-----|------------|---------------------|
-| GET | `/post-categories/datatable` | `post-categories.datatable` | `post-categories.view` |
-| GET | `/post-categories` | `post-categories.index` | `post-categories.view` |
-| GET | `/post-categories/create` | `post-categories.create` | `post-categories.create` |
-| POST | `/post-categories` | `post-categories.store` | `post-categories.create` |
-| GET | `/post-categories/{record}` | `post-categories.show` | `post-categories.view` |
-| GET | `/post-categories/{record}/edit` | `post-categories.edit` | `post-categories.update` |
-| PUT | `/post-categories/{record}` | `post-categories.update` | `post-categories.update` |
-| DELETE | `/post-categories/{record}` | `post-categories.destroy` | `post-categories.delete` |
+| Method | URI | Route name | Middleware permission |
+|--------|-----|------------|-----------------------|
+| GET | `/post-categories/datatable` | `post-categories.datatable` | `view any post-categories` |
+| GET | `/post-categories` | `post-categories.index` | `view any post-categories` |
+| GET | `/post-categories/create` | `post-categories.create` | `create post-categories` |
+| POST | `/post-categories` | `post-categories.store` | `create post-categories` |
+| GET | `/post-categories/{record}` | `post-categories.show` | `view any post-categories` |
+| GET | `/post-categories/{record}/edit` | `post-categories.edit` | `update post-categories` |
+| PUT | `/post-categories/{record}` | `post-categories.update` | `update post-categories` |
+| DELETE | `/post-categories/{record}` | `post-categories.destroy` | `delete post-categories` |
+
+> **Note:** The route middleware uses space-format permission names (`view any post-categories`). The policy and seeder use dot-notation (`post-categories.view`). Both checks run on every request: the middleware first (HTTP 403 if it fails), then the policy inside the controller. Superusers bypass both layers automatically via `Gate::before()`.
 
 **Need extra routes?** Pass a closure as the fourth argument:
 
@@ -438,7 +452,7 @@ A request to edit a record flows through all of them:
 ```
 GET /post-categories/5/edit
 
-  → Route middleware: does user have 'post-categories.update' permission?
+  → Route middleware: does user have 'update post-categories' permission?
       NO  → 403 (controller never runs)
       YES ↓
 
@@ -606,41 +620,62 @@ public function reject(User $user, Model $model): bool
 
 #### What BaseController handles automatically
 
-`BaseController` calls `authorizeAction()` for all four inherited methods. You do not repeat this yourself:
+`BaseController` handles all eight standard CRUD actions. You never override `store()` or `update()` directly — use hooks instead.
 
 | Inherited method | Ability enforced automatically |
 |-----------------|-------------------------------|
 | `index()` | `viewAny` |
 | `create()` | `create` |
+| `store()` | `create` |
 | `edit()` | `update` |
+| `update()` | `update` |
 | `destroy()` | `delete` |
 
-#### What you must add yourself
+#### Wiring validation — `requestClass()` hook
 
-`store()` and `update()` are not in `BaseController` (they need module-specific Form Requests), so you call `authorizeAction()` manually:
+Tell `BaseController` which Form Request to use by overriding `requestClass()`. The base `store()` and `update()` resolve it automatically, run validation, and call `create()` or `update()` on the model (or delegate to the service if one is set):
 
 ```php
-public function store(StorePostCategoryRequest $request): RedirectResponse
+protected function requestClass(): ?string
 {
-    $this->authorizeAction('create');                     // no record — class-level check
-
-    PostCategory::create($request->validated());
-
-    return $this->successRedirect('created');
-}
-
-public function update(UpdatePostCategoryRequest $request, int|string $record): RedirectResponse
-{
-    $postCategory = $this->findRecord($record);
-    $this->authorizeAction('update', $postCategory);      // pass the record — row-level check
-
-    $postCategory->update($request->validated());
-
-    return $this->successRedirect('updated');
+    return PostCategoryRequest::class;
 }
 ```
 
-If you override `show()` to render a view (the base default just redirects to edit):
+This is the **only** thing needed for standard validation. Do not override `store()` or `update()` just to inject a typed Form Request — that causes a PHP fatal error (see Common Mistakes).
+
+#### Passing data to views — `createViewData()` / `editViewData()`
+
+```php
+protected function createViewData(): array
+{
+    return [
+        'departments' => Department::active()->orderBy('name')->get(),
+    ];
+}
+
+protected function editViewData(Model $record): array
+{
+    $record->load('category');
+
+    return [
+        'departments' => Department::active()->orderBy('name')->get(),
+    ];
+}
+```
+
+#### Guarding deletion — `beforeDestroy()`
+
+```php
+protected function beforeDestroy(Model $record): void
+{
+    abort_if($record->posts()->exists(), 422, 'Cannot delete a category that has posts.');
+}
+```
+
+#### Rendering a show view — `show()`
+
+The base default redirects to `edit`. Override `show()` when you want a dedicated read-only page:
 
 ```php
 public function show(int|string $record): View
@@ -668,12 +703,12 @@ public function approve(Request $request, int|string $record): RedirectResponse
 }
 ```
 
-#### Quick reference: when to call `authorizeAction()` in a module controller
+#### Quick reference: when to call `authorizeAction()` yourself
 
 | Method | Call authorizeAction? | Notes |
 |--------|-----------------------|-------|
-| `store()` | **Yes** | Always |
-| `update()` | **Yes** | Always, pass the record |
+| `store()` | **Never** | Base handles it — use `requestClass()` hook |
+| `update()` | **Never** | Base handles it — use `requestClass()` hook |
 | `show()` | **Only if overriding** | Base default redirects to edit (already authorized) |
 | `approve()` / custom | **Yes** | Always, pass the record |
 | `index()` | No | Base handles it |
@@ -799,9 +834,6 @@ if ($user->can('post-categories.approve')) {
     // ...
 }
 
-// Checking role (goes through Gate):
-if ($user->can('some-permission')) { ... }
-
 // ❌ Never do this — bypasses Gate, Superuser bypass does NOT fire:
 if ($user->hasPermissionTo('post-categories.approve')) { ... }
 if ($user->hasRole('Admin')) { ... }
@@ -811,11 +843,26 @@ if ($user->hasRole('Admin')) { ... }
 
 ### Common Mistakes
 
-**1. Forgetting `authorizeAction()` in `store()` or `update()`**
+**1. Overriding `store()` or `update()` with a typed Form Request parameter**
 
-Route middleware protects the page load (GET). It does not protect the form submit (POST/PUT). Without `authorizeAction()` in `store()` and `update()`, any authenticated user can write data.
+PHP's method signature rules do not allow narrowing a parameter type in an override. This causes a fatal `Declaration must be compatible` error at runtime.
 
-**2. Using `$this->authorize()` instead of `$this->authorizeAction()`**
+```php
+// ❌ Fatal error — narrows Request to StorePostCategoryRequest
+public function store(StorePostCategoryRequest $request): RedirectResponse { ... }
+
+// ✅ Correct — use the requestClass() hook instead
+protected function requestClass(): ?string
+{
+    return PostCategoryRequest::class;
+}
+```
+
+**2. Forgetting `requestClass()` entirely**
+
+Without `requestClass()`, `BaseController::store()` and `update()` fall back to the raw `Request` with no validation. Your data is saved unvalidated.
+
+**3. Using `$this->authorize()` instead of `$this->authorizeAction()`**
 
 ```php
 // ❌ Wrong
@@ -824,10 +871,6 @@ $this->authorize('create', PostCategory::class);
 // ✅ Correct
 $this->authorizeAction('create');
 ```
-
-**3. Overriding `authorizeAction` in a module controller**
-
-The base implementation already resolves `$this->model`. Any override is redundant and should be deleted.
 
 **4. Using the specific model type in a Policy override**
 
@@ -852,6 +895,18 @@ $user->can('post-categories.view');
 **6. Not scoping the DataTable query when `viewAny` returns `true`**
 
 If `viewAny` allows all users to load the list page, the DataTable query must use `->when()` to filter rows by `user_id`. Without it, every user sees every row.
+
+**7. Not marking virtual/aggregate columns as non-searchable in DataTable**
+
+Computed columns (e.g. `withCount()` aggregates) are not real database columns. If you include them in `tableColumns()` without `'searchable' => false`, Yajra will attempt a SQL `LIKE` search on them and throw a column-not-found error.
+
+```php
+// ❌ Wrong — roles_count is a withCount() aggregate, not a real column
+['data' => 'roles_count', 'name' => 'roles_count', 'label' => 'Roles'],
+
+// ✅ Correct
+['data' => 'roles_count', 'name' => 'roles_count', 'label' => 'Roles', 'searchable' => false, 'orderable' => false],
+```
 
 ---
 
@@ -1013,6 +1068,20 @@ public function __construct(PostCategoryDataTableController $dataTableController
 }
 ```
 
+#### Wiring validation
+
+Point `BaseController` to the request class via `requestClass()`. This is the **only** hook needed for standard CRUD:
+
+```php
+protected function requestClass(): ?string
+{
+    return PostCategoryRequest::class;
+}
+```
+
+`BaseController::store()` resolves this class, validates, and calls `PostCategory::create($data)`.
+`BaseController::update()` resolves this class, validates, and calls `$record->update($data)`.
+
 #### Override hooks
 
 **`createViewData()` / `editViewData()`** — pass extra data to the form:
@@ -1026,6 +1095,19 @@ protected function createViewData(): array
 }
 ```
 
+**`fileFields()`** — declare file upload fields with their storage paths:
+
+```php
+protected function fileFields(): array
+{
+    return [
+        'supporting_document' => 'post-categories/documents',
+    ];
+}
+```
+
+File upload and cleanup (on update and delete) are handled automatically by `BaseController`.
+
 **`beforeDestroy()`** — guard before deletion:
 
 ```php
@@ -1035,28 +1117,82 @@ protected function beforeDestroy(Model $record): void
 }
 ```
 
-**`store()` / `update()`** — always call `authorizeAction()`:
+---
+
+### Service Layer (Optional)
+
+Use a service when `BaseController`'s built-in `create()` / `update()` is not enough — for example, when you need to sync a relationship or run side-effects after saving.
+
+#### Creating a service
 
 ```php
-public function store(StorePostCategoryRequest $request): RedirectResponse
+// app/Services/PostCategoryService.php
+class PostCategoryService extends BaseService
 {
-    $this->authorizeAction('create');
+    protected string $modelClass = PostCategory::class;
 
-    PostCategory::create($request->validated());
+    protected function afterCreate(Model $record, array $data): void
+    {
+        // sync tags, fire events, send notifications, etc.
+        if (! empty($data['tag_ids'])) {
+            $record->tags()->sync($data['tag_ids']);
+        }
+    }
 
-    return $this->successRedirect('created');
-}
-
-public function update(UpdatePostCategoryRequest $request, int|string $record): RedirectResponse
-{
-    $postCategory = $this->findRecord($record);
-    $this->authorizeAction('update', $postCategory);
-
-    $postCategory->update($request->validated());
-
-    return $this->successRedirect('updated');
+    protected function afterUpdate(Model $record, array $data): void
+    {
+        if (array_key_exists('tag_ids', $data)) {
+            $record->tags()->sync($data['tag_ids'] ?? []);
+        }
+    }
 }
 ```
+
+#### Available hooks (all optional, all no-op by default)
+
+| Hook | Signature | When it runs |
+|------|-----------|--------------|
+| `beforeCreate` | `(array $data): void` | Before `Model::create()` |
+| `afterCreate` | `(Model $record, array $data): void` | After record is created |
+| `beforeUpdate` | `(Model $record, array $data): void` | Before `$record->update()` |
+| `afterUpdate` | `(Model $record, array $data): void` | After record is updated |
+| `beforeDelete` | `(Model $record): void` | Before `$record->delete()` |
+| `afterDelete` | `(Model $record): void` | After record is deleted |
+
+#### Wiring the service to the controller
+
+Inject the service in the constructor and assign it to `$this->service`. `BaseController` will automatically delegate `store()` and `update()` to the service instead of acting directly on the model.
+
+```php
+public function __construct(
+    PostCategoryDataTableController $dataTableController,
+    PostCategoryService $service,
+) {
+    $this->model = PostCategory::class;
+    $this->routePrefix = 'post-categories';
+    $this->viewPrefix = 'post-categories';
+    $this->resourceName = 'Post Category';
+    $this->dataTableController = $dataTableController;
+    $this->service = $service;
+}
+```
+
+#### Filtering data before update
+
+Override `update()` in the service to strip fields that should not be mass-assigned on update. The most common case is an optional password field:
+
+```php
+public function update(Model $record, array $data): Model
+{
+    if (empty($data['password'])) {
+        unset($data['password']);
+    }
+
+    return parent::update($record, $data);
+}
+```
+
+> `$data` is passed by value in the hook signatures (`beforeUpdate`, `afterUpdate`), so modifications inside those hooks do not affect the data saved by `$record->update()`. Override `update()` itself when you need to filter `$data` before it reaches the model.
 
 ---
 
@@ -1201,8 +1337,7 @@ stubs/crud-module/
 ├── model.stub
 ├── observer.stub
 ├── policy.stub
-├── store-request.stub
-├── update-request.stub
+├── request.stub              ← single merged request (create + update)
 ├── controller.stub
 ├── datatable-controller.stub
 └── views/

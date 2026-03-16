@@ -4,23 +4,29 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\BaseController\BaseController;
 use App\Http\Requests\AssignPermissionsToRoleRequest;
-use App\Http\Requests\StoreRoleRequest;
-use App\Http\Requests\UpdateRoleRequest;
+use App\Http\Requests\RoleRequest;
 use App\Models\Permission;
 use App\Models\Role;
+use App\Services\RoleService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
 class RoleController extends BaseController
 {
-    public function __construct(RoleDataTableController $dataTableController)
+    public function __construct(RoleDataTableController $dataTableController, RoleService $service)
     {
         $this->model = Role::class;
         $this->routePrefix = 'roles';
         $this->viewPrefix = 'roles';
         $this->resourceName = 'Role';
         $this->dataTableController = $dataTableController;
+        $this->service = $service;
+    }
+
+    protected function requestClass(): ?string
+    {
+        return RoleRequest::class;
     }
 
     protected function createViewData(): array
@@ -44,42 +50,6 @@ class RoleController extends BaseController
         $role->load('permissions', 'users');
 
         return view('roles.show', compact('role'));
-    }
-
-    public function store(StoreRoleRequest $request): RedirectResponse
-    {
-        $role = Role::create([
-            'name' => $request->input('name'),
-            'guard_name' => $request->input('guard_name', 'web'),
-            'description' => $request->input('description'),
-        ]);
-
-        if ($request->filled('permissions')) {
-            $role->syncPermissions(
-                Permission::whereIn('id', $request->input('permissions'))->get()
-            );
-        }
-
-        return $this->successRedirect('created');
-    }
-
-    public function update(UpdateRoleRequest $request, int|string $record): RedirectResponse
-    {
-        $role = $this->findRecord($record);
-
-        $role->update([
-            'name' => $request->input('name', $role->name),
-            'guard_name' => $request->input('guard_name', $role->guard_name),
-            'description' => $request->input('description', $role->description),
-        ]);
-
-        if ($request->has('permissions')) {
-            $role->syncPermissions(
-                Permission::whereIn('id', $request->input('permissions', []))->get()
-            );
-        }
-
-        return $this->successRedirect('updated');
     }
 
     protected function beforeDestroy(Model $record): void

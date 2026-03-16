@@ -98,8 +98,7 @@ class RemoveCrudModule extends Command
             "app/Models/{$module}.php" => base_path("app/Models/{$module}.php"),
             "app/Observers/{$module}Observer.php" => base_path("app/Observers/{$module}Observer.php"),
             "app/Policies/{$module}Policy.php" => base_path("app/Policies/{$module}Policy.php"),
-            "app/Http/Requests/Store{$module}Request.php" => base_path("app/Http/Requests/Store{$module}Request.php"),
-            "app/Http/Requests/Update{$module}Request.php" => base_path("app/Http/Requests/Update{$module}Request.php"),
+            "app/Http/Requests/{$module}Request.php" => base_path("app/Http/Requests/{$module}Request.php"),
             "app/Http/Controllers/{$module}Controller.php" => base_path("app/Http/Controllers/{$module}Controller.php"),
             "app/Http/Controllers/{$module}DataTableController.php" => base_path("app/Http/Controllers/{$module}DataTableController.php"),
         ];

@@ -73,6 +73,7 @@ class PermissionDataTableController extends BaseDataTableController
                 'name' => 'roles_count',
                 'label' => 'Roles',
                 'width' => '80',
+                'searchable' => false,
                 'className' => 'text-center',
             ],
             [
