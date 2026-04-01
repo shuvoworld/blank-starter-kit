@@ -5,6 +5,8 @@ use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\DepartmentDataTableController;
 use App\Http\Controllers\DesignationController;
 use App\Http\Controllers\DesignationDataTableController;
+use App\Http\Controllers\EmailController;
+use App\Http\Controllers\EmailDataTableController;
 use App\Http\Controllers\EmployeeCategoryController;
 use App\Http\Controllers\EmployeeCategoryDataTableController;
 use App\Http\Controllers\EmployeeController;
@@ -51,6 +53,7 @@ Route::middleware('auth')->group(function () {
     Route::crudModule('designations', DesignationController::class, DesignationDataTableController::class);
     Route::crudModule('products', ProductController::class, ProductDataTableController::class);
     Route::crudModule('leave-types', LeaveTypeController::class, LeaveTypeDataTableController::class);
+    Route::crudModule('emails', EmailController::class, EmailDataTableController::class);
 
     // Roles — standard CRUD + permission assignment routes
     Route::crudModule('roles', RoleController::class, RoleDataTableController::class, function () {

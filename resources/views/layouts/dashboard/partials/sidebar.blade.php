@@ -124,6 +124,13 @@
                             <p>Roles</p>
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a href="{{ route('emails.index') }}"
+                           class="nav-link {{ request()->routeIs('emails.*') ? 'active' : '' }}">
+                            <i class="nav-icon bi bi-envelope"></i>
+                            <p>Emails</p>
+                        </a>
+                    </li>
 
                     <li class="nav-item">
                         <a href="{{ route('permissions.index') }}"
