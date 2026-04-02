@@ -11,10 +11,27 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Email extends Model
 {
+    /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasActivityLog, HasFactory, SoftDeletes;
 
     protected $fillable = [
         'name',
+        'to',
+        'cc',
+        'bcc',
+        'subject',
+        'html',
+        'status',
+        'attempts',
+        'last_attempted_at',
+        'successfully_delivered_at',
+        'to_user_id',
+        'created_at',
+        'updated_at',
+        'created_by',
+        'updated_by',
+        'deleted_at',
+        'deleted_by',
     ];
 
     public function createdBy(): BelongsTo
